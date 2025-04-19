@@ -1,0 +1,31 @@
+input:
+  - topic:
+      id: 1
+      args:
+        about: "cats"
+
+resources:
+  - sentence:
+      id: 2
+
+      descriptors:
+        is_capitalised:
+          params:
+
+      dependencies:
+        - topic:
+            id: 1
+  - sentence:
+      id: 3
+
+  - sentence:
+      id: 4
+
+      dependencies:
+        - sentence:
+            id: 2
+        - sentence:
+            id: 3
+output:
+  - sentence:
+      id: 4
