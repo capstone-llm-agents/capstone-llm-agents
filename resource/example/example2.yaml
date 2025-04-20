@@ -6,7 +6,7 @@ input:
 
 resources:
   - sentence:
-      id: 2
+      id: 1
 
       descriptors:
         is_capitalised:
@@ -16,16 +16,17 @@ resources:
         - topic:
             id: 1
   - sentence:
-      id: 3
+      id: 2
 
   - sentence:
-      id: 4
+      id: 3
 
       dependencies:
         - sentence:
-            id: 2
+            id: 1
         - sentence:
-            id: 3
+            id: 2
+
 output:
   - sentence:
-      id: 4
+      id: 3
