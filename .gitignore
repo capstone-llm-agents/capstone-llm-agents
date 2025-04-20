@@ -174,4 +174,4 @@ cython_debug/
 .pypirc
 
 # ignore config dir
-config/
+config/*.json
