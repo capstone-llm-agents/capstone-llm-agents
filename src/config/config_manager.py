@@ -57,7 +57,7 @@ class ConfigManager:
         return app_config_model, models_config_model
 
     def get_llm_config(
-        self, uses_tools: bool = False, model_index: int | None = None
+        self, use_tools: bool = False, model_index: int | None = None
     ) -> LLMConfig:
         # TODO refactor this out to be specific to AG2
         """
@@ -73,7 +73,7 @@ class ConfigManager:
         if model_index is None:
             model_index = self.models_config.default_model
 
-        if uses_tools and self.models_config.default_model_with_tools is not None:
+        if use_tools and self.models_config.default_model_with_tools is not None:
             model_index = self.models_config.default_model_with_tools
 
         if model_index >= len(self.models_config.models):

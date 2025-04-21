@@ -73,6 +73,7 @@ class AG2MASAgent(MASAgent):
             description=tool.description,
         )
 
+    # TODO realistically best option is to have init chat, and init chats with configs for these
     def ask(self, prompt: str):
         """Prompt the agent.
 

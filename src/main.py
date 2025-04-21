@@ -40,7 +40,7 @@ def main():
     agent = AG2MASAgent(
         name="AG2MAS",
         description="Write a sentence about a topic.",
-        llm_config=app.config_manager.get_llm_config(uses_tools=False),
+        llm_config=app.config_manager.get_llm_config(use_tools=False),
         response_format=TextResource.TextModel,
     )
 
