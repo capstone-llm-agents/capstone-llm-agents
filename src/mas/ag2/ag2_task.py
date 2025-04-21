@@ -5,7 +5,6 @@ from mas.agent import MASAgent
 from mas.base_resource import BaseResource
 from mas.task import Task
 
-# generic type variables for input and output resource types
 InputResource = TypeVar("InputResource", bound=BaseResource)
 OutputResource = TypeVar("OutputResource", bound=BaseResource)
 
@@ -19,7 +18,7 @@ class AG2Task(
         self,
         input_resource: Type[InputResource],
         output_resource: Type[OutputResource],
-        str_template: str,
+        generate_str: Callable[[InputResource], str],
         agent: MASAgent,
     ):
         """
@@ -28,17 +27,16 @@ class AG2Task(
         Args:
             input_resource (Type[InputResource]): The type of the input resource.
             output_resource (Type[OutputResource]): The type of the output resource.
-            str_template (str): The string template to be used for the task.
-                Example: "Create a plan to {action} the {object}."
-                Where {action} and {object} are params in InputResource.
-
+            generate_str (Callable[[InputResource], str]): The function to generate the string template.
         """
         self.agent = agent
-        do_work = self.get_do_work(str_template)
+
+        do_work = self.get_do_work(generate_str)
+
         super().__init__(input_resource, output_resource, do_work)
 
     def get_do_work(
-        self, str_template: str
+        self, generate_str: Callable[[InputResource], str]
     ) -> Callable[[InputResource], OutputResource]:
         """
         Get the function to do the work for the task.
@@ -51,16 +49,13 @@ class AG2Task(
         """
 
         def do_work(input_resource: InputResource) -> OutputResource:
+            # format the string template with the parameters
+            formatted_str = generate_str(input_resource)
 
-            # Get the parameters from the input resource
-            params = input_resource.model.model_dump()
-
-            # Format the string template with the parameters
-            formatted_str = str_template.format(**params)
-
-            # Call the LLM to generate the output resource
+            # call the LLM to generate the output resource model
             output_resource_model = self.agent.ask(formatted_str)
 
+            # create the output resource from the model
             output_resource = self.output_resource(output_resource_model)
 
             return output_resource

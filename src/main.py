@@ -1,13 +1,16 @@
 """Entry point of the program."""
 
+from typing import Callable
 from app import App
 from examples.write_sentence import TopicResource, WriteSentenceTask
 from mas.ag2.ag2_agent import AG2MASAgent
 from mas.ag2.ag2_task import AG2Task
+from mas.base_resource import BaseResource
 from mas.resources.param_template import ParamTemplateResource
 from mas.resources.params import ParamsResource
 from mas.resources.text import TextResource
 from mas.tasks.param_string_task import ParamStringTask
+from utils.string_template import generate_str_using_template
 
 
 def main():
@@ -23,14 +26,13 @@ def main():
     print(sentence.sentence.sentence)
 
     # param string example
+
     param_task = ParamStringTask()
     param_template = param_task.do_work(
         ParamTemplateResource(
             ParamTemplateResource.ParamTemplateModel(
                 template_str=TextResource.TextModel(text="The {topic} is a great pet."),
-                params=ParamsResource.ParamsModel(
-                    params={"topic": sentence.sentence.sentence}
-                ),
+                params=ParamsResource.ParamsModel(params={"topic": "cat"}),
             )
         )
     )
@@ -48,7 +50,9 @@ def main():
     ag2_task = AG2Task(
         input_resource=TopicResource,
         output_resource=TextResource,
-        str_template="Write a sentence about {topic}.",
+        generate_str=generate_str_using_template(
+            "Write a sentence about {topic}",
+        ),
         agent=agent,
     )
 
