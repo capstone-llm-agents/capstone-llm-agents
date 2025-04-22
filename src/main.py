@@ -1,7 +1,7 @@
 """Entry point of the program."""
 
 from app import App
-from mas.examples.yaml_test import test_yaml_to_pydantic
+from mas.examples.mas_testing import test_basic_mas
 
 
 def main():
@@ -10,7 +10,8 @@ def main():
     app.run()
 
     # test_task(app)
-    test_yaml_to_pydantic(app)
+    # test_yaml_to_pydantic(app)
+    test_basic_mas(app)
 
 
 if __name__ == "__main__":

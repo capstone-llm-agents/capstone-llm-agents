@@ -10,12 +10,14 @@ class TaskManager:
     It provides methods to add, remove, and get tasks.
     """
 
+    tasks: dict[str, Task]
+    """Dictionary of tasks in the system."""
+
     def __init__(self):
         """
         Initialise the task manager.
         """
-        self.tasks: dict[str, Task] = {}
-        """Dictionary of tasks in the system."""
+        self.tasks = {}
 
     def add_task(self, task: Task):
         """
@@ -38,7 +40,7 @@ class TaskManager:
         else:
             raise ValueError(f"Task with name {task_name} does not exist.")
 
-    def get_task(self, task_name: str) -> Task:
+    def get_task(self, task_name: str) -> Task | None:
         """
         Get a task from the task manager.
 
