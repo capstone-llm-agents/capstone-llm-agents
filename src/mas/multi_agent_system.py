@@ -241,6 +241,7 @@ class MultiAgentSystem:
             horn_clauses.append(horn_clause)
 
         # add the dependent tasks
+
         for dependent_task in dependent_tasks:
 
             horn_clause = HornClauseForDepedendentDescriptor(
@@ -251,7 +252,7 @@ class MultiAgentSystem:
 
             # also add just for resource transform
             horn_clause = HornClauseForResourceTransform(
-                dependent_task.input_resource_tuple,
+                horn_clause.head,
                 dependent_task.output_resource_tuple,
                 self.resource_manager,
             )

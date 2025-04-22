@@ -7,9 +7,12 @@ from mas.resource_manager import ResourceManager
 
 class HornClauseForResourceTransform(HornClause):
     """
-    Horn Clause class representing a Horn clause in propositional logic for a resource transform.
+    Horn Clause class representing a Horn clause in propositional logic for a resource transform
+    generated from a descriptor.
 
-    e.g. topic_1 => sentence_1
+    descriptor topic_1 => about_topic(sentence_1)
+    also creates this horn clause:
+    e.g. about_topic(sentence_1) => sentence_1
 
     Attributes:
         head (str): The head of the Horn clause.
@@ -20,7 +23,7 @@ class HornClauseForResourceTransform(HornClause):
 
     def __init__(
         self,
-        input_resource_tuple: tuple[type[BaseResource], int],
+        prev_head: str,
         output_resource_tuple: tuple[type[BaseResource], int],
         resource_manager: ResourceManager,
     ) -> None:
@@ -28,13 +31,10 @@ class HornClauseForResourceTransform(HornClause):
         Initialise the HornClause with a head and body.
 
         Args:
-            input_tuple (tuple): A tuple containing the input resource and its ID.
+            prev_head (str): The previous head of the Horn clause.
             output_tuple (tuple): A tuple containing the output resource and its ID.
             resource_manager (ResourceManager): The resource manager for converting resource tuples to strings.
         """
-
-        # get input_str
-        input_str = resource_manager.convert_resource_tuple_to_str(input_resource_tuple)
 
         # get output_str
         output_str = resource_manager.convert_resource_tuple_to_str(
@@ -42,14 +42,11 @@ class HornClauseForResourceTransform(HornClause):
         )
 
         # body
-        body = [input_str]
+        body = [prev_head]
 
         head = output_str
 
         super().__init__(head, body)
-
-        # save input_tuple
-        self.input_tuple = input_resource_tuple
 
         # save output_tuple
         self.output_tuple = output_resource_tuple
