@@ -27,7 +27,13 @@ class ExecutePlanTask(
         Args:
             plan (Plan): The plan to be executed.
         """
-        super().__init__(input_resource, output_resource, self.execute_plan)
+        super().__init__(
+            "ExecutePlanTask",
+            "A task that executes a plan of tasks",
+            input_resource,
+            output_resource,
+            self.execute_plan,
+        )
         self.plan = plan
 
     def execute_plan(self, input_resource: InputResource) -> OutputResource:

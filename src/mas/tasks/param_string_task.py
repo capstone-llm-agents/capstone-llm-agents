@@ -13,7 +13,13 @@ class ParamStringTask(Task[ParamTemplateResource, TextResource]):
         """
         Initialise the ParamStringTask with input and output resource types.
         """
-        super().__init__(ParamTemplateResource, TextResource, self.parameterise_string)
+        super().__init__(
+            "ParamStringTask",
+            "A task that parameterises a string using a template and parameters.",
+            ParamTemplateResource,
+            TextResource,
+            self.parameterise_string,
+        )
 
     def parameterise_string(
         self, input_resource: ParamTemplateResource

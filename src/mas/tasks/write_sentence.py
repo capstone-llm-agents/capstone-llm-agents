@@ -91,5 +91,9 @@ class WriteSentenceTask(Task[TopicResource, SentenceResource]):
         Initialise the WriteSentenceTask.
         """
         super().__init__(
-            TopicResource.TopicModel, SentenceResource.SentenceModel, self._do_work
+            "WriteSentenceTask",
+            "A task that writes a sentence about a topic.",
+            TopicResource.TopicModel,
+            SentenceResource.SentenceModel,
+            self._do_work,
         )
