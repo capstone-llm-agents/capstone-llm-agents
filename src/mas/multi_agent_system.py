@@ -6,6 +6,7 @@ from mas.clauses.horn_all_dependencies import HornClauseForAllDescriptors
 from mas.clauses.horn_descriptor import HornClauseForDepedendentDescriptor
 from mas.clauses.horn_input import HornClauseForInput
 from mas.clauses.horn_resource import HornClauseForResourceTransform
+from mas.clauses.horn_resource_assignment import HornClauseForResourceAssignment
 from mas.clauses.horn_task import HornClauseForTask
 from mas.horn_clause import HornClause
 from mas.horn_kb import HornKB
@@ -189,10 +190,15 @@ class MultiAgentSystem:
             )
         # TODO figure out how to implement non-dependent tasks into the horn kb
 
+        print(len(dependent_tasks))
+
         print("Dependent tasks per resource:")
-        for input_res_tuple, dependent_tasks in dependent_tasks_per_resource.items():
+        for (
+            input_res_tuple,
+            dependent_tasks_for_res,
+        ) in dependent_tasks_per_resource.items():
             # get len
-            num_dependent_tasks = len(dependent_tasks)
+            num_dependent_tasks = len(dependent_tasks_for_res)
             print(f"\t{input_res_tuple}: {num_dependent_tasks} dependent tasks")
 
         horn_clauses: list[HornClause] = []
@@ -208,7 +214,25 @@ class MultiAgentSystem:
             # add to horn clauses
             horn_clauses.append(horn_clause)
 
-            # iterate over tasks
+        all_resources = self.resource_manager.get_resources()
+
+        # iter over all resources
+
+        # this assigns any known resources from any general resources that could be generated
+        # e.g. sentence_any => sentence_2
+        for resource_type, resource_set in all_resources.items():
+            # iter over resources ids
+            for resource_id in resource_set:
+                # get resource
+                resource_tuple = (resource_type, resource_id)
+
+                horn_clause = HornClauseForResourceAssignment(
+                    resource_tuple, self.resource_manager
+                )
+                # add to horn clauses
+                horn_clauses.append(horn_clause)
+
+        # iterate over tasks
         for task in self.task_manager.tasks.values():
             horn_clause = HornClauseForTask(
                 task.input_resource, task.output_resource, self.resource_manager
@@ -218,6 +242,7 @@ class MultiAgentSystem:
 
         # add the dependent tasks
         for dependent_task in dependent_tasks:
+
             horn_clause = HornClauseForDepedendentDescriptor(
                 dependent_task, self.resource_manager
             )
@@ -268,6 +293,9 @@ class MultiAgentSystem:
 
             found, forward_chain_plan = horn_kb.forward_chain(resource_str)
 
+            # TODO do backward relevance tracing and remove clauses that are not relevant
+            # needs a provenance map / dependency tree for this but should be possible
+
             if not found:
                 raise ValueError(
                     f"Resource {resource_str} not found in forward chain plan."
@@ -279,7 +307,26 @@ class MultiAgentSystem:
         print("Forward chain plans:")
         for forward_chain_plan in forward_chain_plans:
             print("\tPlan:")
+
+            # unfiltered
             for clause in forward_chain_plan:
+                print(f"\t\t{clause}")
+
+            print("\tFiltered:")
+
+            # filter out these clauses
+            # they are not steps to do just helpers to point the KB to the right resources
+            class_to_filter_out = (
+                HornClauseForAllDescriptors | HornClauseForResourceTransform
+            )
+
+            filtered_clauses = [
+                clause
+                for clause in forward_chain_plan
+                if not isinstance(clause, class_to_filter_out)
+            ]
+
+            for clause in filtered_clauses:
                 print(f"\t\t{clause}")
 
         return None

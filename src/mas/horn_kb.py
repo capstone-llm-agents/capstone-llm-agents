@@ -32,28 +32,27 @@ class HornKB:
 
     def forward_chain(self, query: str) -> tuple[bool, list[HornClause]]:
         """
-        Perform forward chaining to determine if the query can be derived.
+        Perform goal-aware forward chaining to determine if the query can be derived.
+        Stops once the query is entailed and prunes unnecessary steps.
 
         Args:
             query (str): The proposition to prove.
 
         Returns:
             tuple: A tuple (True/False, path) indicating whether the query was proven,
-                and the list of HornClauses used to infer the query.
+                and the minimal list of HornClauses used to infer the query.
         """
         inferred = set()
         agenda: deque[str] = deque()
         count: dict[HornClause, int] = {}
         clause_map: dict[str, list[HornClause]] = {}
-        path: list[HornClause] = []
-        used_clauses = set()
+        provenance: dict[str, HornClause] = {}
 
-        # Preprocess clauses
+        # preprocess clauses
         for clause in self.horn_clauses:
-            if not clause.body or len(clause.body) == 0:
+            if not clause.body:
                 agenda.append(clause.head)
-                path.append(clause)  # These are axioms — they are used immediately
-                used_clauses.add(clause)
+                provenance[clause.head] = clause
             else:
                 count[clause] = len(clause.body)
                 for literal in clause.body:
@@ -67,15 +66,29 @@ class HornKB:
             inferred.add(p)
 
             if p == query:
-                return True, path
+                # reconstruct the path that led to the query
+                path = []
+                to_trace = deque([query])
+                traced = set()
+
+                while to_trace:
+                    fact = to_trace.popleft()
+                    if fact in traced or fact not in provenance:
+                        continue
+                    clause = provenance[fact]
+                    path.append(clause)
+                    traced.add(fact)
+                    for b in clause.body:
+                        to_trace.append(b)
+
+                return True, list(reversed(path))
 
             for clause in clause_map.get(p, []):
-                if clause in used_clauses:
-                    continue
                 count[clause] -= 1
                 if count[clause] == 0:
-                    agenda.append(clause.head)
-                    path.append(clause)
-                    used_clauses.add(clause)
+                    head = clause.head
+                    if head not in provenance:
+                        provenance[head] = clause
+                    agenda.append(head)
 
-        return False, path
+        return False, []

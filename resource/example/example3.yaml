@@ -9,14 +9,23 @@ resources:
       id: 1
 
       descriptors:
-        is_capitalised:
-          params:
         about_topic:
           params:
             topic:
               topic:
                 id: 1
+        is_capitalised:
+          params:
+
+  - sentence:
+      id: 2
+
+      descriptors:
+        is_capitalised:
+          params:
 
 output:
   - sentence:
       id: 1
+  - sentence:
+      id: 2
