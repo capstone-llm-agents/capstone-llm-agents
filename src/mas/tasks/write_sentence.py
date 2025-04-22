@@ -24,7 +24,7 @@ class TopicResource(BaseResource):
             Args:
                 about (str): The topic to be represented by the resource.
             """
-            super().__init__(topic=about)
+            super().__init__(about=about)
             self.about = about
 
     def __init__(self, about: TopicModel):
@@ -35,7 +35,7 @@ class TopicResource(BaseResource):
             about (str): The topic to be represented by the resource.
         """
         super().__init__(about)
-        self.topic = about
+        self.about = about
 
 
 class SentenceResource(BaseResource):
@@ -82,7 +82,7 @@ class WriteSentenceTask(Task[TopicResource, SentenceResource]):
         Returns:
             SentenceResource: The output resource after performing the task.
         """
-        topic = input_resource.topic.about
+        topic = input_resource.about.about
         sentence = f"This is a sentence about {topic}."
         return SentenceResource(SentenceResource.SentenceModel(sentence=sentence))
 
