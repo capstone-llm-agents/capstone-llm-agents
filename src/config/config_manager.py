@@ -2,6 +2,8 @@
 
 import json
 
+from autogen import LLMConfig
+
 from config.config_models import AppConfig, ModelsConfig
 
 
@@ -53,3 +55,35 @@ class ConfigManager:
         # TODO handle .env config (not used ATM)
 
         return app_config_model, models_config_model
+
+    def get_llm_config(
+        self, use_tools: bool = False, model_index: int | None = None
+    ) -> LLMConfig:
+        # TODO refactor this out to be specific to AG2
+        """
+        Get the LLM configuration.
+
+        Args:
+            include_tools (bool): Whether to include tools in the configuration. Defaults to False.
+            model_index (int | None): The index of the model to use. If None, uses the default model.
+
+        Returns:
+            dict: The LLM configuration.
+        """
+        if model_index is None:
+            model_index = self.models_config.default_model
+
+        if use_tools and self.models_config.default_model_with_tools is not None:
+            model_index = self.models_config.default_model_with_tools
+
+        if model_index >= len(self.models_config.models):
+            raise ValueError(
+                f"Model index {model_index} is out of range. "
+                f"Max index is {len(self.models_config.models) - 1}."
+            )
+
+        model_config = self.models_config.models[model_index]
+        return LLMConfig(
+            api_type=model_config.api_type,
+            model=model_config.model,
+        )
