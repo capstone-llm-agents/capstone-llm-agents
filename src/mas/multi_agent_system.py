@@ -1,9 +1,9 @@
 """Module for Multi-Agent System (MAS)"""
 
-from pydantic import BaseModel
 from mas.agent import MASAgent
 from mas.base_resource import BaseResource
 from mas.query.mas_query import MASQuery, ResourceModel, ResourceParamModel
+from mas.query.query_dependencies import MASQueryDependencies
 from mas.query.query_input import MASQueryInput
 from mas.query.query_output import MASQueryOutput
 from mas.resource_manager import ResourceManager
@@ -71,6 +71,17 @@ class MultiAgentSystem:
         # check resources
         print("Resources in resource manager:")
         print(self.resource_manager.get_resources())
+
+        # get resource dependencies
+        query_dependencies = MASQueryDependencies(
+            query_resources, self.resource_manager
+        )
+
+        print("Resource descriptors:")
+        print(query_dependencies.descriptors)
+
+        print("Resource dependencies:")
+        print(query_dependencies.dependencies)
 
         # output
         query_output = MASQueryOutput(query.output, self.resource_manager)
