@@ -69,7 +69,7 @@ class Plan(Generic[PlanOutputResource]):
         input_res = initial_input
 
         for task in self.tasks:
-            input_res = task.do_work(input_res)
+            input_res = task.do(input_res)
 
         final_task = self.tasks[-1]
 

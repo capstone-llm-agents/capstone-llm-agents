@@ -31,7 +31,7 @@ class Task(Generic[InputResource, OutputResource]):
         """The output resource type for the task."""
         self.do_work_callable = do_work
 
-    def do_work(self, input_resource: InputResource) -> OutputResource:
+    def do(self, input_resource: InputResource) -> OutputResource:
         """
         Perform the task using the input resource.
 

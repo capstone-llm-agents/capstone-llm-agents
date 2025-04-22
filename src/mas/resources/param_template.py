@@ -27,3 +27,13 @@ class ParamTemplateResource(BaseResource):
         """
         super().__init__(template)
         self.template = template
+
+    @staticmethod
+    def get_model_type() -> type[ParamTemplateModel]:
+        """
+        Get the type of the model.
+
+        Returns:
+            type: The type of the model.
+        """
+        return ParamTemplateResource.ParamTemplateModel

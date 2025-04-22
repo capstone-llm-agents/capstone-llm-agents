@@ -16,8 +16,6 @@ class AG2MASAgent(MASAgent):
         name: str,
         description: str,
         llm_config: LLMConfig,
-        # TODO refactor out response format to change when depending on the task / tool call
-        response_format: BaseModel,
         system_message: str | None = None,
     ):
         """
@@ -38,8 +36,22 @@ class AG2MASAgent(MASAgent):
         # copy llm_config
         copy_llm_config: LLMConfig = llm_config.copy()
 
+        response_format: None | type[BaseModel] = None
+
         # set response format
         copy_llm_config["response_format"] = response_format
+
+        self.llm_config = copy_llm_config
+        """The LLM configuration for the agent."""
+
+        self.response_format = response_format
+        """The response format for the agent."""
+
+        self.response_format = response_format
+        """The response format for the agent."""
+
+        self.system_message = system_message
+        """The system message for the agent."""
 
         # create ag2 agent
         self.ag2_agent = ConversableAgent(
@@ -48,6 +60,43 @@ class AG2MASAgent(MASAgent):
             system_message=system_message,
             llm_config=copy_llm_config,
         )
+
+    def recreate_llm_config(self):
+        """Recreate the LLM configuration for the agent."""
+        # copy llm_config
+        copy_llm_config = self.llm_config.copy()
+
+        # set response format
+        copy_llm_config["response_format"] = self.response_format
+
+        self.llm_config = copy_llm_config
+
+    def recreate_agent(self):
+        """Recreate the agent with the current LLM configuration."""
+
+        # recreate llm config
+        self.recreate_llm_config()
+
+        self.ag2_agent = ConversableAgent(
+            name=self.name,
+            description=self.description,
+            system_message=self.system_message,
+            llm_config=self.llm_config,
+        )
+
+    # TODO: This is a hack. It recreates the agent with the new response format.
+    # This may have unintended consequences which we are currently unaware of.
+    def set_response_format(self, response_format: type[BaseModel]):
+        """Set the response format for the agent.
+
+        Args:
+            response_format (BaseModel): The response format for the agent.
+
+        """
+        self.response_format = response_format
+
+        # recreate agent
+        self.recreate_agent()
 
     def register_tool(self, tool: Tool):
         """Register a tool with the agent.
@@ -73,6 +122,10 @@ class AG2MASAgent(MASAgent):
             description=tool.description,
         )
 
+    # TODO you can do multiple prompts in a single call
+    # so we need to change it to be a list of prompts
+    # and a Prompt obj cause there are settings ({ message: "", role: "user/system" })
+    # and a Chat obj cause there are other settings (max_turns, recipient)
     def ask(self, prompt: str):
         """Prompt the agent.
 

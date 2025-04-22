@@ -35,3 +35,13 @@ class TextResource(BaseResource):
         """
         super().__init__(text)
         self.text = text
+
+    @staticmethod
+    def get_model_type() -> type[TextModel]:
+        """
+        Get the type of the model.
+
+        Returns:
+            type: The type of the model.
+        """
+        return TextResource.TextModel

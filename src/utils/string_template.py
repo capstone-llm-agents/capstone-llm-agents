@@ -19,7 +19,7 @@ def generate_str_using_template(
 
         param_task = ParamStringTask()
 
-        param_template = param_task.do_work(
+        param_template = param_task.do(
             ParamTemplateResource(
                 ParamTemplateResource.ParamTemplateModel(
                     template_str=TextResource.TextModel(text=templated_str),
