@@ -33,7 +33,7 @@ class TextResource(BaseResource):
         Args:
             text (str): The text to be represented by the resource.
         """
-        super().__init__(text)
+        super().__init__(text, alias="text")
         self.text = text
 
     @staticmethod

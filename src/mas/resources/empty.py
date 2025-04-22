@@ -26,7 +26,7 @@ class EmptyResource(BaseResource):
         Args:
             empty (EmptyModel): The empty model to be represented by the resource.
         """
-        super().__init__(empty)
+        super().__init__(empty, alias="empty")
         self.empty = empty
 
     @staticmethod

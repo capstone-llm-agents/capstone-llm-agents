@@ -119,6 +119,11 @@ class MultiAgentSystem:
         # compute dependent tasks
         dependent_tasks: list[DependentTask] = []
 
+        # tasks per resource
+        dependent_tasks_per_resource: dict[
+            tuple[type[BaseResource], int], list[DependentTask]
+        ] = {}
+
         # go over descriptors
         for (
             resource_with_descriptors,
@@ -161,13 +166,17 @@ class MultiAgentSystem:
 
                 # create dependent task
                 dependent_task = DependentTask(
-                    task,
-                    input_res_tuple,
-                    output_res_tuple,
+                    task, input_res_tuple, output_res_tuple, descriptor_param.name
                 )
 
                 # add to dependent tasks
                 dependent_tasks.append(dependent_task)
+
+                # add to dependent tasks per resource
+                if output_res_tuple not in dependent_tasks_per_resource:
+                    dependent_tasks_per_resource[output_res_tuple] = []
+
+                dependent_tasks_per_resource[output_res_tuple].append(dependent_task)
 
         print("Dependent tasks:")
         for dependent_task in dependent_tasks:
@@ -176,15 +185,31 @@ class MultiAgentSystem:
             )
         # TODO figure out how to implement non-dependent tasks into the horn kb
 
+        print("Dependent tasks per resource:")
+        for input_res_tuple, dependent_tasks in dependent_tasks_per_resource.items():
+            # get len
+            num_dependent_tasks = len(dependent_tasks)
+            print(f"\t{input_res_tuple}: {num_dependent_tasks} dependent tasks")
+
         horn_clauses: list[HornClause] = []
 
         # iterate over tasks
-        for task in dependent_tasks:
-            # convert to clause
-            horn_clause = ClauseConverter.convert_to_clause(task, self.resource_manager)
+        for task in self.task_manager.tasks.values():
+            # add default tasks
 
-            # add to horn clauses
-            horn_clauses.append(horn_clause)
+            # id=0 represents any id
+
+            head = self.resource_manager.convert_resource_tuple_to_str(
+                (task.output_resource, 0)
+            ).replace("0", "any")
+
+            body = [
+                self.resource_manager.convert_resource_tuple_to_str(
+                    (task.input_resource, 0)
+                ).replace("0", "any")
+            ]
+
+            horn_clause = HornClause(head, body)
 
             # add to horn clauses
             horn_clauses.append(horn_clause)
@@ -198,6 +223,64 @@ class MultiAgentSystem:
             # add to horn clauses
             horn_clauses.append(HornClause(head=resource_str, body=[]))
 
+        # add the dependent tasks
+        for dependent_task in dependent_tasks:
+            # convert to clause
+            horn_clause = ClauseConverter.convert_to_clause(
+                dependent_task, self.resource_manager
+            )
+
+            # add to horn clauses
+            horn_clauses.append(horn_clause)
+
+            # also add without the descriptor name
+            # e.g. just the output resource
+
+            input_resource_str = self.resource_manager.convert_resource_tuple_to_str(
+                dependent_task.input_resource_tuple
+            )
+
+            output_resource_str = self.resource_manager.convert_resource_tuple_to_str(
+                dependent_task.output_resource_tuple
+            )
+
+            horn_clause = HornClause(
+                head=output_resource_str,
+                body=[input_resource_str],
+            )
+
+            # add to horn clauses
+            horn_clauses.append(horn_clause)
+
+        # add dependent task per resource horn clauses
+        for input_res_tuple, dependent_tasks in dependent_tasks_per_resource.items():
+            # idea:
+            # e.g. input = sentence_1
+            # we want head to be all_dependencies(sentence_1)
+            # and body to be the dependent tasks e.g. about_topic(sentence_1), is_capitalised(sentence_1)
+
+            # get the dependent tasks
+            dependent_tasks_str = [
+                f"""{dependent_task.descriptor}({self.resource_manager.convert_resource_tuple_to_str(
+                    dependent_task.output_resource_tuple
+                )})"""
+                for dependent_task in dependent_tasks
+            ]
+
+            # get the input resource
+            input_resource_str = self.resource_manager.convert_resource_tuple_to_str(
+                input_res_tuple
+            )
+
+            # create the head
+            head = f"all_dependencies({input_resource_str})"
+            # create the body
+            body = [f"{dependent_task}" for dependent_task in dependent_tasks_str]
+            # create the horn clause
+            horn_clause = HornClause(head, body)
+            # add to horn clauses
+            horn_clauses.append(horn_clause)
+
         # create the kb
         horn_kb = HornKB()
         for clause in horn_clauses:
@@ -207,7 +290,7 @@ class MultiAgentSystem:
         for clause in horn_clauses:
             print(f"\t{clause}")
 
-        forward_chain_plans: list[list[str]] = []
+        forward_chain_plans: list[list[HornClause]] = []
 
         # forward chain over each output resource
         # TODO optimise, bit expensive (reiterating for each resource)
@@ -215,6 +298,12 @@ class MultiAgentSystem:
             resource_str = self.resource_manager.convert_resource_tuple_to_str(
                 output_resource
             )
+
+            # if it is in dependent tasks by resource we need to wrap it
+
+            if output_resource in dependent_tasks_per_resource:
+                # wrap with all_dependencies()
+                resource_str = f"all_dependencies({resource_str})"
 
             found, forward_chain_plan = horn_kb.forward_chain(resource_str)
 
@@ -229,7 +318,8 @@ class MultiAgentSystem:
         print("Forward chain plans:")
         for forward_chain_plan in forward_chain_plans:
             print("\tPlan:")
-            print(f"\t{forward_chain_plan}")
+            for clause in forward_chain_plan:
+                print(f"\t\t{clause}")
 
         return None
 

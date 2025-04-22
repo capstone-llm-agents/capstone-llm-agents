@@ -30,7 +30,7 @@ class HornKB:
         """
         self.horn_clauses.append(clause)
 
-    def forward_chain(self, query: str) -> tuple[bool, list[str]]:
+    def forward_chain(self, query: str) -> tuple[bool, list[HornClause]]:
         """
         Perform forward chaining to determine if the query can be derived.
 
@@ -39,23 +39,25 @@ class HornKB:
 
         Returns:
             tuple: A tuple (True/False, path) indicating whether the query was proven,
-                   and the list of inferred literals in order.
+                and the list of HornClauses used to infer the query.
         """
         inferred = set()
         agenda: deque[str] = deque()
         count: dict[HornClause, int] = {}
         clause_map: dict[str, list[HornClause]] = {}
+        path: list[HornClause] = []
+        used_clauses = set()
 
         # Preprocess clauses
         for clause in self.horn_clauses:
             if not clause.body or len(clause.body) == 0:
                 agenda.append(clause.head)
+                path.append(clause)  # These are axioms — they are used immediately
+                used_clauses.add(clause)
             else:
                 count[clause] = len(clause.body)
                 for literal in clause.body:
                     clause_map.setdefault(literal, []).append(clause)
-
-        path = []
 
         while agenda:
             p = agenda.popleft()
@@ -63,14 +65,17 @@ class HornKB:
                 continue
 
             inferred.add(p)
-            path.append(p)
 
             if p == query:
                 return True, path
 
             for clause in clause_map.get(p, []):
+                if clause in used_clauses:
+                    continue
                 count[clause] -= 1
                 if count[clause] == 0:
                     agenda.append(clause.head)
+                    path.append(clause)
+                    used_clauses.add(clause)
 
         return False, path

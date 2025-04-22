@@ -10,9 +10,9 @@ def main():
     app = App()
     app.run()
 
-    test_task(app)
+    # test_task(app)
     # test_yaml_to_pydantic(app)
-    # test_basic_mass(app)
+    test_basic_mas(app)
 
 
 if __name__ == "__main__":
