@@ -13,6 +13,7 @@ class AG2MASAgent(MASAgent):
 
     def __init__(
         self,
+        # TODO use AG2Template to build agent, group chat with agents, or swarm
         name: str,
         description: str,
         llm_config: LLMConfig,
