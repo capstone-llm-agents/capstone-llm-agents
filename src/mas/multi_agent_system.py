@@ -54,8 +54,9 @@ class MultiAgentSystem:
         print(query_input.resource_id_mapping)
 
         # also add to resource manager
-        for resource_id, resource in query_input.resource_id_mapping.items():
-            self.resource_manager.add_resource(type(resource), resource_id)
+        for resource_id_type_pair in query_input.resource_id_mapping:
+            resource_type, resource_id = resource_id_type_pair
+            self.resource_manager.add_resource(resource_type, resource_id)
 
         # resources
         query_resources = query.resources
@@ -78,7 +79,7 @@ class MultiAgentSystem:
         print(query_output.output_resources)
 
         # TODO
-        return BaseResource()
+        return None
 
     def add_agent(self, agent: MASAgent):
         """
