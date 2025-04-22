@@ -3,6 +3,7 @@
 from mas.base_resource import BaseResource
 from mas.query.mas_query import ResourceArgModel
 from mas.resource_manager import ResourceManager
+from mas.resources.empty import EmptyResource
 
 
 class MASQueryInput:
@@ -44,3 +45,7 @@ class MASQueryInput:
 
                 # add resource to mapping
                 self.resource_id_mapping[(resource_type, value.id)] = resource
+
+        # add empty resource
+        empty_resource = EmptyResource(EmptyResource.EmptyModel())
+        self.resource_id_mapping[(EmptyResource, 1)] = empty_resource

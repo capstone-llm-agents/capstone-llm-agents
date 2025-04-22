@@ -106,6 +106,10 @@ class MultiAgentSystem:
         print("Output resources:")
         print(query_output.output_resources)
 
+        print("Tasks")
+        for task in self.task_manager.tasks:
+            print(f"\t{task}")
+
         # TODO
         return None
 
