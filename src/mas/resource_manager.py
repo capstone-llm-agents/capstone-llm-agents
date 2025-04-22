@@ -14,7 +14,11 @@ class ResourceManager:
     """Dictionary of resources in the system."""
 
     resource_types: dict[str, type[BaseResource]]
-    """Dictionary of resource types in the system."""
+    """Dictionary of name to resource types in the system."""
+
+    # reverse dict
+    resource_types_reverse: dict[type[BaseResource], str]
+    """Dictionary of resource types to mapped name in the system."""
 
     def __init__(self):
         """
@@ -23,6 +27,8 @@ class ResourceManager:
         self.resources = {}
 
         self.resource_types = {}
+
+        self.resource_types_reverse = {}
 
     def add_resource(self, resource: type[BaseResource], resource_id: int):
         """
@@ -89,3 +95,27 @@ class ResourceManager:
             resource_type (type[BaseResource]): The resource type to be added.
         """
         self.resource_types[resource_type_name] = resource_type
+        self.resource_types_reverse[resource_type] = resource_type_name
+
+    def convert_resource_tuple_to_str(
+        self,
+        resource_tuple: tuple[type[BaseResource], int],
+    ) -> str:
+        """
+        Convert a resource tuple to a string.
+
+        Args:
+            resource_tuple (tuple[type[BaseResource], int]): The resource tuple to be converted.
+
+        Returns:
+            str: The string representation of the resource tuple.
+        """
+        # get name from reverse dict
+        resource_name = self.resource_types_reverse.get(resource_tuple[0], None)
+
+        if resource_name is None:
+            raise ValueError(
+                f"Resource type {resource_tuple[0]} not found in resource manager."
+            )
+
+        return f"{resource_name}_{resource_tuple[1]}"

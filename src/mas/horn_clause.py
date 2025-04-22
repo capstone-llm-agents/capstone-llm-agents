@@ -20,3 +20,21 @@ class HornClause:
         """
         self.head = head
         self.body = body
+
+    def __repr__(self) -> str:
+        """
+        Return a string representation of the HornClause.
+
+        Returns:
+            str: The string representation of the HornClause.
+        """
+        return f"HornClause(head={self.head}, body={self.body})"
+
+    def __str__(self) -> str:
+        """
+        Return a string representation of the HornClause.
+
+        Returns:
+            str: The string representation of the HornClause.
+        """
+        return f"{', '.join(self.body)} => {self.head}"

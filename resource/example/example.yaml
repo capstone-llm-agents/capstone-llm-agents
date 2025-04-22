@@ -13,7 +13,7 @@ resources:
           params:
         about_topic:
           params:
-            topic:
+            about:
               topic:
                 id: 1
   - sentence:

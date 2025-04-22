@@ -12,11 +12,14 @@ class HornKB:
         horn_clauses (list): List of Horn clauses in the knowledge base.
     """
 
+    horn_clauses: list[HornClause]
+    """List of Horn clauses in the knowledge base."""
+
     def __init__(self):
         """
         Initialise the HornKB with an empty list of Horn clauses.
         """
-        self.horn_clauses: list[HornClause] = []
+        self.horn_clauses = []
 
     def add_clause(self, clause: HornClause) -> None:
         """
@@ -39,9 +42,9 @@ class HornKB:
                    and the list of inferred literals in order.
         """
         inferred = set()
-        agenda = deque()
-        count = {}
-        clause_map = {}
+        agenda: deque[str] = deque()
+        count: dict[HornClause, int] = {}
+        clause_map: dict[str, list[HornClause]] = {}
 
         # Preprocess clauses
         for clause in self.horn_clauses:

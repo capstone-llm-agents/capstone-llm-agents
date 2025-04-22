@@ -2,6 +2,7 @@
 
 from app import App
 from mas.examples.mas_testing import test_basic_mas
+from mas.examples.task_testing import test_task
 
 
 def main():
@@ -9,9 +10,9 @@ def main():
     app = App()
     app.run()
 
-    # test_task(app)
+    test_task(app)
     # test_yaml_to_pydantic(app)
-    test_basic_mas(app)
+    # test_basic_mass(app)
 
 
 if __name__ == "__main__":

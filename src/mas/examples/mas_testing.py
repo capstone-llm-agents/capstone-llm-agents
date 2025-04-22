@@ -30,6 +30,7 @@ def test_basic_mas(app: App):
     # TODO includes aliases for mapping also
     # example resources mapping
     example_resource_mapping: dict[str, type[BaseResource]] = {
+        "empty": EmptyResource,
         "sentence": SentenceResource,
         "topic": TopicResource,
     }
@@ -77,7 +78,7 @@ def test_basic_mas(app: App):
 
     descriptor_mapping: dict[str, Task] = {
         "about_topic": write_sentence_task,
-        "is_capatilised": capatilise_sentence_task,
+        "is_capitalised": capatilise_sentence_task,
     }
 
     # example tasks

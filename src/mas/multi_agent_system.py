@@ -5,8 +5,9 @@ from mas.base_resource import BaseResource
 from mas.clause_converter import ClauseConverter
 from mas.horn_clause import HornClause
 from mas.horn_kb import HornKB
+from mas.query.dependent_task import DependentTask
 from mas.query.mas_query import MASQuery, ResourceModel, ResourceParamModel
-from mas.query.query_dependencies import MASQueryDependencies
+from mas.query.query_dependencies import MASQueryDependencies, Param
 from mas.query.query_input import MASQueryInput
 from mas.query.query_output import MASQueryOutput
 from mas.resource_manager import ResourceManager
@@ -115,26 +116,121 @@ class MultiAgentSystem:
         for task in self.task_manager.tasks:
             print(f"\t{task}")
 
+        # compute dependent tasks
+        dependent_tasks: list[DependentTask] = []
+
+        # go over descriptors
+        for (
+            resource_with_descriptors,
+            descriptor_params,
+        ) in query_dependencies.descriptors.items():
+            # get the task
+            output_res_tuple = resource_with_descriptors
+
+            for descriptor_param in descriptor_params:
+                # get the task
+                task = descriptor_mapping.get(descriptor_param.name)
+                if task is None:
+                    raise ValueError(
+                        f"Task {descriptor_param.name} not found in descriptor mapping."
+                    )
+
+                print(descriptor_param.params)
+
+                # TODO add support for multiple params, we assume only one param
+                params = list(descriptor_param.params.values())
+
+                if len(params) == 0:
+                    # use the input resource
+                    param = Param(
+                        "input_resource",
+                        output_res_tuple[0],
+                        output_res_tuple[1],
+                    )
+                else:
+                    # get the param
+                    param = params[0]
+
+                param_id = param.id
+                param_type = param.resource_type
+
+                input_res_tuple = (
+                    param_type,
+                    param_id,
+                )
+
+                # create dependent task
+                dependent_task = DependentTask(
+                    task,
+                    input_res_tuple,
+                    output_res_tuple,
+                )
+
+                # add to dependent tasks
+                dependent_tasks.append(dependent_task)
+
+        print("Dependent tasks:")
+        for dependent_task in dependent_tasks:
+            print(
+                f"\t{dependent_task.task.name}: {dependent_task.input_resource_tuple} -> {dependent_task.output_resource_tuple}"
+            )
+        # TODO figure out how to implement non-dependent tasks into the horn kb
+
         horn_clauses: list[HornClause] = []
 
         # iterate over tasks
-        for task in self.task_manager.tasks:
-            horn_clauses += ClauseConverter.convert_to_clause(
-                task,
-                query_dependencies.descriptors,
-                query_dependencies.dependencies,
-                descriptor_mapping,
+        for task in dependent_tasks:
+            # convert to clause
+            horn_clause = ClauseConverter.convert_to_clause(task, self.resource_manager)
+
+            # add to horn clauses
+            horn_clauses.append(horn_clause)
+
+            # add to horn clauses
+            horn_clauses.append(horn_clause)
+
+        # add the known clauses from input
+        for input_resource in query_input.resource_id_mapping:
+            resource_str = self.resource_manager.convert_resource_tuple_to_str(
+                input_resource
             )
+
+            # add to horn clauses
+            horn_clauses.append(HornClause(head=resource_str, body=[]))
 
         # create the kb
         horn_kb = HornKB()
         for clause in horn_clauses:
             horn_kb.add_clause(clause)
 
-        # TODO convert the output to a string
-        horn_kb.forward_chain(query.output)
+        print("Horn clauses:")
+        for clause in horn_clauses:
+            print(f"\t{clause}")
 
-        # TODO
+        forward_chain_plans: list[list[str]] = []
+
+        # forward chain over each output resource
+        # TODO optimise, bit expensive (reiterating for each resource)
+        for output_resource in query_output.output_resources:
+            resource_str = self.resource_manager.convert_resource_tuple_to_str(
+                output_resource
+            )
+
+            found, forward_chain_plan = horn_kb.forward_chain(resource_str)
+
+            if not found:
+                raise ValueError(
+                    f"Resource {resource_str} not found in forward chain plan."
+                )
+
+            forward_chain_plans.append(forward_chain_plan)
+
+        # TODO convert forward chain plans to task plan
+        print("Forward chain plans:")
+        for forward_chain_plan in forward_chain_plans:
+            print("\tPlan:")
+            print(f"\t{forward_chain_plan}")
+
         return None
 
     def add_agent(self, agent: MASAgent):
