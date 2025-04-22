@@ -14,28 +14,28 @@ class TopicResource(BaseResource):
     class TopicModel(BaseModel):
         """A model representing a topic."""
 
-        topic: str
+        about: str
         """The topic to be represented by the resource."""
 
-        def __init__(self, topic: str):
+        def __init__(self, about: str):
             """
             Initialise the TopicModel with a topic.
 
             Args:
-                topic (str): The topic to be represented by the resource.
+                about (str): The topic to be represented by the resource.
             """
-            super().__init__(topic=topic)
-            self.topic = topic
+            super().__init__(topic=about)
+            self.about = about
 
-    def __init__(self, topic: TopicModel):
+    def __init__(self, about: TopicModel):
         """
         Initialise the TopicResource with a topic.
 
         Args:
-            topic (str): The topic to be represented by the resource.
+            about (str): The topic to be represented by the resource.
         """
-        super().__init__(topic)
-        self.topic = topic
+        super().__init__(about)
+        self.topic = about
 
 
 class SentenceResource(BaseResource):
@@ -82,7 +82,7 @@ class WriteSentenceTask(Task[TopicResource, SentenceResource]):
         Returns:
             SentenceResource: The output resource after performing the task.
         """
-        topic = input_resource.topic.topic
+        topic = input_resource.topic.about
         sentence = f"This is a sentence about {topic}."
         return SentenceResource(SentenceResource.SentenceModel(sentence=sentence))
 
@@ -91,5 +91,9 @@ class WriteSentenceTask(Task[TopicResource, SentenceResource]):
         Initialise the WriteSentenceTask.
         """
         super().__init__(
-            TopicResource.TopicModel, SentenceResource.SentenceModel, self._do_work
+            "WriteSentenceTask",
+            "A task that writes a sentence about a topic.",
+            TopicResource.TopicModel,
+            SentenceResource.SentenceModel,
+            self._do_work,
         )

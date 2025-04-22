@@ -46,6 +46,8 @@ def test_task(app: App):
 
     # ag2 task
     ag2_task = AG2Task(
+        name="AG2Task",
+        description="Write a sentence about a topic.",
         input_resource=TopicResource,
         output_resource=TextResource,
         generate_str=generate_str_using_template(

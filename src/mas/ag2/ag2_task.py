@@ -16,6 +16,8 @@ class AG2Task(
 
     def __init__(
         self,
+        name: str,
+        description: str,
         input_resource: Type[InputResource],
         output_resource: Type[OutputResource],
         generate_str: Callable[[InputResource], str],
@@ -25,6 +27,8 @@ class AG2Task(
         Initialise the AG2Task with input and output resource types and a function to do the work.
 
         Args:
+            name (str): The name of the task.
+            description (str): The description of the task.
             input_resource (Type[InputResource]): The type of the input resource.
             output_resource (Type[OutputResource]): The type of the output resource.
             generate_str (Callable[[InputResource], str]): The function to generate the string template.
@@ -33,7 +37,7 @@ class AG2Task(
 
         do_work = self.get_do_work(generate_str)
 
-        super().__init__(input_resource, output_resource, do_work)
+        super().__init__(name, description, input_resource, output_resource, do_work)
 
     def get_do_work(
         self, generate_str: Callable[[InputResource], str]

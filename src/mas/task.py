@@ -13,6 +13,8 @@ class Task(Generic[InputResource, OutputResource]):
 
     def __init__(
         self,
+        name: str,
+        description: str,
         input_resource: Type[InputResource],
         output_resource: Type[OutputResource],
         do_work: Callable[[InputResource], OutputResource],
@@ -21,9 +23,17 @@ class Task(Generic[InputResource, OutputResource]):
         Initialise the Task with input and output resource types.
 
         Args:
+            name (str): The name of the task.
+            description (str): The description of the task.
             input_resource (Type[InputResource]): The input resource type for the task.
             output_resource (Type[OutputResource]): The output resource type for the task.
         """
+        self.name = name
+        """The name of the task."""
+
+        self.description = description
+        """The description of the task."""
+
         self.input_resource = input_resource
         """The input resource type for the task."""
 
