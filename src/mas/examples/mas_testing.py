@@ -12,7 +12,7 @@ def test_basic_mas(app: App):
 
     mas = MultiAgentSystem()
 
-    yaml_file = "./resource/example/example2.yaml"
+    yaml_file = "./resource/example/example.yaml"
 
     mas_query = MASQuery.from_yaml(yaml_file)
 

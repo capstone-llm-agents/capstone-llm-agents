@@ -80,6 +80,23 @@ class MultiAgentSystem:
         print("Resource descriptors:")
         print(query_dependencies.descriptors)
 
+        print("=" * 50)
+
+        for (
+            resource_with_descriptors,
+            descriptors,
+        ) in query_dependencies.descriptors.items():
+
+            for descriptor in descriptors:
+                print(f"Resource: {resource_with_descriptors}")
+                print(f"Descriptor: {descriptor.name}")
+
+                for param_name, param in descriptor.params.items():
+                    print(f"\tParam name: {param_name}")
+                    print(f"\tParam resource type: {param.resource_type}")
+
+        print("=" * 50)
+
         print("Resource dependencies:")
         print(query_dependencies.dependencies)
 
