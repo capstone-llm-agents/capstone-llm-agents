@@ -42,7 +42,7 @@ YIELD Sentence(ID=4)
 
 The prompt equivalent is
 
-```Write a sentence about cats in all caps and then combine it with another sentence about another topic```
+```Write a sentence about cats in all caps and then combine it with another sentence```
 
 The question becomes if you have generic functions like:
 
