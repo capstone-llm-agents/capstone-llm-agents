@@ -2,7 +2,11 @@
 
 from mas.agent import MASAgent
 from mas.base_resource import BaseResource
-from mas.clause_converter import ClauseConverter
+from mas.clauses.horn_all_dependencies import HornClauseForAllDescriptors
+from mas.clauses.horn_descriptor import HornClauseForDepedendentDescriptor
+from mas.clauses.horn_input import HornClauseForInput
+from mas.clauses.horn_resource import HornClauseForResourceTransform
+from mas.clauses.horn_task import HornClauseForTask
 from mas.horn_clause import HornClause
 from mas.horn_kb import HornKB
 from mas.query.dependent_task import DependentTask
@@ -193,60 +197,38 @@ class MultiAgentSystem:
 
         horn_clauses: list[HornClause] = []
 
-        # iterate over tasks
-        for task in self.task_manager.tasks.values():
-            # add default tasks
+        horn_clause: HornClause
 
-            # id=0 represents any id
-
-            head = self.resource_manager.convert_resource_tuple_to_str(
-                (task.output_resource, 0)
-            ).replace("0", "any")
-
-            body = [
-                self.resource_manager.convert_resource_tuple_to_str(
-                    (task.input_resource, 0)
-                ).replace("0", "any")
-            ]
-
-            horn_clause = HornClause(head, body)
+        # add the known clauses from input
+        for input_resource_tuple in query_input.resource_id_mapping:
+            horn_clause = HornClauseForInput(
+                input_resource_tuple, self.resource_manager
+            )
 
             # add to horn clauses
             horn_clauses.append(horn_clause)
 
-        # add the known clauses from input
-        for input_resource in query_input.resource_id_mapping:
-            resource_str = self.resource_manager.convert_resource_tuple_to_str(
-                input_resource
+            # iterate over tasks
+        for task in self.task_manager.tasks.values():
+            horn_clause = HornClauseForTask(
+                task.input_resource, task.output_resource, self.resource_manager
             )
-
             # add to horn clauses
-            horn_clauses.append(HornClause(head=resource_str, body=[]))
+            horn_clauses.append(horn_clause)
 
         # add the dependent tasks
         for dependent_task in dependent_tasks:
-            # convert to clause
-            horn_clause = ClauseConverter.convert_to_clause(
+            horn_clause = HornClauseForDepedendentDescriptor(
                 dependent_task, self.resource_manager
             )
-
             # add to horn clauses
             horn_clauses.append(horn_clause)
 
-            # also add without the descriptor name
-            # e.g. just the output resource
-
-            input_resource_str = self.resource_manager.convert_resource_tuple_to_str(
-                dependent_task.input_resource_tuple
-            )
-
-            output_resource_str = self.resource_manager.convert_resource_tuple_to_str(
-                dependent_task.output_resource_tuple
-            )
-
-            horn_clause = HornClause(
-                head=output_resource_str,
-                body=[input_resource_str],
+            # also add just for resource transform
+            horn_clause = HornClauseForResourceTransform(
+                dependent_task.input_resource_tuple,
+                dependent_task.output_resource_tuple,
+                self.resource_manager,
             )
 
             # add to horn clauses
@@ -254,30 +236,9 @@ class MultiAgentSystem:
 
         # add dependent task per resource horn clauses
         for input_res_tuple, dependent_tasks in dependent_tasks_per_resource.items():
-            # idea:
-            # e.g. input = sentence_1
-            # we want head to be all_dependencies(sentence_1)
-            # and body to be the dependent tasks e.g. about_topic(sentence_1), is_capitalised(sentence_1)
-
-            # get the dependent tasks
-            dependent_tasks_str = [
-                f"""{dependent_task.descriptor}({self.resource_manager.convert_resource_tuple_to_str(
-                    dependent_task.output_resource_tuple
-                )})"""
-                for dependent_task in dependent_tasks
-            ]
-
-            # get the input resource
-            input_resource_str = self.resource_manager.convert_resource_tuple_to_str(
-                input_res_tuple
+            horn_clause = HornClauseForAllDescriptors(
+                dependent_tasks, input_res_tuple, self.resource_manager
             )
-
-            # create the head
-            head = f"all_dependencies({input_resource_str})"
-            # create the body
-            body = [f"{dependent_task}" for dependent_task in dependent_tasks_str]
-            # create the horn clause
-            horn_clause = HornClause(head, body)
             # add to horn clauses
             horn_clauses.append(horn_clause)
 

@@ -48,4 +48,4 @@ class MASQueryInput:
 
         # add empty resource
         empty_resource = EmptyResource(EmptyResource.EmptyModel())
-        self.resource_id_mapping[(EmptyResource, 1)] = empty_resource
+        self.resource_id_mapping[(EmptyResource, 0)] = empty_resource
