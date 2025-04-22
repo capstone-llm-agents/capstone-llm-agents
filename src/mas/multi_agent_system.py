@@ -2,6 +2,9 @@
 
 from mas.agent import MASAgent
 from mas.base_resource import BaseResource
+from mas.clause_converter import ClauseConverter
+from mas.horn_clause import HornClause
+from mas.horn_kb import HornKB
 from mas.query.mas_query import MASQuery, ResourceModel, ResourceParamModel
 from mas.query.query_dependencies import MASQueryDependencies
 from mas.query.query_input import MASQueryInput
@@ -36,7 +39,9 @@ class MultiAgentSystem:
         self.task_manager = TaskManager()
         """The task manager for the MAS."""
 
-    def solve_query(self, query: MASQuery) -> BaseResource:
+    def solve_query(
+        self, query: MASQuery, descriptor_mapping: dict[str, Task]
+    ) -> BaseResource:
         """
         Solve a query using the MAS.
 
@@ -109,6 +114,25 @@ class MultiAgentSystem:
         print("Tasks")
         for task in self.task_manager.tasks:
             print(f"\t{task}")
+
+        horn_clauses: list[HornClause] = []
+
+        # iterate over tasks
+        for task in self.task_manager.tasks:
+            horn_clauses += ClauseConverter.convert_to_clause(
+                task,
+                query_dependencies.descriptors,
+                query_dependencies.dependencies,
+                descriptor_mapping,
+            )
+
+        # create the kb
+        horn_kb = HornKB()
+        for clause in horn_clauses:
+            horn_kb.add_clause(clause)
+
+        # TODO convert the output to a string
+        horn_kb.forward_chain(query.output)
 
         # TODO
         return None

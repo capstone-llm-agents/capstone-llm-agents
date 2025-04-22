@@ -8,7 +8,6 @@ from mas.base_resource import BaseResource
 from mas.multi_agent_system import MultiAgentSystem
 from mas.query.mas_query import MASQuery
 from mas.resources.empty import EmptyResource
-from mas.resources.text import TextResource
 from mas.task import Task
 from mas.tasks.write_sentence import SentenceResource, TopicResource
 from utils.string_template import generate_str_using_template
@@ -43,45 +42,56 @@ def test_basic_mas(app: App):
         llm_config=app.config_manager.get_llm_config(use_tools=False),
     )
 
+    write_sentence_task = AG2Task(
+        name="WriteSentenceTask",
+        description="Write a sentence about a topic.",
+        input_resource=TopicResource,
+        output_resource=SentenceResource,
+        generate_str=generate_str_using_template(
+            "Write a sentence about {topic}",
+        ),
+        agent=agent,
+    )
+
+    capatilise_sentence_task = AG2Task(
+        name="CapitaliseSentenceTask",
+        description="Capitalise a sentence.",
+        input_resource=SentenceResource,
+        output_resource=SentenceResource,
+        generate_str=generate_str_using_template(
+            "Capitalise the sentence: {sentence}",
+        ),
+        agent=agent,
+    )
+
+    think_of_topic_task = AG2Task(
+        name="ThinkOfTopicTask",
+        description="Think of a topic.",
+        input_resource=EmptyResource,
+        output_resource=TopicResource,
+        generate_str=generate_str_using_template(
+            "Think of a topic to write about.",
+        ),
+        agent=agent,
+    )
+
+    descriptor_mapping: dict[str, Task] = {
+        "about_topic": write_sentence_task,
+        "is_capatilised": capatilise_sentence_task,
+    }
+
     # example tasks
     example_tasks: list[Task] = [
         # write a sentence about a topic
-        AG2Task(
-            name="WriteSentenceTask",
-            description="Write a sentence about a topic.",
-            input_resource=TopicResource,
-            output_resource=SentenceResource,
-            generate_str=generate_str_using_template(
-                "Write a sentence about {topic}",
-            ),
-            agent=agent,
-        ),
+        write_sentence_task,
         # capitalise a sentence
-        AG2Task(
-            name="CapitaliseSentenceTask",
-            description="Capitalise a sentence.",
-            input_resource=SentenceResource,
-            output_resource=TextResource,
-            generate_str=generate_str_using_template(
-                "Capitalise the sentence: {sentence}",
-            ),
-            agent=agent,
-        ),
+        capatilise_sentence_task,
         # think of a topic
-        AG2Task(
-            name="ThinkOfTopicTask",
-            description="Think of a topic.",
-            input_resource=EmptyResource,
-            output_resource=TopicResource,
-            generate_str=generate_str_using_template(
-                "Think of a topic to write about.",
-            ),
-            agent=agent,
-        ),
+        think_of_topic_task,
     ]
 
     # add tasks to mas
     for task in example_tasks:
         mas.add_task(task)
 
-    mas.solve_query(mas_query)
+    mas.solve_query(mas_query, descriptor_mapping)
