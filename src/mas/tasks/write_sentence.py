@@ -22,7 +22,7 @@ class TopicResource(BaseResource):
             Initialise the TopicModel with a topic.
 
             Args:
-                about (str): The topic to be represented by the resource.
+                topic (str): The topic to be represented by the resource.
             """
             super().__init__(topic=topic)
             self.topic = topic
