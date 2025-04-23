@@ -317,14 +317,16 @@ class MultiAgentSystem:
 
             # filter out these clauses
             # they are not steps to do just helpers to point the KB to the right resources
-            class_to_filter_out = (
-                HornClauseForAllDescriptors | HornClauseForResourceTransform
+            class_to_filter = (
+                HornClauseForDepedendentDescriptor
+                | HornClauseForResourceAssignment
+                | HornClauseForTask
             )
 
             filtered_clauses = [
                 clause
                 for clause in forward_chain_plan
-                if not isinstance(clause, class_to_filter_out)
+                if isinstance(clause, class_to_filter)
             ]
 
             for clause in filtered_clauses:
