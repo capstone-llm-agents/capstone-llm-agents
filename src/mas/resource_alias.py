@@ -1,8 +1,6 @@
 """Manage the resource aliases."""
 
 from mas.base_resource import BaseResource
-from mas.resources.empty import EmptyResource
-from mas.tasks.write_sentence import SentenceResource, TopicResource
 
 
 class ResourceAlias:
@@ -21,11 +19,6 @@ class ResourceAlias:
         Initialise the resource alias manager.
         """
         self.resource_aliases = {}
-
-        # add aliases
-        self.add_resource_alias("empty", EmptyResource)
-        self.add_resource_alias("sentence", SentenceResource)
-        self.add_resource_alias("topic", TopicResource)
 
     def add_resource_alias(self, alias: str, resource_type: type[BaseResource]):
         """

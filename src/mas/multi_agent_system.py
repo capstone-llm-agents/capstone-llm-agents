@@ -17,6 +17,7 @@ from mas.query.query_input import MASQueryInput
 from mas.query.query_output import MASQueryOutput
 from mas.query.query_plan import QueryPlan
 from mas.query.query_runner import QueryRunner
+from mas.resource_alias import ResourceAlias
 from mas.resource_manager import ResourceManager
 from mas.task import Task
 from mas.task_manager import TaskManager
@@ -34,9 +35,13 @@ class MultiAgentSystem:
     agents: list[MASAgent]
     """List of agents in the MAS."""
 
-    def __init__(self):
+    def __init__(self, alias: ResourceAlias):
         """
         Initialise the Multi-Agent System (MAS).
+
+        Args:
+            alias (ResourceAlias): The resource alias manager for the MAS.
+
         """
 
         self.agents = []
@@ -46,6 +51,11 @@ class MultiAgentSystem:
 
         self.task_manager = TaskManager()
         """The task manager for the MAS."""
+
+        self.alias = alias
+        """The resource alias manager for the MAS."""
+
+        self.add_resource_types_from_dict(alias.resource_aliases)
 
     def solve_query(
         self, query: MASQuery, descriptor_mapping: dict[str, Task]

@@ -16,15 +16,18 @@ from utils.string_template import generate_str_using_template
 def test_basic_mas(app: App):
     """Test basic MAS."""
 
-    mas = MultiAgentSystem()
+    alias = ResourceAlias()
+
+    # add aliases
+    alias.add_resource_alias("empty", EmptyResource)
+    alias.add_resource_alias("sentence", SentenceResource)
+    alias.add_resource_alias("topic", TopicResource)
+
+    mas = MultiAgentSystem(alias)
 
     yaml_file = "./resource/example/example3.yaml"
 
     mas_query = MASQuery.from_yaml(yaml_file)
-
-    alias = ResourceAlias()
-
-    mas.add_resource_types_from_dict(alias.resource_aliases)
 
     agent = AG2MASAgent(
         name="AssistantAgent",
