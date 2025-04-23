@@ -1,6 +1,6 @@
 """Horn Knowledge Base"""
 
-from collections import deque
+from collections import deque, defaultdict
 from mas.horn_clause import HornClause
 
 
@@ -29,6 +29,39 @@ class HornKB:
             clause (HornClause): The Horn clause to be added.
         """
         self.horn_clauses.append(clause)
+
+    def topological_sort(self, clauses: list[HornClause]) -> list[HornClause]:
+        """
+        Perform a topological sort on the given list of Horn clauses.
+        This function assumes that the clauses form a Directed Acyclic Graph (DAG).
+        Args:
+            clauses (list[HornClause]): The list of Horn clauses to be sorted.
+        Returns:
+            list[HornClause]: A topologically sorted list of Horn clauses.
+        """
+
+        adj: defaultdict[HornClause, list[HornClause]] = defaultdict(list)
+        in_degree: defaultdict[HornClause, int] = defaultdict(int)
+        clause_by_head = {clause.head: clause for clause in clauses}
+
+        for clause in clauses:
+            for b in clause.body:
+                if b in clause_by_head:
+                    adj[clause_by_head[b]].append(clause)
+                    in_degree[clause] += 1
+
+        queue = deque([c for c in clauses if in_degree[c] == 0])
+        sorted_path = []
+
+        while queue:
+            c = queue.popleft()
+            sorted_path.append(c)
+            for neighbor in adj[c]:
+                in_degree[neighbor] -= 1
+                if in_degree[neighbor] == 0:
+                    queue.append(neighbor)
+
+        return sorted_path
 
     def forward_chain(self, query: str) -> tuple[bool, list[HornClause]]:
         """
@@ -81,7 +114,8 @@ class HornKB:
                     for b in clause.body:
                         to_trace.append(b)
 
-                return True, list(reversed(path))
+                sorted_path = self.topological_sort(path)
+                return True, sorted_path
 
             for clause in clause_map.get(p, []):
                 count[clause] -= 1
