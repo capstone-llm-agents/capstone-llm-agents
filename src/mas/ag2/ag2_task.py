@@ -65,7 +65,11 @@ class AG2Task(
 
             # TODO problem with this is that it assumes the output resource
             # has only one arg and that arg is the model which isn't necessarily true
-            output_resource = self.output_resource(output_resource_model)
+
+            # TODO assumes that does not have any other args
+            output_resource = self.output_resource(
+                output_resource_model,
+            )
 
             return output_resource
 

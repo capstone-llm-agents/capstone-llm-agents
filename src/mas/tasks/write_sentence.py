@@ -14,28 +14,38 @@ class TopicResource(BaseResource):
     class TopicModel(BaseModel):
         """A model representing a topic."""
 
-        about: str
+        topic: str
         """The topic to be represented by the resource."""
 
-        def __init__(self, about: str):
+        def __init__(self, topic: str):
             """
             Initialise the TopicModel with a topic.
 
             Args:
-                about (str): The topic to be represented by the resource.
+                topic (str): The topic to be represented by the resource.
             """
-            super().__init__(about=about)
-            self.about = about
+            super().__init__(topic=topic)
+            self.topic = topic
 
-    def __init__(self, about: TopicModel):
+    def __init__(self, topic: TopicModel):
         """
         Initialise the TopicResource with a topic.
 
         Args:
-            about (str): The topic to be represented by the resource.
+            topic (str): The topic to be represented by the resource.
         """
-        super().__init__(about)
-        self.about = about
+        super().__init__(topic, alias="topic")
+        self.topic = topic
+
+    @staticmethod
+    def get_model_type() -> type[TopicModel]:
+        """
+        Get the type of the model.
+
+        Returns:
+            type: The type of the model.
+        """
+        return TopicResource.TopicModel
 
 
 class SentenceResource(BaseResource):
@@ -65,8 +75,18 @@ class SentenceResource(BaseResource):
         Args:
             sentence (str): The sentence to be represented by the resource.
         """
-        super().__init__(sentence)
+        super().__init__(sentence, alias="sentence")
         self.sentence = sentence
+
+    @staticmethod
+    def get_model_type() -> type[SentenceModel]:
+        """
+        Get the type of the model.
+
+        Returns:
+            type: The type of the model.
+        """
+        return SentenceResource.SentenceModel
 
 
 class WriteSentenceTask(Task[TopicResource, SentenceResource]):
@@ -82,7 +102,7 @@ class WriteSentenceTask(Task[TopicResource, SentenceResource]):
         Returns:
             SentenceResource: The output resource after performing the task.
         """
-        topic = input_resource.about.about
+        topic = input_resource.topic.topic
         sentence = f"This is a sentence about {topic}."
         return SentenceResource(SentenceResource.SentenceModel(sentence=sentence))
 

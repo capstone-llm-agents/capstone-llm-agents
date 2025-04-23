@@ -30,8 +30,8 @@ def test_task(app: App):
     param_template = param_task.do(
         ParamTemplateResource(
             ParamTemplateResource.ParamTemplateModel(
-                template_str=TextResource.TextModel(text="The {about} is a great pet."),
-                params=ParamsResource.ParamsModel(params={"about": "cat"}),
+                template_str=TextResource.TextModel(text="The {topic} is a great pet."),
+                params=ParamsResource.ParamsModel(params={"topic": "cat"}),
             )
         )
     )
@@ -51,7 +51,7 @@ def test_task(app: App):
         input_resource=TopicResource,
         output_resource=TextResource,
         generate_str=generate_str_using_template(
-            "Write a sentence about {about}",
+            "Write a sentence about {topic}",
         ),
         agent=agent,
     )

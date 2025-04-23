@@ -2,7 +2,7 @@ input:
   - topic:
       id: 1
       args:
-        about: "cats"
+        topic: "cats"
 
 resources:
   - sentence:
@@ -13,7 +13,7 @@ resources:
           params:
         about_topic:
           params:
-            topic:
+            about:
               topic:
                 id: 1
   - sentence:
