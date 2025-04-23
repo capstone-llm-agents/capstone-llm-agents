@@ -37,6 +37,16 @@ class TopicResource(BaseResource):
         super().__init__(topic, alias="topic")
         self.topic = topic
 
+    @staticmethod
+    def get_model_type() -> type[TopicModel]:
+        """
+        Get the type of the model.
+
+        Returns:
+            type: The type of the model.
+        """
+        return TopicResource.TopicModel
+
 
 class SentenceResource(BaseResource):
     """A resource representing a sentence."""
@@ -67,6 +77,16 @@ class SentenceResource(BaseResource):
         """
         super().__init__(sentence, alias="sentence")
         self.sentence = sentence
+
+    @staticmethod
+    def get_model_type() -> type[SentenceModel]:
+        """
+        Get the type of the model.
+
+        Returns:
+            type: The type of the model.
+        """
+        return SentenceResource.SentenceModel
 
 
 class WriteSentenceTask(Task[TopicResource, SentenceResource]):

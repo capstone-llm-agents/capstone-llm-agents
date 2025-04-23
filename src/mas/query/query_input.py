@@ -41,7 +41,11 @@ class MASQueryInput:
                 if value.args is None:
                     raise ValueError(f"Resource model {key} has no arguments.")
 
-                resource = resource_type(**value.args)
+                print(f"Resource model {key} has arguments {value.args}")
+                print(resource_type)
+                print(resource_type.get_model_type())
+
+                resource = resource_type(resource_type.get_model_type()(**value.args))
 
                 # add resource to mapping
                 self.resource_id_mapping[(resource_type, value.id)] = resource

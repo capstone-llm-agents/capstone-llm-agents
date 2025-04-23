@@ -54,7 +54,7 @@ class HornClauseForResourceAssignment(HornClause):
         super().__init__(head, body)
 
         # save input_tuple
-        self.input_tuple = output_resource_tuple
+        self.input_tuple = input_resource_tuple
 
         # save output_tuple
         self.output_tuple = output_resource_tuple

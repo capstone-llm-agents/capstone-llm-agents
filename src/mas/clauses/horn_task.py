@@ -3,6 +3,7 @@
 from mas.base_resource import BaseResource
 from mas.horn_clause import HornClause
 from mas.resource_manager import ResourceManager
+from mas.task import Task
 
 
 class HornClauseForTask(HornClause):
@@ -23,6 +24,7 @@ class HornClauseForTask(HornClause):
         input_resource_type: type[BaseResource],
         output_resource_type: type[BaseResource],
         resource_manager: ResourceManager,
+        task: Task,
     ) -> None:
         """
         Initialise the HornClause with a head and body.
@@ -59,3 +61,6 @@ class HornClauseForTask(HornClause):
 
         # save output_tuple
         self.output_tuple = output_resource_tuple
+
+        # save task
+        self.task = task

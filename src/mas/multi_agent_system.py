@@ -15,6 +15,8 @@ from mas.query.mas_query import MASQuery, ResourceModel, ResourceParamModel
 from mas.query.query_dependencies import MASQueryDependencies, Param
 from mas.query.query_input import MASQueryInput
 from mas.query.query_output import MASQueryOutput
+from mas.query.query_plan import QueryPlan
+from mas.query.query_runner import QueryRunner
 from mas.resource_manager import ResourceManager
 from mas.task import Task
 from mas.task_manager import TaskManager
@@ -47,7 +49,7 @@ class MultiAgentSystem:
 
     def solve_query(
         self, query: MASQuery, descriptor_mapping: dict[str, Task]
-    ) -> BaseResource:
+    ) -> list[BaseResource]:
         """
         Solve a query using the MAS.
 
@@ -60,9 +62,6 @@ class MultiAgentSystem:
 
         # input
         query_input = MASQueryInput(query.input, self.resource_manager)
-
-        print("Input resources:")
-        print(query_input.resource_id_mapping)
 
         # also add to resource manager
         for resource_id_type_pair in query_input.resource_id_mapping:
@@ -79,49 +78,14 @@ class MultiAgentSystem:
                 # get resource
                 self.add_resource_from_resource_model(key, value)
 
-        # check resources
-        print("Resources in resource manager:")
-        print(self.resource_manager.get_resources())
-
         # get resource dependencies
         query_dependencies = MASQueryDependencies(
             query_resources, self.resource_manager
         )
 
-        print("Resource descriptors:")
-        print(query_dependencies.descriptors)
-
-        print("=" * 50)
-
-        for (
-            resource_with_descriptors,
-            descriptors,
-        ) in query_dependencies.descriptors.items():
-
-            for descriptor in descriptors:
-                print(f"Resource: {resource_with_descriptors}")
-                print(f"Descriptor: {descriptor.name}")
-
-                for param_name, param in descriptor.params.items():
-                    print(f"\tParam name: {param_name}")
-                    print(f"\tParam resource type: {param.resource_type}")
-
-        print("=" * 50)
-
-        print("Resource dependencies:")
-        print(query_dependencies.dependencies)
-
         # output
         query_output = MASQueryOutput(query.output, self.resource_manager)
 
-        print("Output resources:")
-        print(query_output.output_resources)
-
-        print("Tasks")
-        for task in self.task_manager.tasks:
-            print(f"\t{task}")
-
-        # compute dependent tasks
         dependent_tasks: list[DependentTask] = []
 
         # tasks per resource
@@ -144,8 +108,6 @@ class MultiAgentSystem:
                     raise ValueError(
                         f"Task {descriptor_param.name} not found in descriptor mapping."
                     )
-
-                print(descriptor_param.params)
 
                 # TODO add support for multiple params, we assume only one param
                 params = list(descriptor_param.params.values())
@@ -183,24 +145,6 @@ class MultiAgentSystem:
 
                 dependent_tasks_per_resource[output_res_tuple].append(dependent_task)
 
-        print("Dependent tasks:")
-        for dependent_task in dependent_tasks:
-            print(
-                f"\t{dependent_task.task.name}: {dependent_task.input_resource_tuple} -> {dependent_task.output_resource_tuple}"
-            )
-        # TODO figure out how to implement non-dependent tasks into the horn kb
-
-        print(len(dependent_tasks))
-
-        print("Dependent tasks per resource:")
-        for (
-            input_res_tuple,
-            dependent_tasks_for_res,
-        ) in dependent_tasks_per_resource.items():
-            # get len
-            num_dependent_tasks = len(dependent_tasks_for_res)
-            print(f"\t{input_res_tuple}: {num_dependent_tasks} dependent tasks")
-
         horn_clauses: list[HornClause] = []
 
         horn_clause: HornClause
@@ -234,8 +178,12 @@ class MultiAgentSystem:
 
         # iterate over tasks
         for task in self.task_manager.tasks.values():
+
+            if task is None:
+                raise ValueError(f"Task {task} not found in task manager.")
+
             horn_clause = HornClauseForTask(
-                task.input_resource, task.output_resource, self.resource_manager
+                task.input_resource, task.output_resource, self.resource_manager, task
             )
             # add to horn clauses
             horn_clauses.append(horn_clause)
@@ -306,14 +254,18 @@ class MultiAgentSystem:
 
         # TODO convert forward chain plans to task plan
         print("Forward chain plans:")
-        for forward_chain_plan in forward_chain_plans:
+
+        # output res
+        output_resources: list[BaseResource] = []
+
+        for forward_chain_plan, output_resource_tuple in zip(
+            forward_chain_plans, query_output.output_resources
+        ):
             print("\tPlan:")
 
             # unfiltered
             for clause in forward_chain_plan:
                 print(f"\t\t{clause}")
-
-            print("\tFiltered:")
 
             # filter out these clauses
             # they are not steps to do just helpers to point the KB to the right resources
@@ -329,10 +281,32 @@ class MultiAgentSystem:
                 if isinstance(clause, class_to_filter)
             ]
 
+            print("\tFiltered:")
+
             for clause in filtered_clauses:
                 print(f"\t\t{clause}")
 
-        return None
+            # create query plan
+            query_plan = QueryPlan(filtered_clauses)
+
+            # query planner runner
+            query_runner = QueryRunner(
+                query_plan,
+                self.resource_manager,
+                query_input.resource_id_mapping,
+                output_resource_tuple,
+            )
+
+            # run the query
+            output_resource_from_plan = query_runner.run()
+
+            output_resources.append(output_resource_from_plan)
+
+        print("Output resources:")
+        for final_output_resource in output_resources:
+            print(f"\t{final_output_resource}")
+
+        return output_resources
 
     def add_agent(self, agent: MASAgent):
         """
