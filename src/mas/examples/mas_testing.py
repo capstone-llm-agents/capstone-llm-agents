@@ -4,9 +4,9 @@ from app import App
 
 from mas.ag2.ag2_agent import AG2MASAgent
 from mas.ag2.ag2_task import AG2Task
-from mas.base_resource import BaseResource
 from mas.multi_agent_system import MultiAgentSystem
 from mas.query.mas_query import MASQuery
+from mas.resource_alias import ResourceAlias
 from mas.resources.empty import EmptyResource
 from mas.task import Task
 from mas.tasks.write_sentence import SentenceResource, TopicResource
@@ -22,20 +22,9 @@ def test_basic_mas(app: App):
 
     mas_query = MASQuery.from_yaml(yaml_file)
 
-    print(
-        mas_query.model_dump_json(indent=4, exclude_unset=True, exclude_defaults=True)
-    )
+    alias = ResourceAlias()
 
-    # TODO create a class that can contains this mapping and allows you add to it
-    # TODO includes aliases for mapping also
-    # example resources mapping
-    example_resource_mapping: dict[str, type[BaseResource]] = {
-        "empty": EmptyResource,
-        "sentence": SentenceResource,
-        "topic": TopicResource,
-    }
-
-    mas.add_resource_types_from_dict(example_resource_mapping)
+    mas.add_resource_types_from_dict(alias.resource_aliases)
 
     agent = AG2MASAgent(
         name="AssistantAgent",

@@ -25,7 +25,7 @@ class ParamTemplateResource(BaseResource):
         Args:
             template (ParamTemplateModel): The template string and parameters to be represented by the resource.
         """
-        super().__init__(template, alias="param_template")
+        super().__init__(template)
         self.template = template
 
     @staticmethod

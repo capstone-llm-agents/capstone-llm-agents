@@ -22,7 +22,7 @@ class ParamsResource(BaseResource):
         Args:
             params (dict): The parameters to be represented by the resource.
         """
-        super().__init__(params, alias="params")
+        super().__init__(params)
         self.params = params
 
     @staticmethod

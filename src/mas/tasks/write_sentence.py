@@ -34,7 +34,7 @@ class TopicResource(BaseResource):
         Args:
             topic (str): The topic to be represented by the resource.
         """
-        super().__init__(topic, alias="topic")
+        super().__init__(topic)
         self.topic = topic
 
     @staticmethod
@@ -75,7 +75,7 @@ class SentenceResource(BaseResource):
         Args:
             sentence (str): The sentence to be represented by the resource.
         """
-        super().__init__(sentence, alias="sentence")
+        super().__init__(sentence)
         self.sentence = sentence
 
     @staticmethod
