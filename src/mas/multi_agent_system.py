@@ -221,10 +221,6 @@ class MultiAgentSystem:
         for clause in horn_clauses:
             horn_kb.add_clause(clause)
 
-        print("Horn clauses:")
-        for clause in horn_clauses:
-            print(f"\t{clause}")
-
         forward_chain_plans: list[list[HornClause]] = []
 
         # forward chain over each output resource
@@ -242,7 +238,6 @@ class MultiAgentSystem:
 
             found, forward_chain_plan = horn_kb.forward_chain(resource_str)
 
-            # TODO do backward relevance tracing and remove clauses that are not relevant
             # needs a provenance map / dependency tree for this but should be possible
 
             if not found:
@@ -252,21 +247,12 @@ class MultiAgentSystem:
 
             forward_chain_plans.append(forward_chain_plan)
 
-        # TODO convert forward chain plans to task plan
-        print("Forward chain plans:")
-
         # output res
         output_resources: list[BaseResource] = []
 
         for forward_chain_plan, output_resource_tuple in zip(
             forward_chain_plans, query_output.output_resources
         ):
-            print("\tPlan:")
-
-            # unfiltered
-            for clause in forward_chain_plan:
-                print(f"\t\t{clause}")
-
             # filter out these clauses
             # they are not steps to do just helpers to point the KB to the right resources
             class_to_filter = (
@@ -280,11 +266,6 @@ class MultiAgentSystem:
                 for clause in forward_chain_plan
                 if isinstance(clause, class_to_filter)
             ]
-
-            print("\tFiltered:")
-
-            for clause in filtered_clauses:
-                print(f"\t\t{clause}")
 
             # create query plan
             query_plan = QueryPlan(filtered_clauses)
@@ -301,10 +282,6 @@ class MultiAgentSystem:
             output_resource_from_plan = query_runner.run()
 
             output_resources.append(output_resource_from_plan)
-
-        print("Output resources:")
-        for final_output_resource in output_resources:
-            print(f"\t{final_output_resource}")
 
         return output_resources
 

@@ -73,7 +73,6 @@ class QueryRunner:
                 input_resource = self.resource_values[input_resource_tuple]
 
                 # run task
-                print("Running task with input resource", input_resource)
                 output_resource = clause.dependent_task.task.do(input_resource)
 
                 # set output resource
@@ -117,8 +116,6 @@ class QueryRunner:
 
                 # get input resource
                 input_resource = self.resource_values[input_resource_tuple]
-
-                print("Running task with input resource", input_resource)
 
                 # run task
                 output_resource = clause.task.do(input_resource)

@@ -99,5 +99,6 @@ def test_basic_mas(app: App):
     output_resources = mas.solve_query(mas_query, descriptor_mapping)
 
     # print the output resources
+    print("Output:")
     for output_resource in output_resources:
         print(output_resource.model.model_dump_json(indent=4, exclude_unset=True))
