@@ -53,7 +53,7 @@ class FindRecipeTask(Task[UserRequestResource, RecipeResource]):
 
         '''append optional attributes'''
         if request.flavour_profile:
-            recipe_name += f"{request.taste} "
+            recipe_name += f"{request.flavour_profile} "
 
         if request.dietary_requirement:
             recipe_name += f"{request.dietary_requirement} "
