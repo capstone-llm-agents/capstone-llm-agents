@@ -1,6 +1,5 @@
 """Recipe"""
-
-from app import App
+#from app import App
 
 from mas.ag2.ag2_agent import AG2MASAgent
 from mas.ag2.ag2_task import AG2Task
@@ -13,7 +12,7 @@ from mas.recipe_tasks.find_recipe import UserRequestResource, RecipeResource
 from utils.string_template import generate_str_using_template
 
 
-def recipe_agent_mas(app: App):
+def recipe_agent_mas():
     '''put description here ig'''
 
     alias = ResourceAlias()
@@ -31,7 +30,15 @@ def recipe_agent_mas(app: App):
     agent = AG2MASAgent(
         name="RecipeAgent",
         description="You are a recipe generation assistant.",
-        llm_config=app.config_manager.get_llm_config(use_tools=False),
+        #llm_config=app.config_manager.get_llm_config(use_tools=False),
+        llm_config={
+            "models": [
+                {"api_type": "ollama", "model": "gemma3"},
+                {"api_type": "ollama", "model": "llama3.2"}
+            ],
+            "default_model": 0,
+            "default_model_with_tools": 1
+        },  # Direct config for models
     )
 
     find_recipe_task = AG2Task(
