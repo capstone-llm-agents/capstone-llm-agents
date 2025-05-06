@@ -12,8 +12,7 @@ from mas.task import Task
 from mas.tasks.write_sentence import SentenceResource, TopicResource
 from utils.string_template import generate_str_using_template
 
-
-def test_basic_mas(app: App):
+def test_basic_mas():
     """Test basic MAS."""
 
     alias = ResourceAlias()
@@ -32,7 +31,15 @@ def test_basic_mas(app: App):
     agent = AG2MASAgent(
         name="AssistantAgent",
         description="You are an assistant.",
-        llm_config=app.config_manager.get_llm_config(use_tools=False),
+        #llm_config=app.config_manager.get_llm_config(use_tools=False),
+        llm_config={
+            "models": [
+                {"api_type": "ollama", "model": "gemma3"},
+                {"api_type": "ollama", "model": "llama3.2"}
+            ],
+            "default_model": 0,
+            "default_model_with_tools": 1
+        },  # Direct config for models
     )
 
     write_sentence_task = AG2Task(
