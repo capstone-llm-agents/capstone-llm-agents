@@ -29,6 +29,12 @@ class ChatHistory:
         """Clear the chat history."""
         self.messages = []
 
+    def get_last_message(self) -> ChatMessage | None:
+        """Get the last message in the chat history."""
+        if self.messages:
+            return self.messages[-1]
+        return None
+
 
 class Query(ChatMessage):
     """A query in a conversation."""

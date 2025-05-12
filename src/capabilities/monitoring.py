@@ -34,3 +34,7 @@ class Monitoring(Capability):
     def __init__(self):
         super().__init__("monitoring")
         self.logger = Logger()
+
+    def log(self, content: str):
+        """Log the content with a timestamp."""
+        self.logger.log(content)
