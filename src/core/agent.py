@@ -1,18 +1,27 @@
 from core.capabiliity_manager import AgentCapabilities
 from core.chat import Query, QueryResponse
 from core.entity import Entity
+from core.model import UnderlyingModel
 
 
 class Agent(Entity):
     """A class representing an agent with various capabilities."""
 
     def __init__(
-        self, name: str, description: str, role: str, capabilities: AgentCapabilities
+        self,
+        name: str,
+        description: str,
+        role: str,
+        capabilities: AgentCapabilities,
+        underlying_model: UnderlyingModel,
     ):
         super().__init__(name, description, role)
 
         # capabilities
         self.capabilties = capabilities
+
+        # underlying model
+        self.underlying_model = underlying_model
 
     def handle_query(self, query: Query) -> QueryResponse:
         """Handle a query by executing it and returning the result."""
