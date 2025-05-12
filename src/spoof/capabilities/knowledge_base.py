@@ -36,15 +36,21 @@ class KnowledgeBaseSpoof(KnowledgeBase):
 
         # for simplicity, we will just split the text into chunks of a fixed size.
         # in a real implementation, you might want to use a more sophisticated method.
-        return [
-            Knowledge(text[i : i + self.chunk_size])
-            for i in range(0, len(text), self.chunk_size)
-        ]
+
+        if len(text) < self.chunk_size:
+            return [Knowledge(text)]
+
+        chunks = []
+        for i in range(0, len(text), self.chunk_size):
+            start = i
+            end = i + self.chunk_size
+            chunk = text[start:end]
+            chunks.append(Knowledge(chunk))
+
+        return chunks
 
     def retrieve_related_knowledge(self, query: str) -> list[Knowledge]:
         """Retrieve knowledge related to a query."""
 
         # for simplicity, we will just return the first 5 knowledge items.
-        max_results = min(5, len(self.knowledge_base))
-
-        return self.knowledge_base[:max_results]
+        return self.knowledge_base[:5]

@@ -1,4 +1,4 @@
-from capabilities.planning import Plan, PlanStep, Planning
+from capabilities.planning import Plan, Planning
 from capabilities.query_executor import QueryExectuor
 from spoof.capabilities.query_executor import QueryExectuorSpoof
 
@@ -8,14 +8,8 @@ class PlanningSpoof(Planning):
 
     def create_plan(self, query: str) -> Plan:
         """Create a plan based on the query."""
-
-        # create a simple plan with a single step
-        step = PlanStep(
-            name="answer_query", description="This step just runs the query."
-        )
-
         # create a plan with the step
-        plan = Plan(steps=[step])
+        plan = Plan(steps=[])
         return plan
 
     def build_executor(self, query: str, plan: Plan) -> QueryExectuor:
@@ -26,7 +20,7 @@ class PlanningSpoof(Planning):
 
     def query_needs_planning(self, query: str) -> bool:
         """Check if the query needs planning."""
-        return True
+        return False
 
     def plan_is_executable(self, plan: Plan) -> bool:
         """Check if the plan is executable."""

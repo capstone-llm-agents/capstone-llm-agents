@@ -18,8 +18,7 @@ class MemoryManagerSpoof(MemoryManager):
     def load_memories_relevant_to_query(self, query: str) -> list[Memory]:
         """Load memories relevant to the query."""
         # for now assume that first 3 memories are relevant
-        max_results = min(3, len(self.long_term_memories))
-        return self.long_term_memories[:max_results]
+        return self.long_term_memories[:3]
 
     def is_suitable_for_long_term(self, memory: Memory) -> bool:
         """Decide if memory is suited for long term or short term storage.
