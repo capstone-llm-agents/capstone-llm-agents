@@ -40,7 +40,7 @@ class KnowledgeBaseSpoof(KnowledgeBase):
         if len(text) < self.chunk_size:
             return [Knowledge(text)]
 
-        chunks = []
+        chunks: list[Knowledge] = []
         for i in range(0, len(text), self.chunk_size):
             start = i
             end = i + self.chunk_size
