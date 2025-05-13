@@ -20,6 +20,7 @@ class AG2Model(UnderlyingModel):
                 "role": "user",
                 "content": prompt,
             },
+            max_turns=1,
         )
 
         return response.summary

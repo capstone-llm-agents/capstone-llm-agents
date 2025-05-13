@@ -40,7 +40,6 @@ class UserInterface:
             elif choice == "5":
                 self.list_documents()
             elif choice == "6":
-                print("Goodbye!")
                 break
             else:
                 print("Invalid choice. Try again.")
