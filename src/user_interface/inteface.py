@@ -13,7 +13,7 @@ class UserInterface:
     def run(self):
         """Run the CLI interface."""
 
-        self.clear_screen()
+        # self.clear_screen()
 
         print("Welcome to the MAS CLI!")
         while True:
@@ -86,7 +86,7 @@ class UserInterface:
 
         extension = path.split(".")[-1]
 
-        document = Document(path=path, extensiion=extension)
+        document = Document(path=path, extension=extension)
 
         self.api.add_document(document, agent)
         print("Document added successfully.")

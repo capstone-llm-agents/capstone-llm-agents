@@ -54,23 +54,6 @@ class CapabilityProxy:
         """Get all capabilities."""
         return list(self.capabilities.values())
 
-    def get_capabilities_not_added(self) -> list[Capability]:
-        """Get all capabilities that are not added to the proxy."""
-
-        # get capabilities from proxy
-        proxy_capabilities = self.get_capabilities()
-
-        # get capabilities from spoofed capabilities
-        spoofed_capabilities = self.spoofed_capabilities.get_capabilities()
-
-        # as sets
-        proxy_capabilities_set = set(proxy_capabilities)
-        spoofed_capabilities_set = set(spoofed_capabilities)
-
-        # set difference
-        capabilities_not_added = spoofed_capabilities_set - proxy_capabilities_set
-        return list(capabilities_not_added)
-
     def build_capabilities_manager(self) -> "AgentCapabilities":
         """Build the capabilities manager."""
 
@@ -78,12 +61,16 @@ class CapabilityProxy:
         proxy_capabilities = self.get_capabilities()
 
         # get capabilities from spoofed capabilities to fill the gaps
-        spoofed_capabilities = self.get_capabilities_not_added()
+        spoofed_capabilities = self.spoofed_capabilities.get_capabilities()
 
         capabilties_dict = {}
 
         # add capabilities to the capabilities dict
-        for capability in proxy_capabilities + spoofed_capabilities:
+        for capability in spoofed_capabilities:
+            capabilties_dict[capability.name] = capability
+
+        # override with the capabilities from the proxy
+        for capability in proxy_capabilities:
             capabilties_dict[capability.name] = capability
 
         def convert_dict_to_capabilities(
