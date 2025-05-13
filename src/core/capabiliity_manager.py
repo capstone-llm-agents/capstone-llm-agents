@@ -19,7 +19,7 @@ class CapabilityMap(TypedDict):
     knowledge_base: KnowledgeBase
     memory: MemoryManager
     planning: Planning
-    tool_manager: ToolsManager
+    tools_manager: ToolsManager
     response_formatter: ResponseFormatter
     communication: CommunicationInterface
     learning: Learning
@@ -100,7 +100,7 @@ class AgentCapabilities:
             "knowledge_base": self.knowledge_base,
             "memory": self.memory,
             "planning": self.planning,
-            "tool_manager": self.tool_manager,
+            "tools_manager": self.tool_manager,
             "response_formatter": self.response_formatter,
             "communication": self.communication,
             "learning": self.learning,
@@ -139,7 +139,7 @@ class AgentCapabilities:
             knowledge_base=capabilities["knowledge_base"],
             memory=capabilities["memory"],
             planning=capabilities["planning"],
-            tool_manager=capabilities["tool_manager"],
+            tool_manager=capabilities["tools_manager"],
             response_formatter=capabilities["response_formatter"],
             communication=capabilities["communication"],
             learning=capabilities["learning"],

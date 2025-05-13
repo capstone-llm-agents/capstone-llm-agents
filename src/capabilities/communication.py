@@ -6,4 +6,4 @@ class CommunicationInterface(Capability):
 
     # TODO: supported by Sprint 3
     def __init__(self):
-        super().__init__("communication_interface")
+        super().__init__("communication")

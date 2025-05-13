@@ -1,6 +1,18 @@
 from capabilities.knowledge_base import Document, Knowledge, KnowledgeBase
 
 
+class DocumentSpoof(Document):
+    """A spoof for the Document class."""
+
+    def __init__(self, path: str, extension: str):
+        super().__init__(path, extension)
+        self.text = "Hello World! This is a test document."
+
+    def to_text(self) -> str:
+        """Convert the document to text."""
+        return self.text
+
+
 class KnowledgeBaseSpoof(KnowledgeBase):
     """A spoof for the KnowledgeBase capability."""
 
@@ -25,7 +37,10 @@ class KnowledgeBaseSpoof(KnowledgeBase):
         if not self.is_supported_extension(document.extension):
             raise ValueError(f"Unsupported file extension: {document.extension}")
 
-        text = document.to_text()
+        # override with a spoofed document
+        spoofed_document = DocumentSpoof(document.path, document.extension)
+
+        text = spoofed_document.to_text()
         knowledge = self.chunk_text_to_knowledge(text)
 
         for k in knowledge:
