@@ -1,5 +1,5 @@
 from core.capabiliity_manager import AgentCapabilities
-from core.query import Query, QueryResponse
+from core.chat import Query, QueryResponse
 from core.entity import Entity
 from core.model import UnderlyingModel
 
@@ -26,9 +26,18 @@ class Agent(Entity):
     def handle_query(self, query: Query) -> QueryResponse:
         """Handle a query by executing it and returning the result."""
 
+        # build prompt from the query
+        original_query = query.content
+
         # relevant memories
         relevant_memories = self.capabilties.memory.load_memories_relevant_to_query(
             query.content
+        )
+
+        # TODO inject into system prompt rather than user prompt
+
+        memory_str = "Memories:\n" + "\n".join(
+            [f" - {memory}" for memory in relevant_memories]
         )
 
         # relevant knowledge
@@ -36,13 +45,26 @@ class Agent(Entity):
             query.content
         )
 
-        new_query = Query(
-            query.sender,
-            query.recipient,
-            query.content,
-            relevant_memories,
-            relevant_knowledge,
+        knowledge_str = "\n\nKnowledge:\n" + "\n".join(
+            [f" - {knowledge.knowledge}" for knowledge in relevant_knowledge]
         )
+
+        # if no knowledge or memory don't add them to the prompt
+
+        prompt = ""
+        if len(relevant_memories) > 0:
+            prompt += memory_str
+        if len(relevant_knowledge) > 0:
+            prompt += knowledge_str
+
+        # add the query to the prompt
+        if len(relevant_memories) > 0 or len(relevant_knowledge) > 0:
+            prompt += "\n\nAnswer the following query:\n\n"
+
+        # prompt inject
+        prompt += original_query
+
+        new_query = Query(query.sender, query.recipient, prompt)
 
         # check if the query needs planning
         result = ""

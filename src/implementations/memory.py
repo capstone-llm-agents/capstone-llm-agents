@@ -14,8 +14,7 @@ class Memory(MemoryManager):
         self.memory = self.client.get_or_create_collection(name=self.agent)
 
     def load_memories_relevant_to_query(self, query: str, top_k: int = 3) -> list[Memory]:
-       
-        print(query)
+        
         query_embedding = self.model.encode(query)
         results = self.memory.query(
            query_embeddings=[query_embedding],
@@ -33,6 +32,8 @@ class Memory(MemoryManager):
         raise True
 
     def store_memory_long_term(self, memory: Memory) -> None:
+       
+        print(text)
         embedding = self.model.encode(text)
         memory = self.client.get_collection(name=self.agent)
         memory.add(
@@ -47,10 +48,10 @@ class Memory(MemoryManager):
 
     def update_memory_from_chat_history(self, chat_history: ChatHistory, metadata: dict = {'time':'00:00'}) -> None:
         memory = self.client.get_collection(name=self.agent)
-        messages = chat_history.get_last_n_messages(1)
+        messages = chat_history.get_last_n_messages(2)
         message = messages[0]
         message = message.content
-        
+       
         if len(messages) == 0:
             return
         embedding = self.model.encode(message)
@@ -60,8 +61,7 @@ class Memory(MemoryManager):
             ids=[str(self.get_id())],
             metadatas=[metadata]
         )
-        
-        message = messages[0]
+        message = messages[1]
         message = message.content
         embedding = self.model.encode(message)
         memory.add(
@@ -70,9 +70,10 @@ class Memory(MemoryManager):
             ids=[str(self.get_id())],
             metadatas=[metadata]
         )
-       
 
     def update_memory_from_last_message(self, last_message: ChatMessage) -> None:
+        print('This is text')
+        print(text)
         embedding = self.model.encode(text)
         memory = self.client.get_collection(name=self.agent)
         memory.add(
