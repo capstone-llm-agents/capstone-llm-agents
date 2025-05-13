@@ -7,7 +7,9 @@ import fitz, faiss, numpy as np
 class FAISSKnowledgeBase(KnowledgeBase):
     """A simple knowledge base to store and retrieve information that the agent can use."""
 
-    def __init__(self, supported_extensions: list[str]):
+    def __init__(
+        self, supported_extensions: list[str], max_tokens: int = 100, top_k: int = 5
+    ):
         super().__init__("knowledge_base")
         self.supported_extensions = supported_extensions
         # Initialize embedding model and placeholders
@@ -18,7 +20,8 @@ class FAISSKnowledgeBase(KnowledgeBase):
         self.text_chunks = []  # list of all text chunks
         self.embeddings = None  # will hold numpy array of embeddings
         self.index = None  # FAISS index
-        self.max_tokens = 100  # max tokens per chunk
+        self.max_tokens = max_tokens  # max tokens per chunk
+        self.top_k = top_k  # number of top k results to retrieve
 
     def is_supported_extension(self, extension: str) -> bool:
         """Check if the extension is supported."""
@@ -65,7 +68,7 @@ class FAISSKnowledgeBase(KnowledgeBase):
         self.index.add(np.array(self.embeddings))
         print(f"Indexed {len(all_chunks)} text chunks.")
 
-    def retrieve_related_knowledge(self, query: str, top_k=3) -> list[Knowledge]:
+    def retrieve_related_knowledge(self, query: str) -> list[Knowledge]:
         """
         Retrieves top_k chunks most similar to the query.
         Embeds query and searches FAISS index:contentReference[oaicite:20]{index=20}.
@@ -75,7 +78,7 @@ class FAISSKnowledgeBase(KnowledgeBase):
         # Embed the query text
         query_emb = self.model.encode([query])
         # Search the index
-        D, I = self.index.search(np.array(query_emb), top_k)
+        D, I = self.index.search(np.array(query_emb), self.top_k)
         results = []
         for idx in I[0]:
             results.append(Knowledge(self.text_chunks[idx]))
