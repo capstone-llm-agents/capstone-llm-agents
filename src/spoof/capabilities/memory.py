@@ -57,10 +57,8 @@ class MemoryManagerSpoof(MemoryManager):
         if len(messages) == 0:
             return
 
-        # hack to get second to last message
-        message = messages[0]
-
-        self.update_memory_from_last_message(message)
+        for message in messages:
+            self.update_memory_from_last_message(message)
 
     def update_memory_from_last_message(self, last_message: ChatMessage) -> None:
         """Update memory from the last message. Decides if it is suited for long term or short term storage."""
