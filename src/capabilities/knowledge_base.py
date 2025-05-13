@@ -14,9 +14,9 @@ class Knowledge:
 class Document:
     """A document to be ingested into the knowledge base that could be a PDF, Word document, etc. provided by the user."""
 
-    def __init__(self, path: str, extensiion: str):
+    def __init__(self, path: str, extension: str):
         self.path = path
-        self.extension = extensiion
+        self.extension = extension
 
     def to_text(self) -> str:
         """Convert the document to text."""
