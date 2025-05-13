@@ -1,11 +1,13 @@
 from core.capability import Capability
+from core.model import UnderlyingModel
 
 
 class QueryExectuor(Capability):
     """Can execute a query using a model."""
 
-    def __init__(self):
+    def __init__(self, underlying_model: UnderlyingModel):
         super().__init__("query_executor")
+        self.underlying_model = underlying_model
 
     def answer_query(self, query: str) -> str:
         """Answer a query."""

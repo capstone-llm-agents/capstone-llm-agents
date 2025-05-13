@@ -1,5 +1,6 @@
 from capabilities.query_executor import QueryExectuor
 from core.capability import Capability
+from core.model import UnderlyingModel
 
 
 class PlanStep:
@@ -24,8 +25,9 @@ class Plan:
 class Planning(Capability):
     """A class to represent the planning capabilities of the agent."""
 
-    def __init__(self):
+    def __init__(self, underlying_model: UnderlyingModel):
         super().__init__("planning")
+        self.underlying_model = underlying_model
 
     def create_plan(self, query: str) -> Plan:
         """Create a plan based on the query."""

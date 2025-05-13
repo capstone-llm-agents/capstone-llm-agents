@@ -1,46 +1,81 @@
 # NOTE: For now just do what you need to make it work but I will fix it later
-import argparse
-
-from capabilities.knowledge_base import Document
-from implementations.faiss_kb import FAISSKnowledgeBase
-
-
-class AG2Agent:
-    def __init__(self, knowledge_base):
-        self.kb = knowledge_base
-
-    def ask(self, query):
-        # Retrieve relevant text snippets from the KB
-        docs = self.kb.retrieve_related_knowledge(query, top_k=3)
-        if not docs:
-            return "No knowledge available."
-        # In a real RAG system, here we'd call an LLM with these docs.
-        # For now, just join the snippets to simulate an answer.
-
-        for doc in docs:
-            print(doc.knowledge + "\n")
+from autogen import ConversableAgent
+from app import App
+from core.agent import Agent
+from core.api import MASAPI
+from core.capabiliity_manager import AgentCapabilities
+from core.capabiliity_proxy import CapabilityProxy
+from core.capability import Capability
+from core.entity import HumanUser
+from core.mas import MAS
+from models.ag2_model import AG2Model
+from spoof.spoofed_capabilities import SpoofedCapabilities
+from spoof.spoofed_comm_protocol import CommunicationProtocolSpoof
+from user_interface.inteface import UserInterface
 
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="RAG Knowledge Base Agent")
-    parser.add_argument("doc_path", help="Path to a .txt or .pdf file to ingest")
-    args = parser.parse_args()
+def generate_capabilities_for_ag2_agent(
+    agent: ConversableAgent, agent_capabilities: list[Capability]
+) -> AgentCapabilities:
+    """Generate capabilities for the AG2 agent."""
+    # agent capabiltiies using proxy
+    supported_extensions: list[str] = []
 
-    # Instantiate knowledge base and agent
-    kb = FAISSKnowledgeBase(["txt", "pdf"])
-    document = Document(args.doc_path, args.doc_path.split(".")[-1])
-    agent = AG2Agent(kb)
+    ag2_model = AG2Model(agent)
 
-    # Ingest the document
-    print(f"Ingesting document '{document.path}'...")
-    kb.ingest_document(document)
+    spoofed_capabilities = SpoofedCapabilities(supported_extensions, ag2_model)
 
-    # Loop to accept queries
-    print("Ready for questions. Type your query and press Enter.")
-    while True:
-        query = input("\nYour question: ")
-        if not query.strip():
-            print("Exiting.")
-            break
-        answer = agent.ask(query)
-        print(f"Agent response:\n{answer}")
+    proxy = CapabilityProxy(spoofed_capabilities)
+
+    for capability in agent_capabilities:
+        proxy.add_capability(capability)
+
+    return proxy.build_capabilities_manager()
+
+
+def generate_agent_from_ag2_agent(ag2_agent: ConversableAgent) -> Agent:
+    """Generate an agent from the AG2 agent."""
+    # agent capabiltiies using proxy
+    supported_extensions: list[str] = ["txt"]
+
+    ag2_model = AG2Model(ag2_agent)
+
+    spoofed_capabilities = SpoofedCapabilities(supported_extensions, ag2_model)
+
+    proxy = CapabilityProxy(spoofed_capabilities)
+
+    capabilities_manager = proxy.build_capabilities_manager()
+
+    agent = Agent(
+        name=ag2_agent.name,
+        description=ag2_agent.description,
+        role="agent",
+        capabilities=capabilities_manager,
+        underlying_model=ag2_model,
+    )
+
+    return agent
+
+
+user = HumanUser("User", "The human user of the MAS")
+communication_protocol = CommunicationProtocolSpoof(user)
+
+# NOTE: Here you can add the capabilities that do not need to be spoofed
+# (completed capabilities ready to use)
+capabilities: list[Capability] = []
+
+mas = MAS(communication_protocol, user)
+api = MASAPI(mas)
+app = App(api, UserInterface(api))
+
+assistant_agent = generate_agent_from_ag2_agent(
+    ConversableAgent(
+        name="Assistant",
+        system_message="You are a helpful assistant.",
+        llm_config={"api_type": "ollama", "model": "gemma3"},
+    )
+)
+
+mas.add_agent(assistant_agent)
+
+app.run()
