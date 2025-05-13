@@ -1,6 +1,7 @@
 from autogen import ConversableAgent
 from app import App
 from core.capability import Capability
+from implementations.custom_memory import CustomMemory
 from implementations.faiss_kb import FAISSKnowledgeBase
 
 
@@ -12,6 +13,7 @@ app = App(default_capabilities)
 
 # add kb
 default_capabilities.append(FAISSKnowledgeBase(["pdf", "txt"], 1000, 3))
+# default_capabilities.append(CustomMemory())
 
 # Agents
 # ======
