@@ -28,30 +28,33 @@ class MemoryManager(Capability):
     def store_memory_long_term(self, memory: Memory) -> None:
         """Store memory long term."""
         raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def store_memory_short_term(self, memory: Memory) -> None:
-        """Store memory short term."""
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def load_all_long_term_memories(self) -> list[Memory]:
-        """Load all long term memories."""
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def load_all_short_term_memories(self) -> list[Memory]:
-        """Load all short term memories."""
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def clear_short_term_memory(self) -> None:
-        """Clear short term memory."""
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
+        
     def update_memory_from_chat_history(self, chat_history: ChatHistory) -> None:
-        """Update memory from chat history."""
+      
         raise NotImplementedError("This method should be implemented by subclasses.")
 
     def update_memory_from_last_message(self, last_message: ChatMessage) -> None:
-        """Update memory from the last message. Decides if it is suited for long term or short term storage."""
+       
 
         # NOTE: It should decide which memory to use based on the content of the last message.
 
         raise NotImplementedError("This method should be implemented by subclasses.")
+"""
+    def store_memory_short_term(self, memory: Memory) -> None:
+        
+        raise NotImplementedError("This method should be implemented by subclasses.")
+
+    def load_all_long_term_memories(self) -> list[Memory]:
+       
+        raise NotImplementedError("This method should be implemented by subclasses.")
+
+    def load_all_short_term_memories(self) -> list[Memory]:
+       
+        raise NotImplementedError("This method should be implemented by subclasses.")
+
+    def clear_short_term_memory(self) -> None:
+     
+        raise NotImplementedError("This method should be implemented by subclasses.")
+
+   
+"""
