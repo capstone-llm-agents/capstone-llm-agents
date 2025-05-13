@@ -1,5 +1,5 @@
 from capabilities.query_executor import QueryExectuor
-from core.chat import Query
+from core.query import Query
 
 
 class QueryExectuorSpoof(QueryExectuor):

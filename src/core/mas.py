@@ -1,6 +1,7 @@
 from enum import Enum
 from core.agent import Agent
-from core.chat import ChatHistory, ChatMessage, Query
+from core.chat import ChatHistory, ChatMessage
+from core.query import Query
 from core.entity import HumanUser
 from core.communication_protocol import CommunicationProtocol
 

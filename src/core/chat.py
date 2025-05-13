@@ -42,16 +42,3 @@ class ChatHistory:
 
         count = min(n, len(self.messages))
         return self.messages[-count:]
-
-
-class Query(ChatMessage):
-    """A query in a conversation."""
-
-    def __init__(self, sender: Entity, recipient: Entity, content: str):
-        super().__init__(recipient, content)
-        self.sender = sender
-        self.recipient = recipient
-
-
-class QueryResponse(ChatMessage):
-    """A response to a query in a conversation."""

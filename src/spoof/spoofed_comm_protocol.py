@@ -1,7 +1,8 @@
 import random
 
 from core.agent import Agent
-from core.chat import ChatHistory, Query
+from core.chat import ChatHistory
+from core.query import Query
 from core.communication_protocol import CommunicationProtocol
 from core.entity import Entity
 
