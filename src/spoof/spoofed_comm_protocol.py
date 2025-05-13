@@ -35,13 +35,16 @@ class CommunicationProtocolSpoof(CommunicationProtocol):
         # add user to entities
         entities.add(self.user)
 
+        # remove self
+        entities.discard(last_message.who)
+
         entity_list = list(entities)
 
         # pick random entity
         entity = random.choice(entity_list)
 
         # create a query from the last message
-        return Query(entity, f"Respond to the last message: '{last_message.content}'")
+        return Query(entity, f"{last_message.content}")
 
     def continue_conversation_query(self) -> Query:
         """Continue the conversation with a query."""

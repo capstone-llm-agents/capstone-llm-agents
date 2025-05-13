@@ -27,6 +27,9 @@ class KnowledgeBaseSpoof(KnowledgeBase):
     def add_knowledge(self, knowledge: Knowledge):
         """Add knowledge to the knowledge base."""
         self.knowledge_base.append(knowledge)
+        print(f"Knowledge added: {knowledge.knowledge}")
+        for k in self.knowledge_base:
+            print(f" - {k.knowledge}")
 
     def is_supported_extension(self, extension: str) -> bool:
         """Check if the extension is supported."""

@@ -6,6 +6,9 @@ class Entity:
         self.description = description
         self.role = role
 
+    def __str__(self):
+        return f"{self.name}"
+
 
 class HumanUser(Entity):
     """A human user in a conversation."""

@@ -34,27 +34,35 @@ class Agent(Entity):
             query.content
         )
 
-        memory_str = "\n".join([f" - {memory.content}" for memory in relevant_memories])
+        # TODO inject into system prompt rather than user prompt
+
+        memory_str = "Memories:\n" + "\n".join(
+            [f" - {memory.content}" for memory in relevant_memories]
+        )
 
         # relevant knowledge
         relevant_knowledge = self.capabilties.knowledge_base.retrieve_related_knowledge(
             query.content
         )
 
-        knowledge_str = "\n".join(
+        knowledge_str = "Knowledge:\n" + "\n".join(
             [f" - {knowledge.knowledge}" for knowledge in relevant_knowledge]
         )
 
+        # if no knowledge or memory don't add them to the prompt
+
+        prompt = ""
+        if len(relevant_memories) > 0:
+            prompt += memory_str
+        if len(relevant_knowledge) > 0:
+            prompt += knowledge_str
+
+        # add the query to the prompt
+        if len(relevant_memories) > 0 or len(relevant_knowledge) > 0:
+            prompt += "\nAnswer the following query:\n\n"
+
         # prompt inject
-        prompt = f"""
-        Memories:
-        {memory_str}
-        Knowledge:
-        {knowledge_str}
-        Query:
-        {original_query}
-        Answer:
-        """
+        prompt += original_query
 
         new_query = Query(query.who, prompt)
 

@@ -72,7 +72,7 @@ class UserInterface:
 
         print("Chat History:")
         for entry in history.messages:
-            print(f"{entry.who}: {entry.content}")
+            print(f" - {entry.who}: {entry.content}")
 
     def add_document(self):
         """Add a document to an agent."""
