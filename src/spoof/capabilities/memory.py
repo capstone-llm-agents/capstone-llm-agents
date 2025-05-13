@@ -18,7 +18,7 @@ class MemoryManagerSpoof(MemoryManager):
     def load_memories_relevant_to_query(self, query: str) -> list[Memory]:
         """Load memories relevant to the query."""
         # for now assume that first 3 memories are relevant
-        return self.long_term_memories[:3]
+        return self.long_term_memories[:3] + self.short_term_memories[:3]
 
     def is_suitable_for_long_term(self, memory: Memory) -> bool:
         """Decide if memory is suited for long term or short term storage.
@@ -51,13 +51,15 @@ class MemoryManagerSpoof(MemoryManager):
     def update_memory_from_chat_history(self, chat_history: ChatHistory) -> None:
         """Update memory from chat history."""
 
-        # take last message
-        last_message = chat_history.get_last_message()
+        # get last two messages if possible
+        messages = chat_history.get_last_n_messages(2)
 
-        if last_message is None:
+        if len(messages) == 0:
             return
 
-        self.update_memory_from_last_message(last_message)
+        # else update memory for each message
+        for message in messages:
+            self.update_memory_from_last_message(message)
 
     def update_memory_from_last_message(self, last_message: ChatMessage) -> None:
         """Update memory from the last message. Decides if it is suited for long term or short term storage."""

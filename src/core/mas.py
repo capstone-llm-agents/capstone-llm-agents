@@ -123,6 +123,9 @@ class MAS:
         # add the response to the chat history
         self.chat_history.add_message(response)
 
+        # update the agent's memory
+        agent.capabilties.memory.update_memory_from_chat_history(self.chat_history)
+
         # otherwise we can continue
         return self.continue_run()
 

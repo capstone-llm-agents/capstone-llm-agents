@@ -45,7 +45,7 @@ class Agent(Entity):
             query.content
         )
 
-        knowledge_str = "Knowledge:\n" + "\n".join(
+        knowledge_str = "\n\nKnowledge:\n" + "\n".join(
             [f" - {knowledge.knowledge}" for knowledge in relevant_knowledge]
         )
 
@@ -59,7 +59,7 @@ class Agent(Entity):
 
         # add the query to the prompt
         if len(relevant_memories) > 0 or len(relevant_knowledge) > 0:
-            prompt += "\nAnswer the following query:\n\n"
+            prompt += "\n\nAnswer the following query:\n\n"
 
         # prompt inject
         prompt += original_query
@@ -67,6 +67,7 @@ class Agent(Entity):
         new_query = Query(query.who, prompt)
 
         # check if the query needs planning
+        result = ""
         if self.capabilties.planning.query_needs_planning(new_query.content):
             # create a plan
             plan = self.capabilties.planning.create_plan(new_query.content)
@@ -76,11 +77,8 @@ class Agent(Entity):
 
             # execute the plan
             result = executor.answer_query(original_query)
-
-            # return the result
-            return QueryResponse(self, result)
-
-        result = self.capabilties.query_executor.answer_query(new_query.content)
+        else:
+            result = self.capabilties.query_executor.answer_query(new_query.content)
 
         return QueryResponse(self, result)
 

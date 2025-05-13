@@ -35,6 +35,14 @@ class ChatHistory:
             return self.messages[-1]
         return None
 
+    def get_last_n_messages(self, n: int) -> list[ChatMessage]:
+        """Get the last n messages in the chat history."""
+        if n <= 0:
+            return []
+
+        count = min(n, len(self.messages))
+        return self.messages[-count:]
+
 
 class Query(ChatMessage):
     """A query in a conversation."""
