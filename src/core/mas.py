@@ -21,13 +21,13 @@ class MAS:
     agents: dict[str, Agent]
     chat_history: ChatHistory
 
-    def __init__(self, communication_protocol: CommunicationProtocol):
+    def __init__(self, communication_protocol: CommunicationProtocol, user: HumanUser):
         self.agents = {}
         self.communication_protocol = communication_protocol
 
         self.chat_history = ChatHistory()
 
-        self.user = HumanUser("User", "The human user of the MAS")
+        self.user = user
 
         self.auto_run = True
 
