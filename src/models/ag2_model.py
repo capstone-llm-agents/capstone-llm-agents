@@ -1,4 +1,5 @@
 from autogen import ConversableAgent
+from core.chat import Query
 from core.model import UnderlyingModel
 
 
@@ -9,16 +10,27 @@ class AG2Model(UnderlyingModel):
         super().__init__()
         self.ag2_agent = ag2_agent
 
-    def generate(self, prompt):
+    def who_asked(self, query: Query) -> ConversableAgent:
+        """Get the sender of the query."""
+        entity = query.sender
+
+        return ConversableAgent(
+            name=entity.name,
+            description=entity.description,
+        )
+
+    def generate(self, query: Query):
         """Generate a response from the AG2 model."""
 
         # TODO pass in the sender
 
-        response = self.ag2_agent.initiate_chat(
+        who_asked = self.who_asked(query)
+
+        response = who_asked.initiate_chat(
             recipient=self.ag2_agent,
             message={
                 "role": "user",
-                "content": prompt,
+                "content": query.content,
             },
             max_turns=1,
         )

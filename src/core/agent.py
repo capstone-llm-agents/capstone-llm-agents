@@ -64,7 +64,7 @@ class Agent(Entity):
         # prompt inject
         prompt += original_query
 
-        new_query = Query(query.who, prompt)
+        new_query = Query(query.sender, query.recipient, prompt)
 
         # check if the query needs planning
         result = ""
@@ -76,9 +76,9 @@ class Agent(Entity):
             executor = self.capabilties.planning.build_executor(new_query.content, plan)
 
             # execute the plan
-            result = executor.answer_query(original_query)
+            result = executor.answer_query(new_query)
         else:
-            result = self.capabilties.query_executor.answer_query(new_query.content)
+            result = self.capabilties.query_executor.answer_query(new_query)
 
         return QueryResponse(self, result)
 
