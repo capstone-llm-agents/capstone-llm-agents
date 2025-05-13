@@ -1,4 +1,6 @@
+from core.agent import Agent
 from core.chat import ChatHistory, Query
+from core.entity import HumanUser
 
 
 class CommunicationProtocol:
@@ -6,6 +8,9 @@ class CommunicationProtocol:
 
     # TODO: supported by Sprint 3
 
-    def create_query(self, chat_history: ChatHistory) -> Query:
+    def __init__(self, user: HumanUser):
+        self.user = user
+
+    def create_query(self, chat_history: ChatHistory, agents: list[Agent]) -> Query:
         """Create a new query from the chat history."""
         raise NotImplementedError("create_query not implemented")

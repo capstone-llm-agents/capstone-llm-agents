@@ -12,6 +12,7 @@ class MASResponse(Enum):
     AUTO_RUN_TIMEOUT = "auto_run_timeout"
     WAITING_FOR_USER_QUERY = "waiting_for_user_query"
     WAITING_FOR_USER_RESPONSE = "waiting_for_user_response"
+    CONTINUE = "continue"
 
 
 class MAS:
@@ -94,12 +95,18 @@ class MAS:
             return self.handle_auto_run_timeout()
 
         # create a query
-        query = self.communication_protocol.create_query(self.chat_history)
+        query = self.communication_protocol.create_query(
+            self.chat_history, list(self.agents.values())
+        )
 
         # check if it needs human input (e.g. can't automatically run)
         if query.who == self.user:
             # if it is the user, we need to wait for input
             self.set_query_to_ask_user(query)
+
+            # reset auto run because we are waiting for user input
+            self.reset_steps()
+
             return self.ask_user_query()
 
         # if we are not auto running, we need to wait for input to confirm
@@ -116,8 +123,8 @@ class MAS:
         # add the response to the chat history
         self.chat_history.add_message(response)
 
-        # wait for next user query
-        return self.wait_for_user_query()
+        # otherwise we can continue
+        return self.continue_run()
 
     def resume_from_user_confirmation(self, query: Query):
         """Resume the MAS from user confirmation."""
@@ -142,6 +149,10 @@ class MAS:
         """Ask the user a query."""
         return MASResponse.WAITING_FOR_USER_RESPONSE
 
+    def wait_for_user_query(self) -> MASResponse:
+        """Wait for the user to respond to a query."""
+        return MASResponse.WAITING_FOR_USER_QUERY
+
     def handle_auto_run_timeout(self) -> MASResponse:
         """Handle the auto run timeout."""
         return MASResponse.AUTO_RUN_TIMEOUT
@@ -150,6 +161,6 @@ class MAS:
         """Wait for user confirmation to continue."""
         return MASResponse.WAITING_FOR_USER_CONFIRMATION
 
-    def wait_for_user_query(self) -> MASResponse:
-        """Wait for the user to ask a query."""
-        return MASResponse.WAITING_FOR_USER_QUERY
+    def continue_run(self) -> MASResponse:
+        """Continue the run of the MAS."""
+        return MASResponse.CONTINUE
