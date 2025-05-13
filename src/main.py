@@ -4,10 +4,19 @@ from core.capability import Capability
 from implementations.faiss_kb import FAISSKnowledgeBase
 
 
-default_capabilities: list[Capability] = [FAISSKnowledgeBase(["pdf", "txt"], 1000, 3)]
-
+default_capabilities: list[Capability] = []
 app = App(default_capabilities)
 
+# Capabilities
+# ============
+
+# add kb
+default_capabilities.append(FAISSKnowledgeBase(["pdf", "txt"], 1000, 3))
+
+# Agents
+# ======
+
+# add agent
 app.add_ag2_agent(
     ConversableAgent(
         name="Assistant",
