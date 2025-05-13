@@ -175,3 +175,6 @@ cython_debug/
 
 # ignore config dir
 config/*.json
+
+# ignore .pdf
+*.pdf

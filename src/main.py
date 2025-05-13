@@ -8,6 +8,7 @@ from core.capabiliity_proxy import CapabilityProxy
 from core.capability import Capability
 from core.entity import HumanUser
 from core.mas import MAS
+from implementations.faiss_kb import FAISSKnowledgeBase
 from models.ag2_model import AG2Model
 from spoof.spoofed_capabilities import SpoofedCapabilities
 from spoof.spoofed_comm_protocol import CommunicationProtocolSpoof
@@ -62,7 +63,7 @@ communication_protocol = CommunicationProtocolSpoof(user)
 
 # NOTE: Here you can add the capabilities that do not need to be spoofed
 # (completed capabilities ready to use)
-capabilities: list[Capability] = []
+capabilities: list[Capability] = [FAISSKnowledgeBase(["txt", "pdf"])]
 
 mas = MAS(communication_protocol, user)
 api = MASAPI(mas)
