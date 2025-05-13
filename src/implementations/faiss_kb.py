@@ -12,16 +12,16 @@ class FAISSKnowledgeBase(KnowledgeBase):
     ):
         super().__init__("knowledge_base")
         self.supported_extensions = supported_extensions
-        # Initialize embedding model and placeholders
-        self.model = SentenceTransformer(
-            "all-MiniLM-L6-v2"
-        )  # 384-d model:contentReference[oaicite:13]{index=13}
+        self.model = SentenceTransformer("all-MiniLM-L6-v2")
         self.tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
         self.text_chunks = []  # list of all text chunks
         self.embeddings = None  # will hold numpy array of embeddings
         self.index = None  # FAISS index
         self.max_tokens = max_tokens  # max tokens per chunk
         self.top_k = top_k  # number of top k results to retrieve
+
+        # Instead of single index, we use a list of document-specific storages
+        self.documents = []  # list of dicts: each with 'chunks', 'embeddings', 'index'
 
     def is_supported_extension(self, extension: str) -> bool:
         """Check if the extension is supported."""
@@ -31,55 +31,58 @@ class FAISSKnowledgeBase(KnowledgeBase):
         """Ingest a document into the knowledge base."""
         if not self.is_supported_extension(document.extension):
             raise ValueError(f"Unsupported file extension: {document.extension}")
-        # Read file content
 
+        # Read text from document
         texts = []
         if document.extension == "pdf":
-            doc = fitz.open(
-                document.path
-            )  # PyMuPDF opens PDF:contentReference[oaicite:17]{index=17}
+            doc = fitz.open(document.path)
             for page in doc:
                 texts.append(page.get_text())
         else:
             with open(document.path, "r", encoding="utf-8") as f:
                 texts = [f.read()]
 
-        # Chunk each text and collect all chunks
         all_chunks = []
         for text in texts:
-            chunks = []
             token_ids = self.tokenizer.encode(text)
             for i in range(0, len(token_ids), self.max_tokens):
                 chunk_ids = token_ids[i : i + self.max_tokens]
                 chunk_text = self.tokenizer.decode(chunk_ids)
-                chunks.append(chunk_text)
-            all_chunks.extend(chunks)
+                all_chunks.append(chunk_text)
 
         if not all_chunks:
             return
-        self.text_chunks = all_chunks
 
-        # Encode chunks to embeddings
-        self.embeddings = self.model.encode(all_chunks)  # list -> numpy array
+        # Encode and index chunks
+        embeddings = self.model.encode(all_chunks)
+        dim = embeddings.shape[1]
+        index = faiss.IndexFlatL2(dim)
+        index.add(np.array(embeddings))
 
-        # Build FAISS index (flat L2) and add vectors:contentReference[oaicite:18]{index=18}:contentReference[oaicite:19]{index=19}
-        dim = self.embeddings.shape[1]
-        self.index = faiss.IndexFlatL2(dim)
-        self.index.add(np.array(self.embeddings))
-        print(f"Indexed {len(all_chunks)} text chunks.")
+        self.documents.append(
+            {"chunks": all_chunks, "embeddings": embeddings, "index": index}
+        )
+        print(f"Ingested document with {len(all_chunks)} chunks.")
 
     def retrieve_related_knowledge(self, query: str) -> list[Knowledge]:
         """
         Retrieves top_k chunks most similar to the query.
         Embeds query and searches FAISS index:contentReference[oaicite:20]{index=20}.
         """
-        if self.index is None:
+        if not self.documents:
             return []
-        # Embed the query text
+
         query_emb = self.model.encode([query])
-        # Search the index
-        D, I = self.index.search(np.array(query_emb), self.top_k)
-        results = []
-        for idx in I[0]:
-            results.append(Knowledge(self.text_chunks[idx]))
-        return results
+        combined_results = []
+
+        # Search each document index separately
+        for doc in self.documents:
+            D, I = doc["index"].search(np.array(query_emb), self.top_k)
+            for dist, idx in zip(D[0], I[0]):
+                if idx < len(doc["chunks"]):
+                    combined_results.append((dist, doc["chunks"][idx]))
+
+        # Sort all results by distance and return top_k overall
+        combined_results.sort(key=lambda x: x[0])
+        top_chunks = [Knowledge(text) for _, text in combined_results[: self.top_k]]
+        return top_chunks

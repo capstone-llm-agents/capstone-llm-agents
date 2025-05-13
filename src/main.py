@@ -61,7 +61,7 @@ communication_protocol = CommunicationProtocolSpoof(user)
 
 # NOTE: Here you can add the capabilities that do not need to be spoofed
 # (completed capabilities ready to use)
-capabilities: list[Capability] = [FAISSKnowledgeBase(["pdf", "txt"], 50, 10)]
+capabilities: list[Capability] = [FAISSKnowledgeBase(["pdf", "txt"], 1000, 3)]
 
 mas = MAS(communication_protocol, user)
 api = MASAPI(mas)
