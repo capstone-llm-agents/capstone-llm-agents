@@ -60,6 +60,16 @@ class Memory(MemoryManager):
             ids=[str(self.get_id())],
             metadatas=[metadata]
         )
+        
+        message = messages[0]
+        message = message.content
+        embedding = self.model.encode(message)
+        memory.add(
+            embeddings=[embedding],
+            documents=[message],
+            ids=[str(self.get_id())],
+            metadatas=[metadata]
+        )
        
 
     def update_memory_from_last_message(self, last_message: ChatMessage) -> None:
