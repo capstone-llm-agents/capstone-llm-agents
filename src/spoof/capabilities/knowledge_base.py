@@ -4,13 +4,18 @@ from capabilities.knowledge_base import Document, Knowledge, KnowledgeBase
 class DocumentSpoof(Document):
     """A spoof for the Document class."""
 
-    def __init__(self, path: str, extension: str):
-        super().__init__(path, extension)
-        self.text = "Hello World! This is a test document."
-
     def to_text(self) -> str:
         """Convert the document to text."""
-        return self.text
+
+        # assume that the document is a txt
+        if not self.extension == "txt":
+            raise ValueError(f"Unsupported file extension: {self.extension}")
+
+        # read lines
+        with open(self.path, "r", encoding="utf-8") as file:
+            lines = file.readlines()
+            text = "".join(lines)
+        return text
 
 
 class KnowledgeBaseSpoof(KnowledgeBase):
