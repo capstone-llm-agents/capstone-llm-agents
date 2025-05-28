@@ -1,9 +1,11 @@
 import os
 from openai import OpenAI
 from mem0 import Memory, MemoryClient
+from dotenv import load_dotenv
 
-os.environ['OPENAI_API_KEY'] = "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"
-MEM0_API_KEY = "m0-xX74vpX3bEKH0BfJZjBVffA7AWXU7D7EaL00rjOf"
+load_dotenv()
+
+os.getenv("OPENAI_API_KEY")
 client = OpenAI()
 
 
@@ -12,7 +14,7 @@ class PersonalAITutor:
         """
         Initialize the PersonalAITutor with memory configuration and OpenAI client.
         """
-        self.memory = MemoryClient(MEM0_API_KEY) # utilise mem0 cloud service
+        self.memory = MemoryClient(os.getenv("MEM0_API_KEY")) # utilise mem0 cloud service
         self.client = client
         self.app_id = "app-1"
 
