@@ -23,6 +23,8 @@ class Memory(MemoryManager):
     ) -> None:
         messages = chat_history.get_last_n_messages(2)
 
+        # TODO figure out how to handle if agent talks to agent
+        # like should it remember the other agent's messages? i mean ig so
         # filter for user messages
         messages = [msg for msg in messages if msg.who.role == "user"]
 
