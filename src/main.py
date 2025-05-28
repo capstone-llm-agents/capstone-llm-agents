@@ -2,10 +2,18 @@ from autogen import ConversableAgent
 from app import App
 from core.capability import Capability
 from implementations.faiss_kb import FAISSKnowledgeBase
+from user_interface.cli import CLI
+from user_interface.gui import GUI
 
 
 default_capabilities: list[Capability] = []
-app = App(default_capabilities)
+
+
+interface = CLI()
+# interface = GUI()
+
+
+app = App(interface, default_capabilities)
 
 # Capabilities
 # ============

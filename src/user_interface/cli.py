@@ -1,14 +1,12 @@
 from capabilities.knowledge_base import Document
-from core.app_api import AppAPI
 
 import os
 
+from user_interface.user_interface import UserInterface
 
-class UserInterface:
+
+class CLI(UserInterface):
     """A simple CLI interface for interacting with MASAPI."""
-
-    def __init__(self, api: AppAPI):
-        self.api = api
 
     def run(self):
         """Run the CLI interface."""
@@ -108,5 +106,5 @@ class UserInterface:
 
     def exit(self):
         """Exit the CLI interface."""
-        self.api.exit()
+        super().exit()
         print("Exiting the MAS CLI. Goodbye!")
