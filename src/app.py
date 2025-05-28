@@ -14,13 +14,18 @@ from models.ag2_model import AG2Model
 from spoof.spoofed_capabilities import SpoofedCapabilities
 from spoof.spoofed_comm_protocol import CommunicationProtocolSpoof
 from storage.api import StorageAPI
-from user_interface.inteface import UserInterface
+from user_interface.user_interface import UserInterface
 
 
 class App:
     """The main application class."""
 
-    def __init__(self, capabilities: list[Capability], config_path: str | None = None):
+    def __init__(
+        self,
+        interface: UserInterface,
+        capabilities: list[Capability],
+        config_path: str | None = None,
+    ):
         # config
         config_path = config_path or "./config.yaml"
         self.config = self.load_config(config_path)
@@ -36,7 +41,10 @@ class App:
         self.api = AppAPI(mas_api, storage_api)
 
         # interface layer
-        self.interface = UserInterface(self.api)
+        self.interface = interface
+
+        # set interface API
+        self.interface.set_api(self.api)
 
         # default agent capabilities
         self.capabilities = capabilities
