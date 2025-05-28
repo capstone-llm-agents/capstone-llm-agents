@@ -14,7 +14,7 @@ from models.ag2_model import AG2Model
 from spoof.spoofed_capabilities import SpoofedCapabilities
 from spoof.spoofed_comm_protocol import CommunicationProtocolSpoof
 from storage.api import StorageAPI
-from user_interface.inteface import UserInterface
+from user_interface.cli import UserInterface
 
 
 class App:
