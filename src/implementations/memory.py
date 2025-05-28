@@ -1,105 +1,33 @@
 from capabilities.memory import MemoryManager, Memory
 from sentence_transformers import SentenceTransformer
 from core.chat import ChatHistory, ChatMessage
+import os
+from mem0 import MemoryClient
 
-import numpy as np
-import chromadb as DB
+os.environ['OPENAI_API_KEY'] = "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"
+MEM0_API_KEY = "m0-xX74vpX3bEKH0BfJZjBVffA7AWXU7D7EaL00rjOf"
+
 
 class Memory(MemoryManager):
-    def __init__(self, embedding_model_name: str = 'all-MiniLM-L6-v2'):
+    def __init__(self):
         super().__init__()
-        self.model = SentenceTransformer(embedding_model_name)
-        self.client = DB.PersistentClient(path='Assistant')
-        self.agent = 'Assistant'
-        self.memory = self.client.get_or_create_collection(name=self.agent)
+        self.client=MemoryClient(MEM0_API_KEY)
+        self.app_id="agent-memory"
 
-    def load_memories_relevant_to_query(self, query: str, top_k: int = 3) -> list[Memory]:
+
+    def load_memories_relevant_to_query(self, query: str, user_id="assistant") -> list[Memory]:
+        return self.client.search(query, user_id=user_id, version="v2") # limit parameter for top_k 
         
-        query_embedding = self.model.encode(query)
-        results = self.memory.query(
-           query_embeddings=[query_embedding],
-           n_results=top_k,
-           include=['documents', 'metadatas', 'distances']
-        )
-        print(results)
-        return results['documents']
-        
-
-    def is_suitable_for_long_term(self, memory: Memory) -> bool:
-        """Decide if memory is suited for long term or short term storage.
-        Returns True if memory is suited for long term storage, False for short term.
-        """
-        raise True
-
-    def store_memory_long_term(self, memory: Memory) -> None:
-       
-        print(text)
-        embedding = self.model.encode(text)
-        memory = self.client.get_collection(name=self.agent)
-        memory.add(
-           embeddings=[embedding],
-           documents=[text],
-           ids=[str(self.get_id())],
-           metadatas=[metadata]
-       )
-        
-    def get_id(self):
-       return len(self.memory.get()['ids']) + 1
-
-    def update_memory_from_chat_history(self, chat_history: ChatHistory, metadata: dict = {'time':'00:00'}) -> None:
-        memory = self.client.get_collection(name=self.agent)
+    def update_memory_from_chat_history(self, chat_history: ChatHistory, user_id="assistant") -> None:
         messages = chat_history.get_last_n_messages(2)
         message = messages[0]
         message = message.content
-       
+        self.client.add(message, user_id=user_id)
         if len(messages) == 0:
             return
-        embedding = self.model.encode(message)
-        memory.add(
-            embeddings=[embedding],
-            documents=[message],
-            ids=[str(self.get_id())],
-            metadatas=[metadata]
-        )
         message = messages[1]
         message = message.content
-        embedding = self.model.encode(message)
-        memory.add(
-            embeddings=[embedding],
-            documents=[message],
-            ids=[str(self.get_id())],
-            metadatas=[metadata]
-        )
+        self.client.add(message, user_id=user_id)
 
-    def update_memory_from_last_message(self, last_message: ChatMessage) -> None:
-        print('This is text')
-        print(text)
-        embedding = self.model.encode(text)
-        memory = self.client.get_collection(name=self.agent)
-        memory.add(
-            embeddings=[embedding],
-            documents=[text],
-            ids=[str(self.get_id())],
-            metadatas=[metadata]
-        )
-        # NOTE: It should decide which memory to use based on the content of the last message.
-
- 
-
-"""
-    def store_memory_short_term(self, memory: Memory) -> None:
-     
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def load_all_long_term_memories(self) -> list[Memory]:
-     
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def load_all_short_term_memories(self) -> list[Memory]:
-       
-        raise NotImplementedError("This method should be implemented by subclasses.")
-
-    def clear_short_term_memory(self) -> None:
-       
-        raise NotImplementedError("This method should be implemented by subclasses.")
-"""
+    def load_all_long_term_memories(self, user_id="assistant") -> list[Memory]:
+        return self.client.get_all(user_id=user_id)

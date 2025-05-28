@@ -16,7 +16,7 @@ class ChatHistory:
 
     def __init__(self):
         self.messages = []
-
+    
     def add_message(self, message: ChatMessage):
         """Add a message to the chat history."""
         self.messages.append(message)
