@@ -16,13 +16,15 @@ from spoof.spoofed_comm_protocol import CommunicationProtocolSpoof
 from user_interface.inteface import UserInterface
 import os
 
+from dotenv import load_dotenv
 from autogen import ConversableAgent
 from app import App
 from core.capability import Capability
 from implementations.faiss_kb import FAISSKnowledgeBase
 from openai import OpenAI
 
-os.environ['OPENAI_API_KEY'] = "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"
+load_dotenv()
+
 default_capabilities: list[Capability] = []
 app = App(default_capabilities)
 

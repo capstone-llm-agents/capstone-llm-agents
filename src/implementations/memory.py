@@ -4,14 +4,10 @@ from core.chat import ChatHistory, ChatMessage
 import os
 from mem0 import MemoryClient
 
-os.environ['OPENAI_API_KEY'] = "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"
-MEM0_API_KEY = "m0-xX74vpX3bEKH0BfJZjBVffA7AWXU7D7EaL00rjOf"
-
-
 class Memory(MemoryManager):
     def __init__(self):
         super().__init__()
-        self.client=MemoryClient(MEM0_API_KEY)
+        self.client=MemoryClient(os.getenv("MEM0_API_KEY"))
         self.app_id="agent-memory"
 
 
