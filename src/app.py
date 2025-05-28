@@ -1,4 +1,6 @@
 import yaml
+import os
+
 
 from autogen import ConversableAgent
 from core.agent import Agent
@@ -57,6 +59,10 @@ class App:
             raise ValueError(
                 "Configuration file must be a YAML file with .yaml extension."
             )
+
+        # check if file exists
+        if not os.path.exists(config_path):
+            raise FileNotFoundError(f"Configuration file not found: {config_path}")
 
         with open(config_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
