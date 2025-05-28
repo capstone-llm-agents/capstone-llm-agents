@@ -1,5 +1,6 @@
 from core.agent import Agent
-from core.chat import ChatHistory, Query
+from core.chat import ChatHistory
+from core.query import Query
 from core.entity import HumanUser
 
 

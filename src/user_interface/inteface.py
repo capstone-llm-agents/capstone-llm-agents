@@ -1,5 +1,5 @@
 from capabilities.knowledge_base import Document
-from core.api import MASAPI
+from core.app_api import AppAPI
 
 import os
 
@@ -7,13 +7,13 @@ import os
 class UserInterface:
     """A simple CLI interface for interacting with MASAPI."""
 
-    def __init__(self, api: MASAPI):
+    def __init__(self, api: AppAPI):
         self.api = api
 
     def run(self):
         """Run the CLI interface."""
 
-        self.clear_screen()
+        # self.clear_screen()
 
         print("Welcome to the MAS CLI!")
         while True:
@@ -40,13 +40,14 @@ class UserInterface:
             elif choice == "5":
                 self.list_documents()
             elif choice == "6":
+                self.exit()
                 break
             else:
                 print("Invalid choice. Try again.")
 
     def list_agents(self):
         """List all agents in the MAS."""
-        agents = self.api.get_agents()
+        agents = self.api.mas_api.get_agents()
         if agents:
             print("Agents:")
             for agent in agents:
@@ -57,13 +58,13 @@ class UserInterface:
     def query_mas(self):
         """Query the MAS with a prompt."""
         query = input("Enter your query: ")
-        response = self.api.query_mas(query)
+        response = self.api.mas_api.query_mas(query)
         print("Response:")
         print(response)
 
     def view_chat_history(self):
         """View the chat history."""
-        history = self.api.get_chat_history()
+        history = self.api.mas_api.get_chat_history()
 
         # length check
         if len(history.messages) == 0:
@@ -78,7 +79,7 @@ class UserInterface:
         """Add a document to an agent."""
         agent_name = input("Enter agent name: ")
         try:
-            agent = self.api.get_agent(agent_name)
+            agent = self.api.mas_api.get_agent(agent_name)
         except KeyError:
             print(f"No agent found with name: {agent_name}")
             return
@@ -86,14 +87,14 @@ class UserInterface:
 
         extension = path.split(".")[-1]
 
-        document = Document(path=path, extensiion=extension)
+        document = Document(path=path, extension=extension)
 
-        self.api.add_document(document, agent)
+        self.api.mas_api.add_document(document, agent)
         print("Document added successfully.")
 
     def list_documents(self):
         """List all documents in the MAS."""
-        docs = self.api.get_documents()
+        docs = self.api.mas_api.get_documents()
         if docs:
             print("Documents:")
             for doc in docs:
@@ -104,3 +105,8 @@ class UserInterface:
     def clear_screen(self):
         """Clear the console screen."""
         os.system("cls" if os.name == "nt" else "clear")
+
+    def exit(self):
+        """Exit the CLI interface."""
+        self.api.exit()
+        print("Exiting the MAS CLI. Goodbye!")
