@@ -4,18 +4,28 @@ from core.chat import ChatHistory, ChatMessage
 import os
 from mem0 import MemoryClient
 
+
 class Memory(MemoryManager):
     def __init__(self):
         super().__init__()
-        self.client=MemoryClient(os.getenv("MEM0_API_KEY"))
-        self.app_id="agent-memory"
+        self.client = MemoryClient(os.getenv("MEM0_API_KEY"))
+        self.app_id = "agent-memory"
 
+    def load_memories_relevant_to_query(
+        self, query: str, user_id="assistant"
+    ) -> list[Memory]:
+        return self.client.search(
+            query, user_id=user_id, version="v2"
+        )  # limit parameter for top_k
 
-    def load_memories_relevant_to_query(self, query: str, user_id="assistant") -> list[Memory]:
-        return self.client.search(query, user_id=user_id, version="v2") # limit parameter for top_k 
-        
-    def update_memory_from_chat_history(self, chat_history: ChatHistory, user_id="assistant") -> None:
+    def update_memory_from_chat_history(
+        self, chat_history: ChatHistory, user_id="assistant"
+    ) -> None:
         messages = chat_history.get_last_n_messages(2)
+
+        # filter for user messages
+        messages = [msg for msg in messages if msg.who.role == "user"]
+
         message = messages[0]
         message = message.content
         self.client.add(message, user_id=user_id)
