@@ -178,3 +178,9 @@ config/*.json
 
 # ignore .pdf
 *.pdf
+
+# ignore config.yaml
+config.yaml
+
+# ignore sqlite db
+*.db

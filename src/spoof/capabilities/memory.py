@@ -63,7 +63,9 @@ class MemoryManagerSpoof(MemoryManager):
     def update_memory_from_last_message(self, last_message: ChatMessage) -> None:
         """Update memory from the last message. Decides if it is suited for long term or short term storage."""
         # decide if it is suited for long term or short term storage
-        memory = Memory(last_message.content)
+
+        who = last_message.who
+        memory = Memory(f"{who.role}:{last_message.content}")
 
         if self.is_suitable_for_long_term(memory):
             self.store_memory_long_term(memory)

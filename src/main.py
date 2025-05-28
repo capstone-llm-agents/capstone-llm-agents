@@ -23,7 +23,6 @@ app.add_ag2_agent(
         system_message="You are a helpful assistant.",
         llm_config={"api_type": "ollama", "model": "gemma3"},
     ),
-    default_capabilities,
 )
 
 app.run()

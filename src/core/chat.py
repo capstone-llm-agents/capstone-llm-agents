@@ -1,4 +1,8 @@
 from core.entity import Entity
+from storage.serialisable import Serialisable
+
+
+import json
 
 
 class ChatMessage:
@@ -9,7 +13,7 @@ class ChatMessage:
         self.content = content
 
 
-class ChatHistory:
+class ChatHistory(Serialisable):
     """A list of chat messages in a conversation."""
 
     messages: list[ChatMessage]
@@ -42,3 +46,32 @@ class ChatHistory:
 
         count = min(n, len(self.messages))
         return self.messages[-count:]
+
+    def to_dict(self) -> dict:
+        """Convert the ChatHistory object to a dictionary."""
+
+        # messages
+        messages = [
+            {"who": message.who.to_dict(), "content": message.content}
+            for message in self.messages
+        ]
+
+        # as json str
+        messages = json.dumps(messages, default=lambda o: o.to_dict(), indent=2)
+
+        return {"messages": messages}
+
+    @classmethod
+    def from_dict(cls, data: dict):
+        """Create a ChatHistory object from a dictionary."""
+        chat_history = cls()
+
+        # load messages from json str
+        messages = json.loads(data["messages"])
+
+        for message in messages:
+            chat_history.add_message(
+                ChatMessage(Entity.from_dict(message["who"]), message["content"])
+            )
+
+        return chat_history
