@@ -9,7 +9,7 @@ from core.mas_api import MASAPI
 from core.capabiliity_manager import AgentCapabilities
 from core.capabiliity_proxy import CapabilityProxy
 from core.capability import Capability
-from core.config import AppConfig, Config
+from core.config import AppConfig, Config, LoadedConfig
 from core.entity import HumanUser
 from core.mas import MAS
 from models.ag2_model import AG2Model
@@ -30,7 +30,7 @@ class App:
     ):
         # config
         config_path = config_path or "./config.yaml"
-        self.config = self.load_config(config_path)
+        self.config = LoadedConfig(self.load_config(config_path))
 
         # mas
         user = HumanUser("User", "The human user of the MAS")
@@ -39,7 +39,7 @@ class App:
 
         # api layer
         mas_api = MASAPI(mas)
-        storage_api = StorageAPI(self.config.db_path)
+        storage_api = StorageAPI(self.config.get_db_path())
         self.api = AppAPI(mas_api, storage_api)
 
         # interface layer

@@ -1,5 +1,6 @@
 """Application configuration module."""
 
+import autogen
 import requests
 
 from pydantic import BaseModel, Field
@@ -8,7 +9,7 @@ from pydantic import BaseModel, Field
 class LLMConfig(BaseModel):
     """Configuration for the LLM (Large Language Model)."""
 
-    model_type: str = Field(default="ollama")
+    api_type: str = Field(default="ollama")
     model: str = Field()
 
 
@@ -26,6 +27,46 @@ class AppConfig(BaseModel):
     llm_config: ModelConfig
     db_path: str = Field("./database.db")
     interface: str = Field(default="cli")  # "cli" or "gui"
+
+
+class LoadedConfig:
+    """Class to hold the loaded application configuration."""
+
+    def __init__(self, app_config: AppConfig):
+        self.app_config = app_config
+
+    def get_llm_config(
+        self, uses_tools: bool = False, index: int | None = None
+    ) -> autogen.LLMConfig:
+        """Get the model configuration based on whether tools are used."""
+        if uses_tools:
+            index = (
+                self.app_config.llm_config.default_model_with_tools_index
+                if index is None
+                else index
+            )
+        else:
+            index = (
+                self.app_config.llm_config.default_model_index
+                if index is None
+                else index
+            )
+
+        if not (0 <= index < len(self.app_config.llm_config.models)):
+            raise IndexError("Model index out of range.")
+
+        llm_config_model = self.app_config.llm_config.models[index]
+
+        print(llm_config_model)
+
+        return autogen.LLMConfig(
+            api_type=str(llm_config_model.api_type),
+            model=str(llm_config_model.model),
+        )
+
+    def get_db_path(self) -> str:
+        """Get the database path."""
+        return self.app_config.db_path
 
 
 class Config:

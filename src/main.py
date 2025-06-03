@@ -29,7 +29,7 @@ app.add_ag2_agent(
     ConversableAgent(
         name="Assistant",
         system_message="You are a helpful assistant.",
-        llm_config={"api_type": "ollama", "model": "gemma3"},
+        llm_config=app.config.get_llm_config(),
     ),
 )
 
