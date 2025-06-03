@@ -149,7 +149,7 @@ class Config:
                 print("Invalid input. Please enter a number.")
 
         model_config = ModelConfig(
-            models=[LLMConfig(model_type="ollama", model=model) for model in models],
+            models=[LLMConfig(api_type="ollama", model=model) for model in models],
             default_model_index=default_model_index,
             default_model_with_tools_index=default_model_with_tools_index,
         )
