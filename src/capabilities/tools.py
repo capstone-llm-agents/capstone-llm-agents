@@ -64,11 +64,19 @@ class ToolsManager(Capability):
     def get_tool_responses_for_query(self, query: str) -> list[ToolOutput]:
         """Get responses from all tools for a specific query."""
         relevant_tools = self.get_relevant_tools_for_query(query)
+        print(
+            f"Relevant tools for query '{query}': {[tool.name for tool in relevant_tools]}"
+        )
+
         tool_outputs: list[ToolOutput] = []
 
         for tool in relevant_tools:
             tool_input = self.get_input_for_tool(tool, query)
+            print(f"Tool '{tool.name}' input for query '{query}': {tool_input.args}")
             tool_output = self.use_tool(tool, tool_input)
+            print(
+                f"Tool '{tool.name}' output for query '{query}': {tool_output.result}"
+            )
             tool_outputs.append(tool_output)
 
         return tool_outputs
@@ -76,24 +84,12 @@ class ToolsManager(Capability):
     def get_relevant_tools_for_query(self, query: str) -> list[Tool]:
         """Get tools relevant to a specific query."""
 
-        # 1. get the names of the tools that are relevant to the query
-
-        # 2. create a prompt that asks the agent to select the tools that are relevant to the query
-
-        # 3. filter the tools based on this response
-
-        # 4. return the relevant tools
-
         raise NotImplementedError(
             "This method should be implemented by subclasses to filter tools based on the query."
         )
 
     def get_input_for_tool(self, tool: Tool, query: str) -> ToolInput:
         """Get the input for a specific tool based on the query."""
-
-        # 1. ask the agent to generate the input for the tool based on the query
-
-        # 2. return the input for the tool
 
         raise NotImplementedError(
             "This method should be implemented by subclasses to generate input for the tool."

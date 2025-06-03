@@ -26,6 +26,7 @@ class AG2Model(UnderlyingModel):
 
         relevant_memories = query.memories
         relevant_knowledge = query.knowledge
+        relevant_tool_responses = query.tool_responses
 
         context_sections = []
 
@@ -56,6 +57,12 @@ class AG2Model(UnderlyingModel):
                 [f"- {knowledge.knowledge}" for knowledge in relevant_knowledge]
             )
             context_sections.append(f"Knowledge:\n{knowledge_str}")
+
+        if relevant_tool_responses:
+            tool_responses_str = "\n".join(
+                [f"- {response.result}" for response in relevant_tool_responses]
+            )
+            context_sections.append(f"Tool Responses:\n{tool_responses_str}")
 
         prompt_parts = []
 

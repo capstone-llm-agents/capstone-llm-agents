@@ -23,7 +23,7 @@ class SpoofedCapabilities(AgentCapabilities):
         knowledge_base = KnowledgeBaseSpoof(supported_extensions)
         memory = MemoryManagerSpoof()
         planning = PlanningSpoof(underlying_model)
-        tool_manager = ToolsManagerSpoof()
+        tools_manager = ToolsManagerSpoof()
         response_formatter = ResponseFormatterSpoof()
         communication = CommunicationInterfaceSpoof()
         learning = LearningSpoof()
@@ -34,7 +34,7 @@ class SpoofedCapabilities(AgentCapabilities):
             knowledge_base,
             memory,
             planning,
-            tool_manager,
+            tools_manager,
             response_formatter,
             communication,
             learning,
