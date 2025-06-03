@@ -12,6 +12,7 @@ from core.capability import Capability
 from core.config import AppConfig, Config, LoadedConfig
 from core.entity import HumanUser
 from core.mas import MAS
+from core.space_api import SpaceAPI
 from models.ag2_model import AG2Model
 from spoof.spoofed_capabilities import SpoofedCapabilities
 from storage.api import StorageAPI
@@ -40,7 +41,8 @@ class App:
         # api layer
         mas_api = MASAPI(mas)
         storage_api = StorageAPI(self.config.get_db_path())
-        self.api = AppAPI(mas_api, storage_api)
+        space_api = SpaceAPI([], mas)
+        self.api = AppAPI(mas_api, storage_api, space_api)
 
         # interface dict
         interfaces: dict[str, type[UserInterface]] = {
