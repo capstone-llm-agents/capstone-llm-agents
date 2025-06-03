@@ -9,7 +9,7 @@ from core.mas_api import MASAPI
 from core.capabiliity_manager import AgentCapabilities
 from core.capabiliity_proxy import CapabilityProxy
 from core.capability import Capability
-from core.config import AppConfig
+from core.config import AppConfig, Config
 from core.entity import HumanUser
 from core.mas import MAS
 from models.ag2_model import AG2Model
@@ -62,7 +62,9 @@ class App:
 
         # check if file exists
         if not os.path.exists(config_path):
-            raise FileNotFoundError(f"Configuration file not found: {config_path}")
+            # ask config
+            print("Config file does not exist. Let's create one!\n")
+            Config.create_config_file()
 
         with open(config_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
