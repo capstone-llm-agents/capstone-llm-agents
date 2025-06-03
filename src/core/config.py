@@ -57,8 +57,6 @@ class LoadedConfig:
 
         llm_config_model = self.app_config.llm_config.models[index]
 
-        print(llm_config_model)
-
         return autogen.LLMConfig(
             api_type=str(llm_config_model.api_type),
             model=str(llm_config_model.model),

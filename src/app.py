@@ -14,9 +14,11 @@ from core.entity import HumanUser
 from core.mas import MAS
 from models.ag2_model import AG2Model
 from spoof.spoofed_capabilities import SpoofedCapabilities
-from spoof.spoofed_comm_protocol import CommunicationProtocolSpoof
 from storage.api import StorageAPI
 from user_interface.user_interface import UserInterface
+from user_interface.cli import CLI
+from user_interface.gui import GUI
+from implementations.communication_protocol import BasicCommunicationProtocol
 
 
 class App:
@@ -24,8 +26,6 @@ class App:
 
     def __init__(
         self,
-        interface: UserInterface,
-        capabilities: list[Capability],
         config_path: str | None = None,
     ):
         # config
@@ -34,7 +34,7 @@ class App:
 
         # mas
         user = HumanUser("User", "The human user of the MAS")
-        communication_protocol = CommunicationProtocolSpoof(user)
+        communication_protocol = BasicCommunicationProtocol(user)
         mas = MAS(communication_protocol, user)
 
         # api layer
@@ -42,14 +42,31 @@ class App:
         storage_api = StorageAPI(self.config.get_db_path())
         self.api = AppAPI(mas_api, storage_api)
 
+        # interface dict
+        interfaces: dict[str, type[UserInterface]] = {
+            "cli": CLI,
+            "gui": GUI,
+        }
+
+        # get from config
+        interface_name = self.config.app_config.interface
+
+        if interface_name not in interfaces:
+            print(
+                f"[WARN] Interface '{interface_name}' not found. Defaulting to CLI interface."
+            )
+
+        # get interface
+        interface_type = interfaces.get(interface_name, interfaces["cli"])
+
         # interface layer
-        self.interface = interface
+        self.interface = interface_type()
 
         # set interface API
         self.interface.set_api(self.api)
 
         # default agent capabilities
-        self.capabilities = capabilities
+        self.capabilities = []
 
     def load_config(self, config_path: str) -> AppConfig:
         """Load the configuration from a YAML file."""
@@ -70,6 +87,10 @@ class App:
             data = yaml.safe_load(f)
 
         return AppConfig(**data)
+
+    def add_capability(self, capability: Capability):
+        """Add a capability to the MAS."""
+        self.capabilities.append(capability)
 
     def run(self):
         """Run the application."""

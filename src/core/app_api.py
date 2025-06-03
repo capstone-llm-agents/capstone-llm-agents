@@ -1,15 +1,17 @@
 """A collection of APIs to interact with the application."""
 
 from core.mas_api import MASAPI
+from core.space_api import SpaceAPI
 from storage.api import StorageAPI
 
 
 class AppAPI:
     """A class to interact with the application APIs."""
 
-    def __init__(self, mas_api: MASAPI, storage_api: StorageAPI):
+    def __init__(self, mas_api: MASAPI, storage_api: StorageAPI, space_api: SpaceAPI):
         self.mas_api = mas_api
         self.storage_api = storage_api
+        self.space_api = space_api
 
     def start(self):
         """Start the application."""
