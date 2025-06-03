@@ -184,3 +184,6 @@ config.yaml
 
 # ignore sqlite db
 *.db
+
+# ignore ds store
+.DS_Store
