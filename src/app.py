@@ -1,4 +1,6 @@
 import yaml
+import os
+
 
 from autogen import ConversableAgent
 from core.agent import Agent
@@ -7,7 +9,7 @@ from core.mas_api import MASAPI
 from core.capabiliity_manager import AgentCapabilities
 from core.capabiliity_proxy import CapabilityProxy
 from core.capability import Capability
-from core.config import AppConfig
+from core.config import AppConfig, Config
 from core.entity import HumanUser
 from core.mas import MAS
 from models.ag2_model import AG2Model
@@ -57,6 +59,12 @@ class App:
             raise ValueError(
                 "Configuration file must be a YAML file with .yaml extension."
             )
+
+        # check if file exists
+        if not os.path.exists(config_path):
+            # ask config
+            print("Config file does not exist. Let's create one!\n")
+            Config.create_config_file()
 
         with open(config_path, encoding="utf-8") as f:
             data = yaml.safe_load(f)
