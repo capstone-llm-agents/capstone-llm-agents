@@ -11,21 +11,43 @@ class ToolInput:
         self.tool = tool
         self.args = args
 
+    def to_string(self) -> str:
+        """Convert the input to a string representation."""
+        # convert args dict to a string
+        return ", ".join(f"{key}: {value}" for key, value in self.args.items())
+
 
 class ToolOutput:
     """A class representing the output from a tool."""
 
-    def __init__(self, tool: Tool, result: Any):
+    def __init__(self, tool: Tool, result: Any, tool_input: ToolInput):
         self.tool = tool
         self.result = result
+        self.tool_input = tool_input
+
+
+class ToolOutputError(ToolOutput):
+    """A class representing an error output from a tool."""
+
+    def __init__(self, tool: Tool, error_message: str, tool_input: ToolInput):
+        super().__init__(tool, error_message, tool_input)
+        self.error_message = error_message
 
 
 class Tool:
     """A class representing a tool that can be used by the agent."""
 
-    def __init__(self, name: str, description: str):
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        input_description: str | None = None,
+        output_description: str | None = None,
+    ):
         self.name = name
         self.description = description
+        self.input_description = input_description
+        self.output_description = output_description
 
     def use(self, tool_input: ToolInput) -> ToolOutput:
         """Use the tool."""
@@ -74,6 +96,13 @@ class ToolsManager(Capability):
             tool_input = self.get_input_for_tool(tool, query)
             print(f"Tool '{tool.name}' input for query '{query}': {tool_input.args}")
             tool_output = self.use_tool(tool, tool_input)
+
+            if isinstance(tool_output, ToolOutputError):
+                print(
+                    f"Skipping tool. Error using tool '{tool.name}' for query '{query}': {tool_output.error_message}"
+                )
+                continue
+
             print(
                 f"Tool '{tool.name}' output for query '{query}': {tool_output.result}"
             )

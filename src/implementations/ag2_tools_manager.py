@@ -112,7 +112,7 @@ class AG2ToolsManager(ToolsManager):
 
         prompt = (
             examples + f"\n\nTool Name: {tool.name}\n"
-            f"Tool Description: {tool.description}\n"
+            f"Tool Description: {tool.description} {tool.input_description}\n"
             f"User Query: {query}\n"
             "Tool Input: "
         )

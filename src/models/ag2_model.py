@@ -60,7 +60,10 @@ class AG2Model(UnderlyingModel):
 
         if relevant_tool_responses:
             tool_responses_str = "\n".join(
-                [f"- {response.result}" for response in relevant_tool_responses]
+                [
+                    f"- {response.tool.name} | Input {response.tool_input.to_string()} | Result: {response.result}"
+                    for response in relevant_tool_responses
+                ]
             )
             context_sections.append(f"Tool Responses:\n{tool_responses_str}")
 
@@ -69,10 +72,12 @@ class AG2Model(UnderlyingModel):
         if context_sections:
             prompt_parts.append("The following background context may be helpful:\n")
             prompt_parts.append("\n\n".join(context_sections))
-            prompt_parts.append("\n\nNow answer the following query:\n")
+            prompt_parts.append("Answer the following user's query kindly:\n")
 
         prompt_parts.append(query.content)
         full_prompt = "\n".join(prompt_parts)
+
+        print(f"Full prompt: {full_prompt}")
 
         past_messages.append({"role": "user", "content": full_prompt})
 
