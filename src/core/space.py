@@ -1,5 +1,6 @@
 from core.chat import ChatHistory
 from core.entity import Entity
+from core.mas import MAS
 
 
 class Space:
@@ -8,9 +9,10 @@ class Space:
     entities: list[Entity]
     chat_history: ChatHistory
 
-    def __init__(self):
+    def __init__(self, mas: MAS):
         self.entities = []
         self.chat_history = ChatHistory()
+        self.mas = mas
 
     def get_entities(self) -> list[Entity]:
         """Get all entities in the space."""
@@ -18,4 +20,6 @@ class Space:
 
     def get_chat_history(self) -> ChatHistory:
         """Get the chat history in the space."""
-        return self.chat_history
+
+        # TODO remove this spoof and get the chat history from the space not MAS
+        return self.mas.chat_history
