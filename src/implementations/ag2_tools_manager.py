@@ -62,7 +62,15 @@ class AG2ToolsManager(ToolsManager):
     - calculator: Solves math expressions
     Relevant Tools: []
 
+    Example 4:
+    User Query: "Translate 'What is 8 times 7?' into Spanish and then solve it."
+    Available Tools:
+    - translator: Translates text between languages
+    - calculator: Solves math expressions
+    Relevant Tools: ["translator", "calculator"]
+
     Be precise. Do not include tools unless they are obviously required to answer the query.
+    Only include multiple tools if the query explicitly requires more than one type of action.
         """
 
         prompt = (
