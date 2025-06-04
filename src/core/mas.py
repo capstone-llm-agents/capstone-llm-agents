@@ -4,6 +4,7 @@ from core.chat import ChatHistory, ChatMessage
 from core.query import Query
 from core.entity import HumanUser
 from core.communication_protocol import CommunicationProtocol
+from implementations.communication_protocol import BasicCommunicationProtocol
 
 
 class MASResponse(Enum):
@@ -49,6 +50,12 @@ class MAS:
         # load memories of each agent
         for agent in self.agents.values():
             agent.capabilties.memory.update_memory_from_chat_history(self.chat_history)
+
+        # TODO hacky
+
+        # bind the user_mas chat history to the MAS chat history
+        if isinstance(self.communication_protocol, BasicCommunicationProtocol):
+            self.communication_protocol.bind_user_space_history(self.chat_history)
 
     def reset_steps(self):
         """Reset the step count."""

@@ -19,25 +19,17 @@ class BasicCommunicationProtocol(CommunicationProtocol):
         self.user_space = user_space
         self.main_space = main_space
 
+    def bind_user_space_history(self, chat_history: ChatHistory):
+        """Bind the user space chat history to the provided chat history."""
+        self.user_space.chat_history = chat_history
+
     def create_query(self, chat_history: ChatHistory, agents: list[Agent]) -> Query:
         """Create a new query from the chat history and available agents."""
-
         if len(agents) == 0:
             raise ValueError("No agents in the MAS. There must be at least one agent.")
 
-        if (
-            self.main_space.assistant_agent is None
-            or self.user_space.assistant_agent is None
-        ):
-            raise ValueError("No assistant agent set in the MAS.")
+        assistant_agent = self.get_assistant_agent()
 
-        assistant_agent = self.main_space.assistant_agent
-
-        # NOTE: chat_history refers to the chat history of the user space
-        # to make sure they are equal, we will bind them
-        self.user_space.chat_history = chat_history
-
-        # get the last message in the chat history
         last_message = chat_history.get_last_message()
 
         # new chat, the agent can start the conversation
@@ -72,19 +64,15 @@ class BasicCommunicationProtocol(CommunicationProtocol):
 
         return self.main_space.handle_query(query)
 
-    def get_assistant_agent(self, agents: list[Agent]) -> Agent:
+    def get_assistant_agent(self) -> Agent:
         """Get the default assistant agent from the list of agents."""
-        if len(agents) == 0:
-            raise ValueError("No agents in the MAS. There must be at least one agent.")
+        if (
+            self.main_space.assistant_agent is None
+            or self.user_space.assistant_agent is None
+        ):
+            raise ValueError("No assistant agent set in the MAS.")
 
-        # TODO make sure that there is a way to specify the assistant agent and that it must exist
-
-        for agent in agents:
-            if agent.is_assistant_agent():
-                return agent
-
-        # otherwise default to the first agent (arbitrary choice)
-        return agents[0]
+        return self.main_space.assistant_agent
 
     def get_task_from_message(
         self, chat_message: ChatMessage, recipient: Agent
