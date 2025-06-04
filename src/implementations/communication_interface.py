@@ -47,6 +47,7 @@ class SimpleCommunicationInterface(CommunicationInterface):
 
         Score them a scale from 1 to 10, where 1 means not suitable at all and 10 means perfectly suitable.
         Any queries that any agent could do should be scored around 2.
+        To score high the agent must have specific knowledge or skills that are relevant to the task.
         """
 
         reply = evaluator_agent.generate_reply([{"role": "user", "content": prompt}])
