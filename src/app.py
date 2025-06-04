@@ -12,6 +12,7 @@ from core.capability import Capability
 from core.config import AppConfig, Config, LoadedConfig
 from core.entity import HumanUser
 from core.mas import MAS
+from core.space import MainSpace, UserSpace
 from core.space_api import SpaceAPI
 from models.ag2_model import AG2Model
 from spoof.spoofed_capabilities import SpoofedCapabilities
@@ -35,7 +36,9 @@ class App:
 
         # mas
         user = HumanUser("User", "The human user of the MAS")
-        communication_protocol = BasicCommunicationProtocol(user)
+        communication_protocol = BasicCommunicationProtocol(
+            user, UserSpace("User Space", None, user), MainSpace("Main Space", None, [])
+        )
         mas = MAS(communication_protocol, user)
 
         # api layer
@@ -105,6 +108,13 @@ class App:
         """Add an agent to the MAS."""
         self.api.mas_api.mas.add_agent(agent)
         self.api.storage_api.add_agent(agent)
+
+        # TODO remove this hack
+
+        proto = self.api.mas_api.mas.communication_protocol
+
+        if isinstance(proto, BasicCommunicationProtocol):
+            proto.add_agent(agent)
 
     def _generate_capabilities_for_ag2_agent(
         self, agent: ConversableAgent, agent_capabilities: list[Capability]

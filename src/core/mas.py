@@ -122,7 +122,7 @@ class MAS:
         )
 
         # check if it needs human input (e.g. can't automatically run)
-        if query.who == self.user:
+        if query.recipient == self.user:
             # if it is the user, we need to wait for input
             self.set_query_to_ask_user(query)
 
@@ -137,10 +137,10 @@ class MAS:
             return self.wait_for_user_confirmation()
 
         # get agent from query
-        agent = self.get_agent(query.who.name)
+        agent = self.get_agent(query.recipient.name)
 
         # ask the agent
-        response = agent.handle_query(query)
+        response = self.communication_protocol.handle_query(query)
 
         # add the response to the chat history
         self.chat_history.add_message(response)

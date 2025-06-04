@@ -1,6 +1,7 @@
 from core.agent import Agent
 from core.chat import ChatHistory
 from core.entity import Entity, HumanUser
+from core.query import Query, QueryResponse
 
 
 class Space:
@@ -27,6 +28,10 @@ class Space:
         """Add an entity to the space."""
         if entity not in self.entities:
             self.entities.append(entity)
+
+    def handle_query(self, query: Query) -> QueryResponse:
+        """Handle a query in the space and return a response."""
+        raise NotImplementedError("This method should be implemented in subclasses.")
 
 
 class UserSpace(Space):
