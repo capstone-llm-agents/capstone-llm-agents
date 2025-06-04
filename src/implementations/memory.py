@@ -13,6 +13,8 @@ class Memory(MemoryManager):
     def load_memories_relevant_to_query(
         self, query: str, user_id="assistant"
     ) -> list[Memory]:
+        print("Using mem0 to load memories relevant to query:", query)
+
         return self.client.search(
             query, user_id=user_id, version="v2"
         )  # limit parameter for top_k
