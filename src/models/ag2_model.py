@@ -22,7 +22,7 @@ class AG2Model(UnderlyingModel):
     def generate(self, query: Query):
         """Generate a response from the AG2 model."""
 
-        sender_agent = self.who_asked(query)
+        # TODO pass in the sender
 
         relevant_memories = query.memories
         relevant_knowledge = query.knowledge
@@ -80,6 +80,9 @@ class AG2Model(UnderlyingModel):
         print(f"Full prompt: {full_prompt}")
 
         past_messages.append({"role": "user", "content": full_prompt})
+
+        # get the sender agent
+        sender_agent = self.who_asked(query)
 
         response = self.ag2_agent.generate_reply(
             messages=past_messages,

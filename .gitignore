@@ -187,3 +187,19 @@ config.yaml
 
 # ignore ds store
 .DS_Store
+
+# do not track
+*.pyc
+
+# Ignore binaries and build folders
+bin/
+*.exe
+*.dll
+*.o
+*.so
+*.out
+
+*.bin
+
+# Asistant
+Assistant/

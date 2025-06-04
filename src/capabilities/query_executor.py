@@ -1,6 +1,6 @@
 from core.capability import Capability
-from core.query import Query
 from core.model import UnderlyingModel
+from core.query import Query
 
 
 class QueryExectuor(Capability):

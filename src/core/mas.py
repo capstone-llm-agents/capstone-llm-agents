@@ -1,9 +1,9 @@
 from enum import Enum
 from core.agent import Agent
 from core.chat import ChatHistory, ChatMessage
-from core.query import Query
 from core.entity import HumanUser
 from core.communication_protocol import CommunicationProtocol
+from core.query import Query
 from implementations.communication_protocol import BasicCommunicationProtocol
 
 
