@@ -1,10 +1,17 @@
+# NOTE: For now just do what you need to make it work but I will fix it later
 from autogen import ConversableAgent
-from app import App
-from implementations.faiss_kb import FAISSKnowledgeBase
 
+from dotenv import load_dotenv
+
+from app import App
+
+from implementations.memory import Memory
+from implementations.faiss_kb import FAISSKnowledgeBase
 from implementations.communication_interface import SimpleCommunicationInterface
 from implementations.ag2_tools import CurrentDateTimeTool, WeekdayTool, MathTool
 from implementations.ag2_tools_manager import AG2ToolsManager
+
+load_dotenv()
 
 
 app = App()
@@ -25,6 +32,9 @@ tools_manager.add_tool(WeekdayTool())
 tools_manager.add_tool(MathTool())
 
 app.add_capability(tools_manager)
+
+# memory
+app.add_capability(Memory())
 
 # Agents
 # ======

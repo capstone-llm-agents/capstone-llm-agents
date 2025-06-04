@@ -1,5 +1,5 @@
 from capabilities.tools import Tool
-from core.query import Query
+from core.chat import Query
 
 
 class UnderlyingModel:
