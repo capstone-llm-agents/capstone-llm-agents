@@ -36,12 +36,18 @@ class Agent(Entity):
             query.content
         )
 
+        # relevant tool outputs
+        relevant_tool_outputs = (
+            self.capabilties.tools_manager.get_tool_responses_for_query(query.content)
+        )
+
         new_query = Query(
             query.sender,
             query.recipient,
             query.content,
             relevant_memories,
             relevant_knowledge,
+            relevant_tool_outputs,
         )
 
         # check if the query needs planning

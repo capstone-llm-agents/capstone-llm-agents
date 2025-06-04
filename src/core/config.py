@@ -58,8 +58,7 @@ class LoadedConfig:
         llm_config_model = self.app_config.llm_config.models[index]
 
         return autogen.LLMConfig(
-            api_type=str(llm_config_model.api_type),
-            model=str(llm_config_model.model),
+            api_type=str(llm_config_model.api_type), model=str(llm_config_model.model)
         )
 
     def get_db_path(self) -> str:

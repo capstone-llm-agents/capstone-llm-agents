@@ -11,21 +11,43 @@ class ToolInput:
         self.tool = tool
         self.args = args
 
+    def to_string(self) -> str:
+        """Convert the input to a string representation."""
+        # convert args dict to a string
+        return ", ".join(f"{key}: {value}" for key, value in self.args.items())
+
 
 class ToolOutput:
     """A class representing the output from a tool."""
 
-    def __init__(self, tool: Tool, result: Any):
+    def __init__(self, tool: Tool, result: Any, tool_input: ToolInput):
         self.tool = tool
         self.result = result
+        self.tool_input = tool_input
+
+
+class ToolOutputError(ToolOutput):
+    """A class representing an error output from a tool."""
+
+    def __init__(self, tool: Tool, error_message: str, tool_input: ToolInput):
+        super().__init__(tool, error_message, tool_input)
+        self.error_message = error_message
 
 
 class Tool:
     """A class representing a tool that can be used by the agent."""
 
-    def __init__(self, name: str, description: str):
+    def __init__(
+        self,
+        name: str,
+        description: str,
+        input_description: str | None = None,
+        output_description: str | None = None,
+    ):
         self.name = name
         self.description = description
+        self.input_description = input_description
+        self.output_description = output_description
 
     def use(self, tool_input: ToolInput) -> ToolOutput:
         """Use the tool."""
@@ -64,11 +86,26 @@ class ToolsManager(Capability):
     def get_tool_responses_for_query(self, query: str) -> list[ToolOutput]:
         """Get responses from all tools for a specific query."""
         relevant_tools = self.get_relevant_tools_for_query(query)
+        print(
+            f"Relevant tools for query '{query}': {[tool.name for tool in relevant_tools]}"
+        )
+
         tool_outputs: list[ToolOutput] = []
 
         for tool in relevant_tools:
             tool_input = self.get_input_for_tool(tool, query)
+            print(f"Tool '{tool.name}' input for query '{query}': {tool_input.args}")
             tool_output = self.use_tool(tool, tool_input)
+
+            if isinstance(tool_output, ToolOutputError):
+                print(
+                    f"Skipping tool. Error using tool '{tool.name}' for query '{query}': {tool_output.error_message}"
+                )
+                continue
+
+            print(
+                f"Tool '{tool.name}' output for query '{query}': {tool_output.result}"
+            )
             tool_outputs.append(tool_output)
 
         return tool_outputs
@@ -76,24 +113,12 @@ class ToolsManager(Capability):
     def get_relevant_tools_for_query(self, query: str) -> list[Tool]:
         """Get tools relevant to a specific query."""
 
-        # 1. get the names of the tools that are relevant to the query
-
-        # 2. create a prompt that asks the agent to select the tools that are relevant to the query
-
-        # 3. filter the tools based on this response
-
-        # 4. return the relevant tools
-
         raise NotImplementedError(
             "This method should be implemented by subclasses to filter tools based on the query."
         )
 
     def get_input_for_tool(self, tool: Tool, query: str) -> ToolInput:
         """Get the input for a specific tool based on the query."""
-
-        # 1. ask the agent to generate the input for the tool based on the query
-
-        # 2. return the input for the tool
 
         raise NotImplementedError(
             "This method should be implemented by subclasses to generate input for the tool."

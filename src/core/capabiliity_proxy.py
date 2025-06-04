@@ -23,7 +23,7 @@ class CapabilityProxy:
     knowledge_base: KnowledgeBase
     memory: MemoryManager
     planning: Planning
-    tool_manager: ToolsManager
+    tools_manager: ToolsManager
     response_formatter: ResponseFormatter
 
     # supported by Sprint 3 (in order of priority)
