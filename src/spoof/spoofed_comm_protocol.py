@@ -2,7 +2,7 @@ import random
 
 from core.agent import Agent
 from core.chat import ChatHistory
-from core.query import Query
+from core.query import Query, QueryResponse
 from core.communication_protocol import CommunicationProtocol
 from core.entity import Entity
 
@@ -69,3 +69,12 @@ class CommunicationProtocolSpoof(CommunicationProtocol):
     def history_appears_complete(self, chat_history: ChatHistory) -> bool:
         """Check if the chat history appears complete."""
         return False
+
+    def handle_query(self, query: Query) -> QueryResponse:
+        """Handle a query from an agent."""
+        agent = query.recipient
+
+        if not isinstance(agent, Agent):
+            raise ValueError(f"Query recipient {agent} is not an Agent.")
+
+        return agent.handle_query(query)

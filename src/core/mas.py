@@ -4,6 +4,7 @@ from core.chat import ChatHistory, ChatMessage
 from core.query import Query
 from core.entity import HumanUser
 from core.communication_protocol import CommunicationProtocol
+from implementations.communication_protocol import BasicCommunicationProtocol
 
 
 class MASResponse(Enum):
@@ -49,6 +50,12 @@ class MAS:
         # load memories of each agent
         for agent in self.agents.values():
             agent.capabilties.memory.update_memory_from_chat_history(self.chat_history)
+
+        # TODO hacky
+
+        # bind the user_mas chat history to the MAS chat history
+        if isinstance(self.communication_protocol, BasicCommunicationProtocol):
+            self.communication_protocol.bind_user_space_history(self.chat_history)
 
     def reset_steps(self):
         """Reset the step count."""
@@ -122,7 +129,7 @@ class MAS:
         )
 
         # check if it needs human input (e.g. can't automatically run)
-        if query.who == self.user:
+        if query.recipient == self.user:
             # if it is the user, we need to wait for input
             self.set_query_to_ask_user(query)
 
@@ -137,10 +144,10 @@ class MAS:
             return self.wait_for_user_confirmation()
 
         # get agent from query
-        agent = self.get_agent(query.who.name)
+        agent = self.get_agent(query.recipient.name)
 
         # ask the agent
-        response = agent.handle_query(query)
+        response = self.communication_protocol.handle_query(query)
 
         # add the response to the chat history
         self.chat_history.add_message(response)

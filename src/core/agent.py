@@ -63,3 +63,8 @@ class Agent(Entity):
     def get_capabilities(self) -> AgentCapabilities:
         """Get the capabilities of the agent."""
         return self.capabilties
+
+    def is_assistant_agent(self) -> bool:
+        """Check if the agent is an assistant agent."""
+        # TODO make this more robust, e.g. by checking the role or capabilities
+        return self.name == "Assistant"
