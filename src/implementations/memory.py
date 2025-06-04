@@ -1,6 +1,5 @@
 from capabilities.memory import MemoryManager, Memory
-from sentence_transformers import SentenceTransformer
-from core.chat import ChatHistory, ChatMessage
+from core.chat import ChatHistory
 import os
 from mem0 import MemoryClient
 
@@ -31,8 +30,9 @@ class Memory(MemoryManager):
         message = messages[0]
         message = message.content
         self.client.add(message, user_id=user_id)
-        if len(messages) == 0:
+        if len(messages) == 1:
             return
+
         message = messages[1]
         message = message.content
         self.client.add(message, user_id=user_id)
