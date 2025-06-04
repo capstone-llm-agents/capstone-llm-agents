@@ -27,9 +27,13 @@ class Memory(MemoryManager):
         # filter for user messages
         messages = [msg for msg in messages if msg.who.role == "user"]
 
+        if len(messages) == 0:
+            return
+
         message = messages[0]
         message = message.content
         self.client.add(message, user_id=user_id)
+
         if len(messages) == 1:
             return
 

@@ -187,3 +187,6 @@ config.yaml
 
 # ignore ds store
 .DS_Store
+
+# do not track
+*.pyc
