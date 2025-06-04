@@ -1,7 +1,6 @@
 from core.agent import Agent
 from core.chat import ChatHistory
-from core.entity import Entity
-from core.mas import MAS
+from core.entity import Entity, HumanUser
 
 
 class Space:
@@ -11,11 +10,10 @@ class Space:
     entities: list[Entity]
     chat_history: ChatHistory
 
-    def __init__(self, name: str, mas: MAS):
+    def __init__(self, name: str):
         self.name = name
         self.entities = []
         self.chat_history = ChatHistory()
-        self.mas = mas
 
     def get_entities(self) -> list[Entity]:
         """Get all entities in the space."""
@@ -31,16 +29,52 @@ class Space:
             self.entities.append(entity)
 
 
-class MASSpace(Space):
-    """A space that is part of a Multi-Agent System (MAS)."""
+class UserSpace(Space):
+    """A space where the user can interact with an assistant agent."""
 
-    assistant: Agent
-    """The assistant agent talks to the user."""
+    user: HumanUser
+    assistant_agent: Agent
 
-    discovery_agent: Agent
-    """The discovery agent helps the assistant find other agents outside the MAS."""
+    def __init__(self, name: str, assistant_agent: Agent, user: HumanUser):
+        super().__init__(name)
 
-    def __init__(self, name: str, mas: MAS, assistant: Agent, discovery_agent: Agent):
-        super().__init__(name, mas)
-        self.assistant = assistant
+        self.user = user
+
+        self.assistant_agent = assistant_agent
+        self.add_entity(assistant_agent)
+
+
+class MainSpace(Space):
+    """A main space that holds all the agents, and the assistant agent."""
+
+    assistant_agent: Agent
+    discovery_agent: Agent | None
+
+    def __init__(
+        self,
+        name: str,
+        assistant_agent: Agent,
+        all_agents: list[Agent],
+        discovery_agent: Agent | None = None,
+    ):
+        super().__init__(name)
+
+        self.assistant_agent = assistant_agent
         self.discovery_agent = discovery_agent
+
+        for agent in all_agents:
+            self.add_entity(agent)
+
+
+class DiscoverySpace(Space):
+    """A space that holds the discovery agents for different domains."""
+
+    discovery_agents: list[Agent]
+
+    def __init__(self, name: str, discovery_agents: list[Agent]):
+        super().__init__(name)
+
+        self.discovery_agents = discovery_agents
+
+        for agent in discovery_agents:
+            self.add_entity(agent)
