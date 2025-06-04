@@ -34,7 +34,7 @@ tools_manager.add_tool(MathTool())
 app.add_capability(tools_manager)
 
 # memory
-app.add_capability(Memory())
+# app.add_capability(Memory())
 
 # Agents
 # ======

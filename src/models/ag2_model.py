@@ -82,7 +82,7 @@ class AG2Model(UnderlyingModel):
         past_messages.append({"role": "user", "content": full_prompt})
 
         # get the sender agent
-        sender_agent = query.sender
+        sender_agent = self.who_asked(query)
 
         response = self.ag2_agent.generate_reply(
             messages=past_messages,
