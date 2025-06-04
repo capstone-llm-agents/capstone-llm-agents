@@ -24,6 +24,8 @@ tools_manager.add_tool(CurrentDateTimeTool())
 tools_manager.add_tool(WeekdayTool())
 tools_manager.add_tool(MathTool())
 
+app.add_capability(tools_manager)
+
 # Agents
 # ======
 
