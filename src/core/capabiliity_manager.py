@@ -35,7 +35,7 @@ class AgentCapabilities:
     knowledge_base: KnowledgeBase
     memory: MemoryManager
     planning: Planning
-    tool_manager: ToolsManager
+    tools_manager: ToolsManager
     response_formatter: ResponseFormatter
 
     # supported by Sprint 3 (in order of priority)
@@ -54,7 +54,7 @@ class AgentCapabilities:
         knowledge_base: KnowledgeBase,
         memory: MemoryManager,
         planning: Planning,
-        tool_manager: ToolsManager,
+        tools_manager: ToolsManager,
         response_formatter: ResponseFormatter,
         communication: CommunicationInterface,
         learning: Learning,
@@ -66,7 +66,7 @@ class AgentCapabilities:
         self.knowledge_base = knowledge_base
         self.memory = memory
         self.planning = planning
-        self.tool_manager = tool_manager
+        self.tools_manager = tools_manager
         self.response_formatter = response_formatter
 
         # supported by Sprint 3 (in order of priority)
@@ -85,7 +85,7 @@ class AgentCapabilities:
                 self.knowledge_base,
                 self.memory,
                 self.planning,
-                self.tool_manager,
+                self.tools_manager,
                 self.response_formatter,
                 self.communication,
                 self.learning,
@@ -100,7 +100,7 @@ class AgentCapabilities:
             "knowledge_base": self.knowledge_base,
             "memory": self.memory,
             "planning": self.planning,
-            "tools_manager": self.tool_manager,
+            "tools_manager": self.tools_manager,
             "response_formatter": self.response_formatter,
             "communication": self.communication,
             "learning": self.learning,
@@ -139,7 +139,7 @@ class AgentCapabilities:
             knowledge_base=capabilities["knowledge_base"],
             memory=capabilities["memory"],
             planning=capabilities["planning"],
-            tool_manager=capabilities["tools_manager"],
+            tools_manager=capabilities["tools_manager"],
             response_formatter=capabilities["response_formatter"],
             communication=capabilities["communication"],
             learning=capabilities["learning"],
