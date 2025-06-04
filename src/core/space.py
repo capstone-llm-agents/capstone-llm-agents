@@ -1,7 +1,6 @@
 from core.agent import Agent
 from core.chat import ChatHistory, ChatMessage
 from core.entity import Entity, HumanUser
-from core.query import Query, QueryResponse
 
 
 class Space:
