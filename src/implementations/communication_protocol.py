@@ -5,6 +5,7 @@ from core.query import Query, QueryResponse
 from core.communication_protocol import CommunicationProtocol
 from core.space import MainSpace, Space, UserSpace
 from core.task import AnswerQueryTask
+from implementations.communication_interface import SimpleCommunicationInterface
 
 
 class BasicCommunicationProtocol(CommunicationProtocol):
@@ -45,6 +46,34 @@ class BasicCommunicationProtocol(CommunicationProtocol):
             last_message.content,
         )
 
+    def get_most_suitable_agent_for_query(
+        self, agents: list[Agent], query: Query
+    ) -> Agent:
+        """Get the most suitable agent from the list of agents."""
+        if len(agents) == 0:
+            raise ValueError("No agents available to handle the query.")
+
+        best_agent = None
+        best_score = float("-inf")
+
+        task = AnswerQueryTask(query)
+
+        for agent in agents:
+            interface = agent.capabilties.communication
+
+            # TODO hack
+            assert isinstance(interface, SimpleCommunicationInterface)
+
+            score = interface.task_is_suitable(task, agent)
+
+            if score > best_score:
+                best_score = score
+                best_agent = agent
+
+        assert best_agent is not None, "No suitable agent found for the query."
+
+        return best_agent
+
     def handle_query(self, query: Query) -> QueryResponse:
         """Handle a query and return a response."""
 
@@ -53,16 +82,45 @@ class BasicCommunicationProtocol(CommunicationProtocol):
         if not isinstance(agent, Agent):
             raise ValueError("Query recipient must be an Agent.")
 
-        # If the recipient is the assistant agent do either:
-        # a. If the query is from the user, we will ask the main space to handle the query
-        # b. If the query is from another agent, we will send this query back to the user in the user space
-
         # If the recipient is not the assistant agent, we will send the query to the assistant agent
 
-        if agent.is_assistant_agent() and query.sender != self.user:
-            return self.user_space.handle_query(query)
+        # The variations are:
+        # U -> As (us)
+        # As -> U (us) * this is implicitly handled by the MAS
+        # As -> Any (ms)
+        # Any -> As (ms)
 
-        return self.main_space.handle_query(query)
+        assistant_agent = self.get_assistant_agent()
+        other_agents = [
+            agent for agent in self.main_space.get_agents() if agent != assistant_agent
+        ]
+
+        # for now we assume that sender is always the user, and recipient is always the assistant agent
+
+        self.main_space.add_chat_message(
+            ChatMessage(
+                assistant_agent,
+                f"Who is most suited to handle this query? {query.content}",
+            )
+        )
+
+        # get the most suitable agent for the query
+        suitable_agent = self.get_most_suitable_agent_for_query(other_agents, query)
+
+        self.main_space.add_chat_message(
+            ChatMessage(
+                suitable_agent,
+                "I will handle the task.",
+            )
+        )
+
+        # suitable agent handles the query
+        new_query = Query(assistant_agent, suitable_agent, query.content)
+
+        response = suitable_agent.handle_query(new_query)
+
+        # remap to assistant agent
+        return QueryResponse(assistant_agent, response.content)
 
     def get_assistant_agent(self) -> Agent:
         """Get the default assistant agent from the list of agents."""

@@ -1,5 +1,5 @@
 from core.agent import Agent
-from core.chat import ChatHistory
+from core.chat import ChatHistory, ChatMessage
 from core.entity import Entity, HumanUser
 from core.query import Query, QueryResponse
 
@@ -29,9 +29,9 @@ class Space:
         if entity not in self.entities:
             self.entities.append(entity)
 
-    def handle_query(self, query: Query) -> QueryResponse:
-        """Handle a query in the space and return a response."""
-        raise NotImplementedError("This method should be implemented in subclasses.")
+    def add_chat_message(self, message: ChatMessage):
+        """Add a chat message to the chat history."""
+        self.chat_history.add_message(message)
 
 
 class UserSpace(Space):
@@ -69,6 +69,10 @@ class MainSpace(Space):
 
         for agent in all_agents:
             self.add_entity(agent)
+
+    def get_agents(self) -> list[Agent]:
+        """Get all agents in the main space."""
+        return [entity for entity in self.entities if isinstance(entity, Agent)]
 
 
 class DiscoverySpace(Space):
