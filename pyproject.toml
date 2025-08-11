@@ -4,7 +4,10 @@ version = "0.1.0"
 description = "MAS that uses LLM agents to solve complex tasks."
 readme = "README.md"
 requires-python = ">=3.13"
-dependencies = []
+dependencies = [
+    "textual>=5.3.0",
+    "textual-dev>=1.7.0",
+]
 
 [tool.ruff.lint]
 select = ["ALL"]
