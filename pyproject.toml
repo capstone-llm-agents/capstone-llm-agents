@@ -1,0 +1,14 @@
+[project]
+name = "capstone-llm-agents"
+version = "0.1.0"
+description = "MAS that uses LLM agents to solve complex tasks."
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = []
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = ["FIX002", "TD002"]
+
+[tool.ruff]
+line-length = 120
