@@ -25,3 +25,6 @@ Running a script in the scripts folder called "script_name". Replace with the ac
 
 ```python -m scripts.script_name```
 
+For example if I have a script called "test_actions.py", "script_name" would be "test_actions".
+
+```python -m scripts.test_actions```
