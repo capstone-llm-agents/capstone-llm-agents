@@ -15,28 +15,36 @@ if TYPE_CHECKING:
 
 
 class MessageBubble(Widget):
-    """A message bubble widget for chat messages."""
+    """Base class for message bubble widgets."""
 
-    def __init__(self, message: str, is_user: bool = False) -> None:
+    def __init__(self, message: str) -> None:
         """Initialize the message bubble."""
         super().__init__()
         self.message = message
-        self.is_user = is_user
+
+
+class UserMessage(MessageBubble):
+    """A message bubble widget for user messages."""
 
     def compose(self) -> ComposeResult:
-        """Compose the message bubble."""
-        if self.is_user:
-            with Horizontal(classes="user-message-container"):
-                yield Static("", classes="spacer")  # Spacer to push message to right
-                with Vertical(classes="user-message-bubble"):
-                    yield Static("You", classes="message-sender")
-                    yield Static(self.message, classes="message-content")
-        else:
-            with Horizontal(classes="assistant-message-container"):
-                with Vertical(classes="assistant-message-bubble"):
-                    yield Static("Assistant", classes="message-sender")
-                    yield Static(self.message, classes="message-content")
-                yield Static("", classes="spacer")  # Spacer to push message to left
+        """Compose the user message bubble."""
+        with Horizontal(classes="user-message-container"):
+            yield Static("", classes="spacer")  # Spacer to push message to right
+            with Vertical(classes="user-message-bubble"):
+                yield Static("You", classes="message-sender")
+                yield Static(self.message, classes="message-content")
+
+
+class AgentMessage(MessageBubble):
+    """A message bubble widget for agent messages."""
+
+    def compose(self) -> ComposeResult:
+        """Compose the agent message bubble."""
+        with Horizontal(classes="assistant-message-container"):
+            with Vertical(classes="assistant-message-bubble"):
+                yield Static("Assistant", classes="message-sender")
+                yield Static(self.message, classes="message-content")
+            yield Static("", classes="spacer")  # Spacer to push message to left
 
 
 class MainMenu(Screen):
@@ -102,7 +110,7 @@ class ChatScreen(Screen):
         # focus the input so the user can start typing immediately
         self.input.focus()
 
-        welcome_bubble = MessageBubble("Hello! I'm your assistant. How can I help you today?", is_user=False)
+        welcome_bubble = AgentMessage("Hello! I'm your assistant. How can I help you today?")
         self.chat_container.mount(welcome_bubble)
 
     def on_input_submitted(self, event: Input.Submitted) -> None:
@@ -115,11 +123,11 @@ class ChatScreen(Screen):
         if not user_msg:
             return
 
-        user_bubble = MessageBubble(user_msg, is_user=True)
+        user_bubble = UserMessage(user_msg)
         self.chat_container.mount(user_bubble)
 
         response: str = f"I heard '{user_msg}'."
-        assistant_bubble = MessageBubble(response, is_user=False)
+        assistant_bubble = AgentMessage(response)
         self.chat_container.mount(assistant_bubble)
 
         self.history.append(("user", user_msg))
