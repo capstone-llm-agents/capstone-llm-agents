@@ -18,6 +18,7 @@ class MessageBubble(Widget):
     """A message bubble widget for chat messages."""
 
     def __init__(self, message: str, is_user: bool = False) -> None:
+        """Initialize the message bubble."""
         super().__init__()
         self.message = message
         self.is_user = is_user
