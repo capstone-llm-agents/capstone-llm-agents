@@ -1,82 +1,141 @@
 ChatScreen {
-        layout: vertical;
-    }
-    
-    #chat-container {
-        height: 1fr;
-        overflow-y: auto;
-        border: solid $accent;
-        margin: 1;
-        scrollbar-size: 1 1;
-    }
-    
-    #chat-input {
-        margin: 1;
-        dock: bottom;
-    }
-    
-    MessageBubble {
-        height: auto;
-        margin: 0;
-        padding: 0;
-    }
-    
-    .user-message-container {
-        width: 100%;
-        height: auto;
-        margin: 0;
-        padding: 0;
-        content-align: right middle;
-    }
-    
-    .assistant-message-container {
-        width: 100%;
-        height: auto;
-        margin: 0;
-        padding: 0;
-        content-align: left middle;
-    }
-    
-    .spacer {
-        width: 1fr;
-        height: 1;
-    }
-    
-    .user-message-bubble {
-        width: auto;
-        min-width: 80;
-        max-width: 120;
-        height: auto;
-        background: $primary;
-        border: solid $accent;
-        padding: 1 2;
-        margin: 0 2 1 0;
-    }
-    
-    .assistant-message-bubble {
-        width: auto;
-        min-width: 80;
-        max-width: 120;
-        height: auto;
-        background: $surface;
-        border: solid $accent;
-        padding: 1 2;
-        margin: 0 0 1 2;
-    }
-    
-    .message-sender {
-        color: $text;
-        text-style: bold;
-        height: auto;
-        width: 100%;
-        padding: 0;
-        margin-bottom: 1;
-    }
-    
-    .message-content {
-        color: $text;
-        height: auto;
-        width: 100%;
-        padding: 0;
-        text-align: left;
-    }
+    layout: vertical;
+}
+
+#chat-container {
+    height: 1fr;
+    overflow-y: auto;
+    border: solid $accent;
+    margin: 1;
+    scrollbar-size: 1 1;
+}
+
+#chat-input {
+    margin: 1;
+    dock: bottom;
+}
+
+MessageBubble {
+    height: auto;
+    margin: 0;
+    padding: 0;
+}
+
+.user-message-container {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    content-align: right middle;
+}
+
+.assistant-message-container {
+    width: 100%;
+    height: auto;
+    margin: 0;
+    padding: 0;
+    content-align: left middle;
+}
+
+.spacer {
+    width: 1fr;
+    height: 1;
+}
+
+.user-message-bubble {
+    width: auto;
+    min-width: 80;
+    max-width: 120;
+    height: auto;
+    background: $primary;
+    border: solid $accent;
+    padding: 1 2;
+    margin: 0 2 1 0;
+}
+
+.assistant-message-bubble {
+    width: auto;
+    min-width: 80;
+    max-width: 120;
+    height: auto;
+    background: $surface;
+    border: solid $accent;
+    padding: 1 2;
+    margin: 0 0 1 2;
+}
+
+.message-sender {
+    color: $text;
+    text-style: bold;
+    height: auto;
+    width: 100%;
+    padding: 0;
+    margin-bottom: 1;
+}
+
+.message-content {
+    color: $text;
+    height: auto;
+    width: 100%;
+    padding: 0;
+    text-align: left;
+}
+
+/* Thinking section styles */
+.thinking-section {
+    background: $surface-darken-1;
+    border: solid $accent 50%;
+    margin-bottom: 1;
+    padding: 1;
+    height: auto;
+}
+
+.thinking-header {
+    color: $text-muted;
+    text-style: italic;
+    margin-bottom: 1;
+}
+
+.thinking-header.clickable {
+    color: $accent;
+    text-style: bold;
+    margin-bottom: 1;
+}
+
+.thinking-header.clickable:hover {
+    color: $accent-lighten-2;
+    text-style: bold underline;
+}
+
+.thinking-content {
+    height: auto;
+    width: 100%;
+    padding-top: 0;
+    margin-top: 0;
+}
+
+/* Work step indicator styles */
+.work-step-indicator {
+    height: 1;
+    margin: 0 0 1 0;
+    padding: 0;
+    content-align: left middle;
+}
+
+.mini-spinner {
+    width: 2;
+    height: 1;
+}
+
+.step-complete {
+    color: $success;
+    width: 2;
+    height: 1;
+    text-align: center;
+}
+
+.step-text {
+    color: $text;
+    height: 1;
+    margin-left: 1;
+}

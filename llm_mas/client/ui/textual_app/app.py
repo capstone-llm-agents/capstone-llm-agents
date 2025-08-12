@@ -2,16 +2,23 @@
 
 from __future__ import annotations
 
+import asyncio
+import random
 from typing import TYPE_CHECKING
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Button, Footer, Header, Input, Static
+from textual.widgets import Button, Footer, Header, Input, LoadingIndicator, Static
+
+from llm_mas.action_system.core.action import Action
+from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, Work, WorkStep
 
 if TYPE_CHECKING:
     from textual import events
+
+background_tasks = set()
 
 
 class MessageBubble(Widget):
@@ -35,16 +42,121 @@ class UserMessage(MessageBubble):
                 yield Static(self.message, classes="message-content")
 
 
+class WorkStepIndicator(Widget):
+    """A compact work step indicator that can be embedded in messages."""
+
+    def __init__(self, work_step: WorkStep) -> None:
+        """Initialize the work step indicator."""
+        super().__init__()
+        self.work_step = work_step
+
+    def compose(self) -> ComposeResult:
+        """Compose the compact work step indicator."""
+        with Horizontal(classes="work-step-indicator"):
+            if not self.work_step.complete:
+                yield LoadingIndicator(classes="mini-spinner")
+            else:
+                yield Static("✓", classes="step-complete")
+
+            step_text = self.work_step.name
+            if self.work_step.work:
+                step_text += f": {self.work_step.work.name}"
+            yield Static(step_text, classes="step-text")
+
+    async def mark_complete(self) -> None:
+        """Mark the work step as complete and update the UI."""
+        self.work_step.mark_complete()
+        await self.recompose()
+
+
 class AgentMessage(MessageBubble):
-    """A message bubble widget for agent messages."""
+    """A message bubble widget for agent messages with integrated work steps."""
+
+    def __init__(self, message: str = "", show_thinking: bool = False) -> None:
+        """Initialize the agent message bubble."""
+        super().__init__(message)
+        self.show_thinking = show_thinking
+        self.work_steps: list[WorkStepIndicator] = []
+        self.thinking_container: Vertical | None = None
+        self.thinking_header: Static | None = None
+        self.thinking_content: Vertical | None = None
+        self.message_bubble: Vertical | None = None
+        self.is_thinking_expanded: bool = True
 
     def compose(self) -> ComposeResult:
         """Compose the agent message bubble."""
         with Horizontal(classes="assistant-message-container"):
-            with Vertical(classes="assistant-message-bubble"):
+            self.message_bubble = Vertical(classes="assistant-message-bubble")
+            with self.message_bubble:
                 yield Static("Assistant", classes="message-sender")
-                yield Static(self.message, classes="message-content")
-            yield Static("", classes="spacer")  # Spacer to push message to left
+
+                if self.show_thinking:
+                    self.thinking_container = Vertical(classes="thinking-section")
+                    with self.thinking_container:
+                        self.thinking_header = Static("▼ Thinking...", classes="thinking-header clickable")
+                        yield self.thinking_header
+
+                        # Create the thinking content container with unique ID
+                        self.thinking_content = Vertical(classes="thinking-content")
+                        yield self.thinking_content
+                    yield self.thinking_container
+
+                if self.message:
+                    yield Static(self.message, classes="message-content")
+            yield self.message_bubble
+            yield Static("", classes="spacer")
+
+    async def add_work_step(self, work_step: WorkStep) -> WorkStepIndicator:
+        """Add a work step to the thinking section."""
+        if not self.thinking_content:
+            return None
+
+        indicator = WorkStepIndicator(work_step)
+        static = Static(indicator.work_step.name, classes="work-step-text")
+        await self.thinking_content.mount(static)
+
+        # TODO figure out why the indicator doesn't show up
+        # await self.thinking_content.mount(indicator)
+
+        self.work_steps.append(indicator)
+
+        self.thinking_content.refresh()
+        return indicator
+
+    async def collapse_thinking_and_show_response(self, response_text: str) -> None:
+        """Collapse the thinking section and show the final response."""
+        if self.thinking_header and self.thinking_content:
+            # Update header to show collapsed state
+            self.thinking_header.update("▶ Show thinking...")
+            # Hide the thinking content
+            self.thinking_content.display = False
+            self.is_thinking_expanded = False
+
+        # Add the response content to the message bubble
+        if self.message_bubble:
+            response_widget = Static(response_text, classes="message-content")
+            await self.message_bubble.mount(response_widget)
+
+    def on_click(self, event) -> None:
+        """Handle clicks to toggle thinking section."""
+        if self.thinking_header and self.thinking_content and event.widget == self.thinking_header:
+            self.toggle_thinking_section()
+
+    def toggle_thinking_section(self) -> None:
+        """Toggle the visibility of the thinking section."""
+        if not self.thinking_header or not self.thinking_content:
+            return
+
+        if self.is_thinking_expanded:
+            # Collapse
+            self.thinking_header.update("▶ Show thinking...")
+            self.thinking_content.display = False
+            self.is_thinking_expanded = False
+        else:
+            # Expand
+            self.thinking_header.update("▼ Hide thinking...")
+            self.thinking_content.display = True
+            self.is_thinking_expanded = True
 
 
 class MainMenu(Screen):
@@ -107,16 +219,66 @@ class ChatScreen(Screen):
     def on_mount(self) -> None:
         """Handle the mount event to initialize the chat screen."""
         self.history = []
-        # focus the input so the user can start typing immediately
         self.input.focus()
 
         welcome_bubble = AgentMessage("Hello! I'm your assistant. How can I help you today?")
         self.chat_container.mount(welcome_bubble)
 
+    async def simulate_agent_workflow(self, user_msg: str) -> None:
+        """Simulate an agent workflow with compact work steps."""
+        agent_bubble = AgentMessage(show_thinking=True)
+        self.chat_container.mount(agent_bubble)
+        self.chat_container.scroll_end()
+
+        selecting_step = SelectingActionWorkStep()
+        selecting_indicator = await agent_bubble.add_work_step(selecting_step)
+
+        await asyncio.sleep(random.uniform(0.8, 1.5))  # noqa: S311
+        if selecting_indicator:
+            await selecting_indicator.mark_complete()
+
+        if "capital" in user_msg.lower() or "geography" in user_msg.lower():
+            action = Action("CheckGeography Action")
+            work = Work("Checking geography database")
+        elif "weather" in user_msg.lower():
+            action = Action("CheckWeather Action")
+            work = Work("Fetching weather data")
+        else:
+            action = Action("ResearchTopic Action")
+            work = Work("Researching topic")
+
+        performing_step = PerformingActionWorkStep(action)
+        performing_step.work = work
+        performing_indicator = await agent_bubble.add_work_step(performing_step)
+
+        await asyncio.sleep(random.uniform(1.2, 2.0))  # noqa: S311
+        if performing_indicator:
+            await performing_indicator.mark_complete()
+
+        # Optionally add a response step
+        if random.choice([True, False]):  # noqa: S311
+            respond_step = PerformingActionWorkStep(Action("Generating Response"))
+            respond_indicator = await agent_bubble.add_work_step(respond_step)
+
+            await asyncio.sleep(random.uniform(0.5, 1.0))  # noqa: S311
+            if respond_indicator:
+                await respond_indicator.mark_complete()
+
+        if "capital" in user_msg.lower():
+            response = "The capital of France is Paris. It's located in the north-central part of the country along the Seine River."
+        elif "weather" in user_msg.lower():
+            response = "I'd need access to a weather service to provide current conditions. You can check local weather services for up-to-date information."
+        else:
+            response = f"I've analyzed your message about '{user_msg}'. Based on my research, I can provide relevant information and insights."
+
+        # Hide thinking and show response
+        await asyncio.sleep(0.3)
+        await agent_bubble.collapse_thinking_and_show_response(response)
+        self.chat_container.scroll_end()
+
     def on_input_submitted(self, event: Input.Submitted) -> None:
         """Handle input submission from the chat box."""
         user_msg: str = event.value.strip()
-        # clear the input early (robust to differing event shapes)
         event.input.value = ""
         self.input.value = ""
 
@@ -125,15 +287,13 @@ class ChatScreen(Screen):
 
         user_bubble = UserMessage(user_msg)
         self.chat_container.mount(user_bubble)
-
-        response: str = f"I heard '{user_msg}'."
-        assistant_bubble = AgentMessage(response)
-        self.chat_container.mount(assistant_bubble)
+        self.chat_container.scroll_end()
 
         self.history.append(("user", user_msg))
-        self.history.append(("assistant", response))
 
-        self.chat_container.scroll_end()
+        task = asyncio.create_task(self.simulate_agent_workflow(user_msg))
+        background_tasks.add(task)
+        task.add_done_callback(background_tasks.discard)
 
     def on_key(self, event: events.Key) -> None:
         """Handle key events for navigation."""

@@ -6,9 +6,9 @@ from llm_mas.action_system.core.action_params import ActionParams
 class Action:
     """Base class for all actions in the system."""
 
-    def __init__(self) -> None:
+    def __init__(self, name: str | None = None) -> None:
         """Initialize the action with a name."""
-        self.name = self.__class__.__name__
+        self.name = name if name is not None else self.__class__.__name__
 
     def do(self, params: ActionParams) -> None:
         """Perform the action with the given agent."""
