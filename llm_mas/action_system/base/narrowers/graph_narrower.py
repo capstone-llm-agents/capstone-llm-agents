@@ -40,13 +40,13 @@ class GraphBasedNarrower(ActionNarrower):
         narrowed_actions: list[Action] = []
 
         # get last action from workspace action history
-        last_action = workspace.action_history.get_last_action()
+        last_action_tup = workspace.action_history.get_last_action()
 
-        if last_action is None:
-            # If no last action, return the original action space
+        if last_action_tup is None:
             narrowed_actions = self.default_actions
 
         else:
+            last_action, _ = last_action_tup
             # find the action edge corresponding to the last action
             for edge in self.action_edges:
                 if edge.action == last_action:

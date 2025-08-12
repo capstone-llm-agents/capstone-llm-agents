@@ -1,5 +1,6 @@
 """The example agent module demonstrates how to create a simple agent with actions and workflows."""
 
+from components.actions.otk import OTK
 from components.actions.say_hello import SayHello
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.actions.workflow import Workflow
@@ -16,6 +17,7 @@ EXAMPLE_AGENT = Agent("ExampleAgent", action_space, narrower, selector)
 
 # add some actions
 EXAMPLE_AGENT.add_action(SayHello())
+EXAMPLE_AGENT.add_action(OTK())
 EXAMPLE_AGENT.add_action(StopAction())
 
 # workflow to say hello 3 times
@@ -25,9 +27,11 @@ for _ in range(3):
 EXAMPLE_AGENT.add_action(workflow)
 
 # default action
-narrower.add_default_action(SayHello())
-narrower.add_default_action(workflow)
+# narrower.add_default_action(SayHello())
+# narrower.add_default_action(workflow)
+narrower.add_default_action(OTK())
 
 # add some edges
 narrower.add_action_edge(SayHello(), [StopAction()])
 narrower.add_action_edge(workflow, [StopAction()])
+narrower.add_action_edge(OTK(), [StopAction()])

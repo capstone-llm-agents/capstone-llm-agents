@@ -1,1 +1,1 @@
-"""Calls Ollam API."""
+"""Code for the Ollama model provider."""

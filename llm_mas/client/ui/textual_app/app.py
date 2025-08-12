@@ -12,6 +12,7 @@ from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, LoadingIndicator, Static
 
+from components.actions.otk import OTK
 from components.agents.example_agent import EXAMPLE_AGENT
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_params import ActionParams
@@ -246,7 +247,7 @@ class ChatScreen(Screen):
 
             selected_action = EXAMPLE_AGENT.select_action()
 
-            await asyncio.sleep(random.uniform(1.2, 2.0))  # Simulate selection duration
+            await asyncio.sleep(random.uniform(1.2, 2.0))  # Simulate selection duration  # noqa: S311
 
             # actual selecting action step
             selecting_step.mark_complete()
@@ -259,18 +260,24 @@ class ChatScreen(Screen):
             performing_step = PerformingActionWorkStep(selected_action)
             performing_indicator = await agent_bubble.add_work_step(performing_step)
 
-            EXAMPLE_AGENT.do_selected_action(selected_action)
-
-            await asyncio.sleep(random.uniform(1.2, 2.0))  # Simulate action duration
+            params = ActionParams()
+            params.set_param("prompt", user_msg)
+            EXAMPLE_AGENT.do_selected_action(selected_action, params)
 
             # actual work step
             performing_step.mark_complete()
-
             # ui
             if performing_indicator:
                 await performing_indicator.mark_complete()
 
-        response = "who ask"
+        response = ""
+
+        print("Action history:", EXAMPLE_AGENT.workspace.action_history.get_history())
+
+        action, result = EXAMPLE_AGENT.workspace.action_history.get_index(-2)
+
+        if isinstance(action, OTK):
+            response = result.get_param("response")
 
         await asyncio.sleep(0.3)
         await agent_bubble.collapse_thinking_and_show_response(response)

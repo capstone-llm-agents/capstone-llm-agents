@@ -4,6 +4,7 @@ from typing import override
 
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_params import ActionParams
+from llm_mas.action_system.core.action_result import ActionResult
 
 
 class Workflow(Action):
@@ -21,7 +22,10 @@ class Workflow(Action):
 
     # TODO: Extend ActionParams to WorkflowActionParams for Workflow actions # noqa: TD003
     @override
-    def do(self, params: ActionParams) -> None:
+    def do(self, params: ActionParams) -> ActionResult:
         """Execute all actions in the workflow."""
         for action in self.actions:
             action.do(params)
+
+        # TODO: return actual result gg
+        return ActionResult()

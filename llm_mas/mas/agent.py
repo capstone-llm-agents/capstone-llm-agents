@@ -6,6 +6,7 @@ from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_narrower import ActionNarrower
 from llm_mas.action_system.core.action_params import ActionParams
+from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.agent.workspace import Workspace
@@ -37,24 +38,24 @@ class Agent:
         # workspace
         self.workspace = workspace if workspace is not None else Workspace()
 
-    def act(self) -> Action:
+    def act(self, params: ActionParams | None = None) -> ActionResult:
         """Perform an action in the workspace using the agent's action selection strategy."""
         action = self.select_action()
-        return self.do_selected_action(action)
+        return self.do_selected_action(action, params)
 
     def select_action(self) -> Action:
         """Select an action to perform."""
         narrowed_action_space = self.narrower.narrow(self.workspace, self.action_space)
         return self.selector.select_action(narrowed_action_space)
 
-    def do_selected_action(self, action: Action) -> Action:
+    def do_selected_action(self, action: Action, params: ActionParams | None = None) -> ActionResult:
         """Perform the selected action."""
         # TODO: Get parameters from some source like ParamProvider  # noqa: TD003
+        params = params if params is not None else ActionParams()
 
-        params = ActionParams()
-        action.do(params)
-        self.workspace.action_history.add_action(action)
-        return action
+        res = action.do(params)
+        self.workspace.action_history.add_action(action, res)
+        return res
 
     def add_action(self, action: Action) -> None:
         """Add an action to the agent's action space."""

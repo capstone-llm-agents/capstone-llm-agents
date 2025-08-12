@@ -1,6 +1,7 @@
 """Action class for the multi-agent system."""
 
 from llm_mas.action_system.core.action_params import ActionParams
+from llm_mas.action_system.core.action_result import ActionResult
 
 
 class Action:
@@ -10,7 +11,7 @@ class Action:
         """Initialize the action with a name."""
         self.name = name if name is not None else self.__class__.__name__
 
-    def do(self, params: ActionParams) -> None:
+    def do(self, params: ActionParams) -> ActionResult:
         """Perform the action with the given agent."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
