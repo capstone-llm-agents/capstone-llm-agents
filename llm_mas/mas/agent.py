@@ -38,22 +38,28 @@ class Agent:
         # workspace
         self.workspace = workspace if workspace is not None else Workspace()
 
-    def act(self, params: ActionParams | None = None) -> ActionResult:
+    def act(self, context: ActionResult | None = None, params: ActionParams | None = None) -> ActionResult:
         """Perform an action in the workspace using the agent's action selection strategy."""
         action = self.select_action()
-        return self.do_selected_action(action, params)
+        return self.do_selected_action(action, context, params)
 
     def select_action(self) -> Action:
         """Select an action to perform."""
         narrowed_action_space = self.narrower.narrow(self.workspace, self.action_space)
         return self.selector.select_action(narrowed_action_space)
 
-    def do_selected_action(self, action: Action, params: ActionParams | None = None) -> ActionResult:
+    def do_selected_action(
+        self,
+        action: Action,
+        context: ActionResult | None = None,
+        params: ActionParams | None = None,
+    ) -> ActionResult:
         """Perform the selected action."""
         # TODO: Get parameters from some source like ParamProvider  # noqa: TD003
         params = params if params is not None else ActionParams()
 
-        res = action.do(params)
+        context = context if context is not None else ActionResult()
+        res = action.do(params, context)
         self.workspace.action_history.add_action(action, res)
         return res
 

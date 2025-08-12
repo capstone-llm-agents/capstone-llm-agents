@@ -240,6 +240,7 @@ class ChatScreen(Screen):
         # clear history
         agent.workspace.action_history.clear()
 
+        context = None
         while not agent.finished_working():
             selecting_step = SelectingActionWorkStep()
 
@@ -262,7 +263,7 @@ class ChatScreen(Screen):
 
             params = ActionParams()
             params.set_param("prompt", user_msg)
-            agent.do_selected_action(selected_action, params)
+            context = agent.do_selected_action(selected_action, context, params)
 
             # actual work step
             performing_step.mark_complete()

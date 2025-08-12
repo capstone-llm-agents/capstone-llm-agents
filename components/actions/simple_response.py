@@ -12,7 +12,7 @@ class SimpleResponse(Action):
     """The action that generates a simple response using an LLM."""
 
     @override
-    def do(self, params: ActionParams) -> ActionResult:
+    def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
         """Perform the action by generating a response from an LLM."""
         prompt = params.get_param("prompt")
 
@@ -20,7 +20,15 @@ class SimpleResponse(Action):
             msg = "Prompt must be a string."
             raise TypeError(msg)
 
-        response = call_llm(prompt)
+        meta_prompt = f"""
+        Context:
+        {context.as_json_pretty()}
+
+        Prompt:
+        {prompt}
+        """
+
+        response = call_llm(meta_prompt)
 
         res = ActionResult()
         res.set_param("response", response)

@@ -4,6 +4,7 @@
 
 from __future__ import annotations
 
+import json
 from typing import Any
 
 
@@ -31,3 +32,7 @@ class ActionResult:
         new_params = ActionResult()
         new_params.results = self.results.copy()
         return new_params
+
+    def as_json_pretty(self) -> str:
+        """Return the action result as a pretty JSON string."""
+        return json.dumps(self.results, indent=4)

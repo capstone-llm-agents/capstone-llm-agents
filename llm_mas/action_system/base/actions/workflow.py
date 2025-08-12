@@ -22,10 +22,11 @@ class Workflow(Action):
 
     # TODO: Extend ActionParams to WorkflowActionParams for Workflow actions # noqa: TD003
     @override
-    def do(self, params: ActionParams) -> ActionResult:
+    def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
         """Execute all actions in the workflow."""
         for action in self.actions:
-            action.do(params)
+            res = action.do(params, context)
+            context = res
 
         # TODO: return actual result gg
         return ActionResult()
