@@ -1,5 +1,7 @@
 """The action_space module defines the base class for action spaces in the llm_mas package."""
 
+import json
+
 from llm_mas.action_system.core.action import Action
 
 
@@ -28,3 +30,8 @@ class ActionSpace:
     def has_action(self, action: Action) -> bool:
         """Check if the action space contains a specific action."""
         return action in self.actions
+
+    def as_json_pretty(self) -> str:
+        """Return a pretty-printed JSON representation of the action space."""
+        # 4 indent
+        return json.dumps([action.as_json() for action in self.actions], indent=4, ensure_ascii=False)

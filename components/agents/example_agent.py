@@ -4,13 +4,14 @@ from components.actions.retrieve_knowledge import RetrieveKnowledge
 from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
-from llm_mas.action_system.base.selectors.random import RandomSelector
+from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.agent import Agent
+from llm_mas.model_providers.ollama.call_llm import call_llm
 
 action_space = ActionSpace()
 narrower = GraphBasedNarrower()
-selector = RandomSelector()
+selector = LLMSelector(call_llm)
 
 EXAMPLE_AGENT = Agent("ExampleAgent", action_space, narrower, selector)
 

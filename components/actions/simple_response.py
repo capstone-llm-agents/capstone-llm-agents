@@ -11,6 +11,10 @@ from llm_mas.model_providers.ollama.call_llm import call_llm
 class SimpleResponse(Action):
     """The action that generates a simple response using an LLM."""
 
+    def __init__(self) -> None:
+        """Initialize the SimpleResponse action."""
+        super().__init__(description="Generates a simple response from an LLM")
+
     @override
     def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
         """Perform the action by generating a response from an LLM."""

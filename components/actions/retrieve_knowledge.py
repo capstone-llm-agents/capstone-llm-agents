@@ -14,6 +14,10 @@ EXAMPLE_KB.add_fact("The house is purple.")
 class RetrieveKnowledge(Action):
     """An action that prints a greeting message."""
 
+    def __init__(self) -> None:
+        """Initialize the RetrieveKnowledge action."""
+        super().__init__(description="Retrieves knowledge from the knowledge base")
+
     @override
     def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
         """Perform the action by printing a greeting."""

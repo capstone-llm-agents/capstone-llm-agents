@@ -7,9 +7,10 @@ from llm_mas.action_system.core.action_result import ActionResult
 class Action:
     """Base class for all actions in the system."""
 
-    def __init__(self, name: str | None = None) -> None:
+    def __init__(self, description: str, name: str | None = None) -> None:
         """Initialize the action with a name."""
         self.name = name if name is not None else self.__class__.__name__
+        self.description = description
 
     def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
         """Perform the action with the given agent."""
@@ -25,3 +26,7 @@ class Action:
     def __hash__(self) -> int:
         """Return the hash based on the class name."""
         return hash(self.name)
+
+    def as_json(self) -> dict:
+        """Return a JSON representation of the action."""
+        return {"name": self.name, "description": self.description, "params": []}
