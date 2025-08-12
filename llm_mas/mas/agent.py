@@ -40,13 +40,14 @@ class Agent:
 
     def act(self, context: ActionResult | None = None, params: ActionParams | None = None) -> ActionResult:
         """Perform an action in the workspace using the agent's action selection strategy."""
-        action = self.select_action()
+        action = self.select_action(context)
         return self.do_selected_action(action, context, params)
 
-    def select_action(self) -> Action:
+    def select_action(self, context: ActionResult | None = None) -> Action:
         """Select an action to perform."""
         narrowed_action_space = self.narrower.narrow(self.workspace, self.action_space)
-        return self.selector.select_action(narrowed_action_space)
+        context = context if context is not None else ActionResult()
+        return self.selector.select_action(narrowed_action_space, context)
 
     def do_selected_action(
         self,

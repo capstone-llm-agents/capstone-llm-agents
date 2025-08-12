@@ -246,7 +246,7 @@ class ChatScreen(Screen):
 
             selecting_indicator = await agent_bubble.add_work_step(selecting_step)
 
-            selected_action = agent.select_action()
+            selected_action = agent.select_action(context)
 
             await asyncio.sleep(random.uniform(1.2, 2.0))  # Simulate selection duration  # noqa: S311
 

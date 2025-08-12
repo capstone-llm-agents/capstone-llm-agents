@@ -13,7 +13,9 @@ class SimpleResponse(Action):
 
     def __init__(self) -> None:
         """Initialize the SimpleResponse action."""
-        super().__init__(description="Generates a simple response from an LLM")
+        super().__init__(
+            description="Responds to simple requests that can be answered with a simple response.",
+        )
 
     @override
     def do(self, params: ActionParams, context: ActionResult) -> ActionResult:

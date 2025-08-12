@@ -21,6 +21,8 @@ EXAMPLE_AGENT.add_action(SimpleResponse())
 EXAMPLE_AGENT.add_action(StopAction())
 EXAMPLE_AGENT.add_action(RetrieveKnowledge())
 
+
+narrower.add_default_action(SimpleResponse())
 narrower.add_default_action(RetrieveKnowledge())
 
 # add some edges

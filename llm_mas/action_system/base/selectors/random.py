@@ -1,8 +1,10 @@
 """The random selector module provides a base class for random selection of actions in the action system."""
 
 import random
+from typing import override
 
 from llm_mas.action_system.core.action import Action
+from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 
@@ -11,7 +13,8 @@ from llm_mas.action_system.core.action_space import ActionSpace
 class RandomSelector(ActionSelector):
     """A selection policy that randomly selects an action from the narrowed action space."""
 
-    def select_action(self, action_space: ActionSpace) -> Action:
+    @override
+    def select_action(self, action_space: ActionSpace, context: ActionResult) -> Action:
         """Select a random action from the given action space."""
         if not action_space.actions:
             msg = "Action space is empty. Cannot select an action."

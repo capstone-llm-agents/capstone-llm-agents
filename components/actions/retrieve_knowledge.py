@@ -16,7 +16,7 @@ class RetrieveKnowledge(Action):
 
     def __init__(self) -> None:
         """Initialize the RetrieveKnowledge action."""
-        super().__init__(description="Retrieves knowledge from the knowledge base")
+        super().__init__(description="Retrieves knowledge from the knowledge base.")
 
     @override
     def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
