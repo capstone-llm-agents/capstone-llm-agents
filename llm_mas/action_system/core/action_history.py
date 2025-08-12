@@ -27,3 +27,7 @@ class ActionHistory:
     def has_action(self, action: Action) -> bool:
         """Check if a specific action is in the history."""
         return action in self.history
+
+    def clear(self) -> None:
+        """Clear the action history."""
+        self.history.clear()

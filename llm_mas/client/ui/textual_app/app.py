@@ -12,7 +12,9 @@ from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, LoadingIndicator, Static
 
+from components.agents.example_agent import EXAMPLE_AGENT
 from llm_mas.action_system.core.action import Action
+from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, Work, WorkStep
 
 if TYPE_CHECKING:
@@ -98,7 +100,11 @@ class AgentMessage(MessageBubble):
 
                         # Create the thinking content container with unique ID
                         self.thinking_content = Vertical(classes="thinking-content")
+                        with self.thinking_content:
+                            pass
+
                         yield self.thinking_content
+
                     yield self.thinking_container
 
                 if self.message:
@@ -137,7 +143,7 @@ class AgentMessage(MessageBubble):
             response_widget = Static(response_text, classes="message-content")
             await self.message_bubble.mount(response_widget)
 
-    def on_click(self, event) -> None:
+    def on_click(self, event: events.Click) -> None:
         """Handle clicks to toggle thinking section."""
         if self.thinking_header and self.thinking_content and event.widget == self.thinking_header:
             self.toggle_thinking_section()
@@ -225,53 +231,47 @@ class ChatScreen(Screen):
         self.chat_container.mount(welcome_bubble)
 
     async def simulate_agent_workflow(self, user_msg: str) -> None:
-        """Simulate an agent workflow with compact work steps."""
+        """Simulate an agent workflow using the ExampleAgent with compact work steps."""
         agent_bubble = AgentMessage(show_thinking=True)
-        self.chat_container.mount(agent_bubble)
+        await self.chat_container.mount(agent_bubble)
         self.chat_container.scroll_end()
 
-        selecting_step = SelectingActionWorkStep()
-        selecting_indicator = await agent_bubble.add_work_step(selecting_step)
+        # clear history
+        EXAMPLE_AGENT.workspace.action_history.clear()
 
-        await asyncio.sleep(random.uniform(0.8, 1.5))  # noqa: S311
-        if selecting_indicator:
-            await selecting_indicator.mark_complete()
+        while not EXAMPLE_AGENT.finished_working():
+            selecting_step = SelectingActionWorkStep()
 
-        if "capital" in user_msg.lower() or "geography" in user_msg.lower():
-            action = Action("CheckGeography Action")
-            work = Work("Checking geography database")
-        elif "weather" in user_msg.lower():
-            action = Action("CheckWeather Action")
-            work = Work("Fetching weather data")
-        else:
-            action = Action("ResearchTopic Action")
-            work = Work("Researching topic")
+            selecting_indicator = await agent_bubble.add_work_step(selecting_step)
 
-        performing_step = PerformingActionWorkStep(action)
-        performing_step.work = work
-        performing_indicator = await agent_bubble.add_work_step(performing_step)
+            selected_action = EXAMPLE_AGENT.select_action()
 
-        await asyncio.sleep(random.uniform(1.2, 2.0))  # noqa: S311
-        if performing_indicator:
-            await performing_indicator.mark_complete()
+            await asyncio.sleep(random.uniform(1.2, 2.0))  # Simulate selection duration
 
-        # Optionally add a response step
-        if random.choice([True, False]):  # noqa: S311
-            respond_step = PerformingActionWorkStep(Action("Generating Response"))
-            respond_indicator = await agent_bubble.add_work_step(respond_step)
+            # actual selecting action step
+            selecting_step.mark_complete()
 
-            await asyncio.sleep(random.uniform(0.5, 1.0))  # noqa: S311
-            if respond_indicator:
-                await respond_indicator.mark_complete()
+            # ui
+            if selecting_indicator:
+                await selecting_indicator.mark_complete()
 
-        if "capital" in user_msg.lower():
-            response = "The capital of France is Paris. It's located in the north-central part of the country along the Seine River."
-        elif "weather" in user_msg.lower():
-            response = "I'd need access to a weather service to provide current conditions. You can check local weather services for up-to-date information."
-        else:
-            response = f"I've analyzed your message about '{user_msg}'. Based on my research, I can provide relevant information and insights."
+            # Show performing action step
+            performing_step = PerformingActionWorkStep(selected_action)
+            performing_indicator = await agent_bubble.add_work_step(performing_step)
 
-        # Hide thinking and show response
+            EXAMPLE_AGENT.do_selected_action(selected_action)
+
+            await asyncio.sleep(random.uniform(1.2, 2.0))  # Simulate action duration
+
+            # actual work step
+            performing_step.mark_complete()
+
+            # ui
+            if performing_indicator:
+                await performing_indicator.mark_complete()
+
+        response = "who ask"
+
         await asyncio.sleep(0.3)
         await agent_bubble.collapse_thinking_and_show_response(response)
         self.chat_container.scroll_end()

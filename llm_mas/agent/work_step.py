@@ -39,5 +39,5 @@ class PerformingActionWorkStep(WorkStep):
 
     def __init__(self, action: Action) -> None:
         """Initialize the performing action work step."""
-        super().__init__(name=action.name)
+        super().__init__(name=f"Running Action: {action.name}")
         self.action = action

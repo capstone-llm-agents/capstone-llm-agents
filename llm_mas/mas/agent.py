@@ -1,5 +1,7 @@
 """An agent is an entity that can perform actions to complete tasks."""
 
+from typing import Callable
+
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_narrower import ActionNarrower
@@ -35,16 +37,24 @@ class Agent:
         # workspace
         self.workspace = workspace if workspace is not None else Workspace()
 
-    def act(self) -> None:
+    def act(self) -> Action:
         """Perform an action in the workspace using the agent's action selection strategy."""
-        narrowed_action_space = self.narrower.narrow(self.workspace, self.action_space)
-        action = self.selector.select_action(narrowed_action_space)
+        action = self.select_action()
+        return self.do_selected_action(action)
 
+    def select_action(self) -> Action:
+        """Select an action to perform."""
+        narrowed_action_space = self.narrower.narrow(self.workspace, self.action_space)
+        return self.selector.select_action(narrowed_action_space)
+
+    def do_selected_action(self, action: Action) -> Action:
+        """Perform the selected action."""
         # TODO: Get parameters from some source like ParamProvider  # noqa: TD003
+
         params = ActionParams()
         action.do(params)
-
         self.workspace.action_history.add_action(action)
+        return action
 
     def add_action(self, action: Action) -> None:
         """Add an action to the agent's action space."""
