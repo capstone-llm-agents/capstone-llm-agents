@@ -5,12 +5,37 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from textual.app import App, ComposeResult
-from textual.containers import Vertical
+from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, RichLog, Static
+from textual.widget import Widget
+from textual.widgets import Button, Footer, Header, Input, Static
 
 if TYPE_CHECKING:
     from textual import events
+
+
+class MessageBubble(Widget):
+    """A message bubble widget for chat messages."""
+
+    def __init__(self, message: str, is_user: bool = False) -> None:
+        super().__init__()
+        self.message = message
+        self.is_user = is_user
+
+    def compose(self) -> ComposeResult:
+        """Compose the message bubble."""
+        if self.is_user:
+            with Horizontal(classes="user-message-container"):
+                yield Static("", classes="spacer")  # Spacer to push message to right
+                with Vertical(classes="user-message-bubble"):
+                    yield Static("You", classes="message-sender")
+                    yield Static(self.message, classes="message-content")
+        else:
+            with Horizontal(classes="assistant-message-container"):
+                with Vertical(classes="assistant-message-bubble"):
+                    yield Static("Assistant", classes="message-sender")
+                    yield Static(self.message, classes="message-content")
+                yield Static("", classes="spacer")  # Spacer to push message to left
 
 
 class MainMenu(Screen):
@@ -52,16 +77,18 @@ class AgentListScreen(Screen):
 class ChatScreen(Screen):
     """Screen for chatting with an assistant agent."""
 
-    chat_view: RichLog
+    CSS_PATH = "./styles/screen.tcss"
+
+    chat_container: ScrollableContainer
     input: Input
     history: list[tuple[str, str]]
 
     def compose(self) -> ComposeResult:
         """Compose the chat layout."""
         yield Header(name="Chat with Assistant")
-        # RichLog is a scrollable log widget that supports appending lines.
-        self.chat_view = RichLog()
-        yield self.chat_view
+
+        self.chat_container = ScrollableContainer(id="chat-container")
+        yield self.chat_container
 
         self.input = Input(placeholder="Type your message…", id="chat_input")
         yield self.input
@@ -71,15 +98,14 @@ class ChatScreen(Screen):
     def on_mount(self) -> None:
         """Handle the mount event to initialize the chat screen."""
         self.history = []
-        # Focus the input so the user can start typing immediately
+        # focus the input so the user can start typing immediately
         self.input.focus()
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Handle input submission from the chat box.
+        welcome_bubble = MessageBubble("Hello! I'm your assistant. How can I help you today?", is_user=False)
+        self.chat_container.mount(welcome_bubble)
 
-        This app simply echoes the user's message. Use `RichLog.write(...)`
-        to append lines; `scroll_end=True` keeps the view scrolled to the bottom.
-        """
+    def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle input submission from the chat box."""
         user_msg: str = event.value.strip()
         # clear the input early (robust to differing event shapes)
         event.input.value = ""
@@ -88,16 +114,17 @@ class ChatScreen(Screen):
         if not user_msg:
             return
 
-        # Append user message
-        self.chat_view.write(f"You: {user_msg}", scroll_end=True)
+        user_bubble = MessageBubble(user_msg, is_user=True)
+        self.chat_container.mount(user_bubble)
 
-        # Placeholder assistant response
-        response: str = f"Assistant: I heard '{user_msg}'"
-        self.chat_view.write(response, scroll_end=True)
+        response: str = f"I heard '{user_msg}'."
+        assistant_bubble = MessageBubble(response, is_user=False)
+        self.chat_container.mount(assistant_bubble)
 
-        # Persist in local history (optional)
         self.history.append(("user", user_msg))
         self.history.append(("assistant", response))
+
+        self.chat_container.scroll_end()
 
     def on_key(self, event: events.Key) -> None:
         """Handle key events for navigation."""

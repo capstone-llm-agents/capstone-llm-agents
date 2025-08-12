@@ -1,0 +1,82 @@
+ChatScreen {
+        layout: vertical;
+    }
+    
+    #chat-container {
+        height: 1fr;
+        overflow-y: auto;
+        border: solid $accent;
+        margin: 1;
+        scrollbar-size: 1 1;
+    }
+    
+    #chat-input {
+        margin: 1;
+        dock: bottom;
+    }
+    
+    MessageBubble {
+        height: auto;
+        margin: 0;
+        padding: 0;
+    }
+    
+    .user-message-container {
+        width: 100%;
+        height: auto;
+        margin: 0;
+        padding: 0;
+        content-align: right middle;
+    }
+    
+    .assistant-message-container {
+        width: 100%;
+        height: auto;
+        margin: 0;
+        padding: 0;
+        content-align: left middle;
+    }
+    
+    .spacer {
+        width: 1fr;
+        height: 1;
+    }
+    
+    .user-message-bubble {
+        width: auto;
+        min-width: 80;
+        max-width: 120;
+        height: auto;
+        background: $primary;
+        border: solid $accent;
+        padding: 1 2;
+        margin: 0 2 1 0;
+    }
+    
+    .assistant-message-bubble {
+        width: auto;
+        min-width: 80;
+        max-width: 120;
+        height: auto;
+        background: $surface;
+        border: solid $accent;
+        padding: 1 2;
+        margin: 0 0 1 2;
+    }
+    
+    .message-sender {
+        color: $text;
+        text-style: bold;
+        height: auto;
+        width: 100%;
+        padding: 0;
+        margin-bottom: 1;
+    }
+    
+    .message-content {
+        color: $text;
+        height: auto;
+        width: 100%;
+        padding: 0;
+        text-align: left;
+    }
