@@ -25,7 +25,7 @@ class ActionHistory:
             return self.history[-1]
         return None
 
-    def get_index(self, index: int) -> tuple[Action, ActionResult] | None:
+    def get_history_at_index(self, index: int) -> tuple[Action, ActionResult] | None:
         """Get the action at a specific index."""
         if self.history:
             return self.history[index]

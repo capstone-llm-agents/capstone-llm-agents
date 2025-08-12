@@ -14,9 +14,9 @@ from textual.widgets import Button, Footer, Header, Input, LoadingIndicator, Sta
 
 from components.actions.otk import OTK
 from components.agents.example_agent import EXAMPLE_AGENT
-from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_params import ActionParams
-from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, Work, WorkStep
+from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, WorkStep
+from llm_mas.mas.agent import Agent
 
 if TYPE_CHECKING:
     from textual import events
@@ -231,21 +231,21 @@ class ChatScreen(Screen):
         welcome_bubble = AgentMessage("Hello! I'm your assistant. How can I help you today?")
         self.chat_container.mount(welcome_bubble)
 
-    async def simulate_agent_workflow(self, user_msg: str) -> None:
+    async def simulate_agent_workflow(self, user_msg: str, agent: Agent) -> None:
         """Simulate an agent workflow using the ExampleAgent with compact work steps."""
         agent_bubble = AgentMessage(show_thinking=True)
         await self.chat_container.mount(agent_bubble)
         self.chat_container.scroll_end()
 
         # clear history
-        EXAMPLE_AGENT.workspace.action_history.clear()
+        agent.workspace.action_history.clear()
 
-        while not EXAMPLE_AGENT.finished_working():
+        while not agent.finished_working():
             selecting_step = SelectingActionWorkStep()
 
             selecting_indicator = await agent_bubble.add_work_step(selecting_step)
 
-            selected_action = EXAMPLE_AGENT.select_action()
+            selected_action = agent.select_action()
 
             await asyncio.sleep(random.uniform(1.2, 2.0))  # Simulate selection duration  # noqa: S311
 
@@ -262,7 +262,7 @@ class ChatScreen(Screen):
 
             params = ActionParams()
             params.set_param("prompt", user_msg)
-            EXAMPLE_AGENT.do_selected_action(selected_action, params)
+            agent.do_selected_action(selected_action, params)
 
             # actual work step
             performing_step.mark_complete()
@@ -272,14 +272,17 @@ class ChatScreen(Screen):
 
         response = ""
 
-        print("Action history:", EXAMPLE_AGENT.workspace.action_history.get_history())
+        action_res_tuple = agent.workspace.action_history.get_history_at_index(-2)
 
-        action, result = EXAMPLE_AGENT.workspace.action_history.get_index(-2)
+        if action_res_tuple is None:
+            msg = "No action result found in history."
+            raise ValueError(msg)
+
+        action, result = action_res_tuple
 
         if isinstance(action, OTK):
             response = result.get_param("response")
 
-        await asyncio.sleep(0.3)
         await agent_bubble.collapse_thinking_and_show_response(response)
         self.chat_container.scroll_end()
 
@@ -298,7 +301,7 @@ class ChatScreen(Screen):
 
         self.history.append(("user", user_msg))
 
-        task = asyncio.create_task(self.simulate_agent_workflow(user_msg))
+        task = asyncio.create_task(self.simulate_agent_workflow(user_msg, EXAMPLE_AGENT))
         background_tasks.add(task)
         task.add_done_callback(background_tasks.discard)
 
