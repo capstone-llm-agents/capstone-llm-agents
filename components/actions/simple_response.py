@@ -1,4 +1,4 @@
-"""The agent tries to OTK the user query."""
+"""The agent responds to a simple prompt using an LLM."""
 
 from typing import override
 
@@ -8,16 +8,12 @@ from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.model_providers.ollama.call_llm import call_llm
 
 
-class OTK(Action):
-    """The OTK (One Turn Kill) action class."""
-
-    def __init__(self) -> None:
-        """Initialize the OTK action."""
-        super().__init__(name="OTK")
+class SimpleResponse(Action):
+    """The action that generates a simple response using an LLM."""
 
     @override
     def do(self, params: ActionParams) -> ActionResult:
-        """Perform the OTK action."""
+        """Perform the action by generating a response from an LLM."""
         prompt = params.get_param("prompt")
 
         if not isinstance(prompt, str):

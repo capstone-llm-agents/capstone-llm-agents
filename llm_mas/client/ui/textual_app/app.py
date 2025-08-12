@@ -12,7 +12,7 @@ from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, LoadingIndicator, Static
 
-from components.actions.otk import OTK
+from components.actions.simple_response import SimpleResponse
 from components.agents.example_agent import EXAMPLE_AGENT
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, WorkStep
@@ -280,7 +280,7 @@ class ChatScreen(Screen):
 
         action, result = action_res_tuple
 
-        if isinstance(action, OTK):
+        if isinstance(action, SimpleResponse):
             response = result.get_param("response")
 
         await agent_bubble.collapse_thinking_and_show_response(response)
