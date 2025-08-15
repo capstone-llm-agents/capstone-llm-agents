@@ -265,13 +265,12 @@ class ChatScreen(Screen):
         self.chat_container.scroll_end(animate=False)
 
         try:
-            # clear agent history in a thread to avoid potential blocking
-            await asyncio.to_thread(agent.workspace.action_history.clear)
+            agent.workspace.action_history.clear()
 
             context = None
             step_count = 0
 
-            while not await asyncio.to_thread(agent.finished_working):
+            while not agent.finished_working():
                 step_count += 1
                 msg = f"Step {step_count}: Processing your request..."
                 app_logger.info(msg)
