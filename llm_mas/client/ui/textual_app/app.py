@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import asyncio
-import random
+import contextlib
+import logging
+import weakref
+from pathlib import Path
 from typing import TYPE_CHECKING
 
 from textual.app import App, ComposeResult
@@ -16,12 +19,41 @@ from components.actions.simple_response import SimpleResponse
 from components.agents.example_agent import EXAMPLE_AGENT
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, WorkStep
-from llm_mas.mas.agent import Agent
 
 if TYPE_CHECKING:
     from textual import events
 
-background_tasks = set()
+    from llm_mas.mas.agent import Agent
+
+
+def setup_file_only_logger(name: str, log_file: str, level: int = logging.INFO) -> logging.Logger:
+    """Create a logger that only writes to file, no console output."""
+    # ensure log directory exists
+    Path(log_file).parent.mkdir(parents=True, exist_ok=True)
+
+    logger = logging.getLogger(name)
+    logger.setLevel(level)
+
+    # remove any existing handlers to start fresh
+    logger.handlers.clear()
+
+    file_handler = logging.FileHandler(log_file)
+    file_handler.setLevel(level)
+
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+    file_handler.setFormatter(formatter)
+
+    logger.addHandler(file_handler)
+
+    # prevent propagation to root logger (this prevents console output)
+    logger.propagate = False
+
+    return logger
+
+
+app_logger = setup_file_only_logger("textual_app", "./logs/app.log", logging.DEBUG)
+
+background_tasks: weakref.WeakSet[asyncio.Task] = weakref.WeakSet()
 
 
 class MessageBubble(Widget):
@@ -52,30 +84,21 @@ class WorkStepIndicator(Widget):
         """Initialize the work step indicator."""
         super().__init__()
         self.work_step = work_step
+        self._loading_indicator: LoadingIndicator | None = None
 
     def compose(self) -> ComposeResult:
         """Compose the compact work step indicator."""
-        with Horizontal(classes="work-step-indicator"):
-            if not self.work_step.complete:
-                yield LoadingIndicator(classes="mini-spinner")
-            else:
-                yield Static("✓", classes="step-complete")
-
-            step_text = self.work_step.name
-            if self.work_step.work:
-                step_text += f": {self.work_step.work.name}"
-            yield Static(step_text, classes="step-text")
+        step_text = self.work_step.name
+        yield Static(step_text)
 
     async def mark_complete(self) -> None:
         """Mark the work step as complete and update the UI."""
-        self.work_step.mark_complete()
-        await self.recompose()
 
 
 class AgentMessage(MessageBubble):
     """A message bubble widget for agent messages with integrated work steps."""
 
-    def __init__(self, message: str = "", show_thinking: bool = False) -> None:
+    def __init__(self, message: str = "", *, show_thinking: bool = False) -> None:
         """Initialize the agent message bubble."""
         super().__init__(message)
         self.show_thinking = show_thinking
@@ -85,6 +108,7 @@ class AgentMessage(MessageBubble):
         self.thinking_content: Vertical | None = None
         self.message_bubble: Vertical | None = None
         self.is_thinking_expanded: bool = True
+        self._is_processing: bool = True
 
     def compose(self) -> ComposeResult:
         """Compose the agent message bubble."""
@@ -99,11 +123,7 @@ class AgentMessage(MessageBubble):
                         self.thinking_header = Static("▼ Thinking...", classes="thinking-header clickable")
                         yield self.thinking_header
 
-                        # Create the thinking content container with unique ID
                         self.thinking_content = Vertical(classes="thinking-content")
-                        with self.thinking_content:
-                            pass
-
                         yield self.thinking_content
 
                     yield self.thinking_container
@@ -116,37 +136,43 @@ class AgentMessage(MessageBubble):
     async def add_work_step(self, work_step: WorkStep) -> WorkStepIndicator:
         """Add a work step to the thinking section."""
         if not self.thinking_content:
-            return None
+            msg = "Thinking section is not initialized."
+            app_logger.error(msg)
+            raise RuntimeError(msg)
+
+        # log
+        msg = f"Adding work step: {work_step.name}"
+        app_logger.debug(msg)
 
         indicator = WorkStepIndicator(work_step)
-        static = Static(indicator.work_step.name, classes="work-step-text")
-        await self.thinking_content.mount(static)
-
-        # TODO figure out why the indicator doesn't show up
-        # await self.thinking_content.mount(indicator)
-
         self.work_steps.append(indicator)
 
-        self.thinking_content.refresh()
+        static = Static(work_step.name, classes="work-step-name")
+        await self.thinking_content.mount(static)
+
         return indicator
 
     async def collapse_thinking_and_show_response(self, response_text: str) -> None:
         """Collapse the thinking section and show the final response."""
+        self._is_processing = False
+
         if self.thinking_header and self.thinking_content:
-            # Update header to show collapsed state
             self.thinking_header.update("▶ Show thinking...")
-            # Hide the thinking content
             self.thinking_content.display = False
             self.is_thinking_expanded = False
 
-        # Add the response content to the message bubble
-        if self.message_bubble:
+        if self.message_bubble and response_text:
             response_widget = Static(response_text, classes="message-content")
             await self.message_bubble.mount(response_widget)
 
     def on_click(self, event: events.Click) -> None:
         """Handle clicks to toggle thinking section."""
-        if self.thinking_header and self.thinking_content and event.widget == self.thinking_header:
+        if (
+            self.thinking_header
+            and self.thinking_content
+            and event.widget == self.thinking_header
+            and not self._is_processing
+        ):
             self.toggle_thinking_section()
 
     def toggle_thinking_section(self) -> None:
@@ -155,12 +181,10 @@ class AgentMessage(MessageBubble):
             return
 
         if self.is_thinking_expanded:
-            # Collapse
             self.thinking_header.update("▶ Show thinking...")
             self.thinking_content.display = False
             self.is_thinking_expanded = False
         else:
-            # Expand
             self.thinking_header.update("▼ Hide thinking...")
             self.thinking_content.display = True
             self.is_thinking_expanded = True
@@ -203,13 +227,17 @@ class AgentListScreen(Screen):
 
 
 class ChatScreen(Screen):
-    """Screen for chatting with an assistant agent."""
+    """Screen for chatting with an assistant agent with fully async workflow."""
 
     CSS_PATH = "./styles/screen.tcss"
 
-    chat_container: ScrollableContainer
-    input: Input
-    history: list[tuple[str, str]]
+    def __init__(self) -> None:
+        """Initialize the chat screen."""
+        super().__init__()
+        self.chat_container: ScrollableContainer
+        self.input: Input
+        self.history: list[tuple[str, str]] = []
+        self._current_task: asyncio.Task | None = None
 
     def compose(self) -> ComposeResult:
         """Compose the chat layout."""
@@ -225,70 +253,116 @@ class ChatScreen(Screen):
 
     def on_mount(self) -> None:
         """Handle the mount event to initialize the chat screen."""
-        self.history = []
         self.input.focus()
 
         welcome_bubble = AgentMessage("Hello! I'm your assistant. How can I help you today?")
         self.chat_container.mount(welcome_bubble)
 
     async def simulate_agent_workflow(self, user_msg: str, agent: Agent) -> None:
-        """Simulate an agent workflow using the ExampleAgent with compact work steps."""
+        """Simulate the agent workflow with proper async handling and timeouts."""
         agent_bubble = AgentMessage(show_thinking=True)
         await self.chat_container.mount(agent_bubble)
-        self.chat_container.scroll_end()
+        self.chat_container.scroll_end(animate=False)
 
-        # clear history
-        agent.workspace.action_history.clear()
+        try:
+            # clear agent history in a thread to avoid potential blocking
+            await asyncio.to_thread(agent.workspace.action_history.clear)
 
-        context = None
-        while not agent.finished_working():
-            selecting_step = SelectingActionWorkStep()
+            context = None
+            step_count = 0
 
-            selecting_indicator = await agent_bubble.add_work_step(selecting_step)
+            while not await asyncio.to_thread(agent.finished_working):
+                step_count += 1
+                msg = f"Step {step_count}: Processing your request..."
+                app_logger.info(msg)
 
-            selected_action = agent.select_action(context)
+                selecting_step = SelectingActionWorkStep()
+                selecting_indicator = await agent_bubble.add_work_step(selecting_step)
 
-            await asyncio.sleep(random.uniform(1.2, 2.0))  # Simulate selection duration  # noqa: S311
+                try:
+                    selected_action = await asyncio.wait_for(
+                        asyncio.to_thread(agent.select_action, context),
+                        timeout=30.0,  # 30 second timeout
+                    )
+                except TimeoutError:
+                    msg = f"Action selection timed out on step {step_count}"
+                    app_logger.exception(msg)
+                    await agent_bubble.collapse_thinking_and_show_response(
+                        "Sorry, the request timed out. Please try again.",
+                    )
+                    return
 
-            # actual selecting action step
-            selecting_step.mark_complete()
+                selecting_step.mark_complete()
+                if selecting_indicator:
+                    await selecting_indicator.mark_complete()
 
-            # ui
-            if selecting_indicator:
-                await selecting_indicator.mark_complete()
+                performing_step = PerformingActionWorkStep(selected_action)
+                performing_indicator = await agent_bubble.add_work_step(performing_step)
 
-            # Show performing action step
-            performing_step = PerformingActionWorkStep(selected_action)
-            performing_indicator = await agent_bubble.add_work_step(performing_step)
+                params = ActionParams()
+                params.set_param("prompt", user_msg)
 
-            params = ActionParams()
-            params.set_param("prompt", user_msg)
-            context = agent.do_selected_action(selected_action, context, params)
+                try:
+                    context = await asyncio.wait_for(
+                        asyncio.to_thread(agent.do_selected_action, selected_action, context, params),
+                        timeout=60.0,  # 60 second timeout for action execution
+                    )
+                except TimeoutError:
+                    msg = f"Action execution timed out on step {step_count}"
+                    app_logger.exception(msg)
+                    await agent_bubble.collapse_thinking_and_show_response(
+                        "Sorry, the action took too long to complete. Please try again.",
+                    )
+                    return
 
-            # actual work step
-            performing_step.mark_complete()
-            # ui
-            if performing_indicator:
-                await performing_indicator.mark_complete()
+                # mark execution complete
+                performing_step.mark_complete()
+                if performing_indicator:
+                    await performing_indicator.mark_complete()
 
-        response = ""
+                self.chat_container.scroll_end(animate=False)
 
-        action_res_tuple = agent.workspace.action_history.get_history_at_index(-2)
+                msg = f"Completed workflow step {step_count}"
+                app_logger.info(msg)
 
-        if action_res_tuple is None:
-            msg = "No action result found in history."
-            raise ValueError(msg)
+            # extract and display response
+            response = await self._extract_response_safe(agent)
+            await agent_bubble.collapse_thinking_and_show_response(response)
+            self.chat_container.scroll_end(animate=True)
 
-        action, result = action_res_tuple
+            app_logger.info("Agent workflow completed successfully")
 
-        if isinstance(action, SimpleResponse):
-            response = result.get_param("response")
+        except Exception as e:
+            msg = f"Error in agent workflow: {e}"
+            app_logger.exception(msg)
+            await agent_bubble.collapse_thinking_and_show_response(f"Sorry, an error occurred: {e!s}")
 
-        await agent_bubble.collapse_thinking_and_show_response(response)
-        self.chat_container.scroll_end()
+    async def _extract_response_safe(self, agent: Agent) -> str:
+        """Safely extract response from agent history with proper error handling."""
 
-    def on_input_submitted(self, event: Input.Submitted) -> None:
-        """Handle input submission from the chat box."""
+        def extract_response() -> str:
+            try:
+                action_res_tuple = agent.workspace.action_history.get_history_at_index(-2)
+                if action_res_tuple is None:
+                    return "I apologize, but I couldn't generate a response. Please try again."
+
+                action, result = action_res_tuple
+                if isinstance(action, SimpleResponse):
+                    response = result.get_param("response")
+                    return (
+                        response if response else "I generated an empty response. Please try rephrasing your question."
+                    )
+                # NOTE: Don't really understand TRY300
+                return "I completed the tas  but couldn't extract a readable response."  # noqa: TRY300
+            except Exception as e:
+                msg = f"Error extracting response: {e}"
+                app_logger.exception(msg)
+                return f"Sorry, there was an error processing your request: {e!s}"
+
+        return await asyncio.to_thread(extract_response)
+
+    async def on_input_submitted(self, event: Input.Submitted) -> None:
+        """Handle input submission with proper task management and cancellation."""
         user_msg: str = event.value.strip()
         event.input.value = ""
         self.input.value = ""
@@ -296,29 +370,92 @@ class ChatScreen(Screen):
         if not user_msg:
             return
 
-        user_bubble = UserMessage(user_msg)
-        self.chat_container.mount(user_bubble)
-        self.chat_container.scroll_end()
+        # cancel any existing workflow
+        if self._current_task and not self._current_task.done():
+            app_logger.info("Cancelling previous workflow task")
+            self._current_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._current_task
 
+        # add user message
+        user_bubble = UserMessage(user_msg)
+        await self.chat_container.mount(user_bubble)
+        self.chat_container.scroll_end(animate=True)
+
+        # update history
         self.history.append(("user", user_msg))
 
-        task = asyncio.create_task(self.simulate_agent_workflow(user_msg, EXAMPLE_AGENT))
-        background_tasks.add(task)
-        task.add_done_callback(background_tasks.discard)
+        # create and track new workflow task
+        self._current_task = asyncio.create_task(
+            self.simulate_agent_workflow(user_msg, EXAMPLE_AGENT),
+            name=f"agent_workflow_{len(self.history)}",
+        )
+        background_tasks.add(self._current_task)
+
+        def task_done_callback(task: asyncio.Task) -> None:
+            background_tasks.discard(task)
+            if task.cancelled():
+                app_logger.info("Agent workflow task was cancelled")
+            elif task.exception():
+                msg = f"Agent workflow task failed: {task.exception()}"
+                app_logger.error(msg)
+
+        self._current_task.add_done_callback(task_done_callback)
 
     def on_key(self, event: events.Key) -> None:
-        """Handle key events for navigation."""
+        """Handle key events for navigation and workflow control."""
         if event.key == "escape":
+            # cancel current workflow if running
+            if self._current_task and not self._current_task.done():
+                self._current_task.cancel()
             self.app.pop_screen()
+
+        elif event.key == "ctrl+c":
+            # allow users to cancel current operation
+            if self._current_task and not self._current_task.done():
+                app_logger.info("User cancelled current workflow")
+                self._current_task.cancel()
+
+    async def on_unmount(self) -> None:
+        """Clean up when screen is unmounted."""
+        if self._current_task and not self._current_task.done():
+            self._current_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._current_task
 
 
 class TextualApp(App):
-    """Main application class for the Textual UI."""
+    """Main application class with optimized async handling."""
+
+    TITLE = "LLM Multi-Agent System"
 
     def on_mount(self) -> None:
         """Mount the main menu screen on application start."""
         self.push_screen(MainMenu())
 
+    # TODO: Doesn't actually get called yet, need to find a way to hook into shutdown properly
+    async def on_shutdown(self) -> None:
+        """Handle graceful shutdown of background tasks."""
+        # log
+        app_logger.info("Shutting down application, cancelling background tasks...")
+
+        # cancel all background tasks
+        for task in list(background_tasks):
+            if not task.done():
+                task.cancel()
+
+        # wait for tasks to complete cancellation
+        if background_tasks:
+            await asyncio.gather(*background_tasks, return_exceptions=True)
+
 
 if __name__ == "__main__":
-    TextualApp().run()
+    app = TextualApp()
+    try:
+        app.run()
+    except KeyboardInterrupt:
+        app_logger.info("Application interrupted by user")
+    except Exception as e:
+        msg = f"Application crashed: {e}"
+        app_logger.exception(msg)
+        raise

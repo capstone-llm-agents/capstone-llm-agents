@@ -128,14 +128,14 @@ MessageBubble {
 }
 
 .step-complete {
-    color: $success;
+    color: green;
     width: 2;
     height: 1;
     text-align: center;
 }
 
 .step-text {
-    color: $text;
+    color: white;
     height: 1;
     margin-left: 1;
 }
