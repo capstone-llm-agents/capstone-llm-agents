@@ -77,22 +77,33 @@ class UserMessage(MessageBubble):
                 yield Static(self.message, classes="message-content")
 
 
-class WorkStepIndicator(Widget):
+class WorkStepIndicator(Static):
     """A compact work step indicator that can be embedded in messages."""
 
     def __init__(self, work_step: WorkStep) -> None:
-        """Initialize the work step indicator."""
+        """Initialize the work step indicator with a work step."""
         super().__init__()
         self.work_step = work_step
-        self._loading_indicator: LoadingIndicator | None = None
 
     def compose(self) -> ComposeResult:
         """Compose the compact work step indicator."""
-        step_text = self.work_step.name
-        yield Static(step_text)
+        # if complete show a tick
+        if self.work_step.complete:
+            yield Static("✓", classes="work-step-complete")
+        else:
+            yield Static("⏳", classes="work-step-in-progress")
+
+        # show the work step name
+        yield Static(self.work_step.name, classes="work-step-name")
 
     async def mark_complete(self) -> None:
         """Mark the work step as complete and update the UI."""
+        self.work_step.mark_complete()
+        self.update("✓")
+        self.classes = "work-step-complete"
+
+        # refresh
+        await self.recompose()
 
 
 class AgentMessage(MessageBubble):
@@ -147,8 +158,7 @@ class AgentMessage(MessageBubble):
         indicator = WorkStepIndicator(work_step)
         self.work_steps.append(indicator)
 
-        static = Static(work_step.name, classes="work-step-name")
-        await self.thinking_content.mount(static)
+        await self.thinking_content.mount(indicator)
 
         return indicator
 
@@ -319,6 +329,9 @@ class ChatScreen(Screen):
                 if performing_indicator:
                     await performing_indicator.mark_complete()
 
+                # small delay to simulate processing time
+                await asyncio.sleep(0.5)
+
                 self.chat_container.scroll_end(animate=False)
 
                 msg = f"Completed workflow step {step_count}"
@@ -352,7 +365,7 @@ class ChatScreen(Screen):
                         response if response else "I generated an empty response. Please try rephrasing your question."
                     )
                 # NOTE: Don't really understand TRY300
-                return "I completed the tas  but couldn't extract a readable response."  # noqa: TRY300
+                return "I completed the task but couldn't extract a readable response."  # noqa: TRY300
             except Exception as e:
                 msg = f"Error extracting response: {e}"
                 app_logger.exception(msg)
