@@ -82,28 +82,46 @@ class WorkStepIndicator(Static):
 
     def __init__(self, work_step: WorkStep) -> None:
         """Initialize the work step indicator with a work step."""
-        super().__init__()
+        super().__init__(classes="work-step-indicator")
         self.work_step = work_step
 
     def compose(self) -> ComposeResult:
         """Compose the compact work step indicator."""
-        # if complete show a tick
-        if self.work_step.complete:
-            yield Static("✓", classes="work-step-complete")
-        else:
-            yield Static("⏳", classes="work-step-in-progress")
+        with Horizontal(classes="work-step-row"):
+            # Status indicator (tick or hourglass)
+            if self.work_step.complete:
+                self.status_widget = Static("✓", classes="step-complete")
+            else:
+                self.status_widget = Static("⏳", classes="step-in-progress")
+            yield self.status_widget
 
-        # show the work step name
-        yield Static(self.work_step.name, classes="work-step-name")
+            # Work step name
+            self.text_widget = Static(self.work_step.name, classes="step-text")
+            yield self.text_widget
 
     async def mark_complete(self) -> None:
         """Mark the work step as complete and update the UI."""
         self.work_step.mark_complete()
-        self.update("✓")
-        self.classes = "work-step-complete"
+        if self.status_widget:
+            self.status_widget.update("✓")
+            self.status_widget.remove_class("step-in-progress")
+            self.status_widget.add_class("step-complete")
 
-        # refresh
-        await self.recompose()
+    def mark_grey(self) -> None:
+        """Mark the work step as grey (completed but not current focus)."""
+        if self.status_widget and self.text_widget:
+            self.status_widget.remove_class("step-complete")
+            self.status_widget.add_class("step-complete-grey")
+            self.text_widget.remove_class("step-text")
+            self.text_widget.add_class("step-text-grey")
+
+    def mark_current_green(self) -> None:
+        """Mark the work step as current active green."""
+        if self.status_widget and self.text_widget:
+            self.status_widget.remove_class("step-complete-grey")
+            self.status_widget.add_class("step-complete")
+            self.text_widget.remove_class("step-text-grey")
+            self.text_widget.add_class("step-text")
 
 
 class AgentMessage(MessageBubble):
@@ -146,10 +164,18 @@ class AgentMessage(MessageBubble):
 
     async def add_work_step(self, work_step: WorkStep) -> WorkStepIndicator:
         """Add a work step to the thinking section."""
+        # small delay to simulate processing time
+        await asyncio.sleep(0.5)
+
         if not self.thinking_content:
             msg = "Thinking section is not initialized."
             app_logger.error(msg)
             raise RuntimeError(msg)
+
+        # Make all previous completed steps grey
+        for indicator in self.work_steps:
+            if indicator.work_step.complete:
+                indicator.mark_grey()
 
         # log
         msg = f"Adding work step: {work_step.name}"
@@ -161,6 +187,20 @@ class AgentMessage(MessageBubble):
         await self.thinking_content.mount(indicator)
 
         return indicator
+
+    async def mark_step_complete(self, indicator: WorkStepIndicator) -> None:
+        """Mark a work step as complete and manage the visual state."""
+        await indicator.mark_complete()
+
+    async def finalize_all_steps(self) -> None:
+        """Mark the final step as green and keep previous ones grey."""
+        # keep the last completed step green, others grey
+        for i, indicator in enumerate(self.work_steps):
+            if indicator.work_step.complete:
+                if i == len(self.work_steps) - 1:
+                    indicator.mark_current_green()
+                else:
+                    indicator.mark_grey()
 
     async def collapse_thinking_and_show_response(self, response_text: str) -> None:
         """Collapse the thinking section and show the final response."""
@@ -303,7 +343,7 @@ class ChatScreen(Screen):
 
                 selecting_step.mark_complete()
                 if selecting_indicator:
-                    await selecting_indicator.mark_complete()
+                    await agent_bubble.mark_step_complete(selecting_indicator)
 
                 performing_step = PerformingActionWorkStep(selected_action)
                 performing_indicator = await agent_bubble.add_work_step(performing_step)
@@ -327,15 +367,26 @@ class ChatScreen(Screen):
                 # mark execution complete
                 performing_step.mark_complete()
                 if performing_indicator:
-                    await performing_indicator.mark_complete()
-
-                # small delay to simulate processing time
-                await asyncio.sleep(0.5)
+                    await agent_bubble.mark_step_complete(performing_indicator)
 
                 self.chat_container.scroll_end(animate=False)
 
                 msg = f"Completed workflow step {step_count}"
                 app_logger.info(msg)
+
+                # finalize all steps to show proper completion state
+                await agent_bubble.finalize_all_steps()
+
+                # extract and display response
+                response = await self._extract_response_safe(agent)
+
+                self.chat_container.scroll_end(animate=False)
+
+                msg = f"Completed workflow step {step_count}"
+                app_logger.info(msg)
+
+            # small delay to simulate processing time
+            await asyncio.sleep(0.5)
 
             # extract and display response
             response = await self._extract_response_safe(agent)

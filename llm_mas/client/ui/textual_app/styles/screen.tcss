@@ -116,26 +116,62 @@ MessageBubble {
 
 /* Work step indicator styles */
 .work-step-indicator {
-    height: 1;
+    height: auto;
     margin: 0 0 1 0;
     padding: 0;
-    content-align: left middle;
 }
 
-.mini-spinner {
-    width: 2;
+.work-step-row {
     height: 1;
+    width: 100%;
+    layout: horizontal;
+    align: left middle;
+    padding: 0;
+    margin: 0;
 }
 
 .step-complete {
-    color: green;
+    color: #22c55e;  /* Nice green color */
+    text-style: bold;
     width: 2;
     height: 1;
     text-align: center;
+    padding: 0;
+    margin: 0;
+}
+
+.step-complete-grey {
+    color: #6b7280;  /* Grey color for completed but not current */
+    width: 2;
+    height: 1;
+    text-align: center;
+    padding: 0;
+    margin: 0;
+}
+
+.step-in-progress {
+    color: #f59e0b;  /* Orange/amber color for in-progress */
+    width: 2;
+    height: 1;
+    text-align: center;
+    padding: 0;
+    margin: 0;
 }
 
 .step-text {
-    color: white;
+    color: $text;
     height: 1;
+    width: auto;
     margin-left: 1;
+    padding: 0;
+    text-align: left;
+}
+
+.step-text-grey {
+    color: #6b7280;  /* Grey color for completed but not current */
+    height: 1;
+    width: auto;
+    margin-left: 1;
+    padding: 0;
+    text-align: left;
 }
