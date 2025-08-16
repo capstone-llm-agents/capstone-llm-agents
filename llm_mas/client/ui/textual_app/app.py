@@ -18,7 +18,6 @@ from textual.widgets import Button, Footer, Header, Input, Static
 from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, WorkStep
-from llm_mas.mas.conversation import Conversation
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
 
 if TYPE_CHECKING:
@@ -26,6 +25,7 @@ if TYPE_CHECKING:
 
     from llm_mas.client.account.client import Client
     from llm_mas.mas.agent import Agent
+    from llm_mas.mas.conversation import Conversation
 
 
 def setup_file_only_logger(name: str, log_file: str, level: int = logging.INFO) -> logging.Logger:
@@ -413,6 +413,7 @@ class ChatScreen(Screen):
         self.client = client
         self.chat_container: ScrollableContainer
         self.input: Input
+        self.history: list[tuple[str, str]] = []
         self._current_task: asyncio.Task | None = None
 
         conversation = self.client.get_mas().conversation_manager.get_conversation("General")
@@ -608,6 +609,7 @@ class ChatScreen(Screen):
         self.chat_container.scroll_end(animate=True)
 
         # update history
+        self.history.append(("user", user_msg))
         self.conversation.add_message(self.client.user, user_msg)
 
         agent = self.client.get_mas().get_assistant_agent()
@@ -620,6 +622,7 @@ class ChatScreen(Screen):
         # create and track new workflow task
         self._current_task = asyncio.create_task(
             self.simulate_agent_workflow(user_msg, agent),
+            name=f"agent_workflow_{len(self.history)}",
         )
         background_tasks.add(self._current_task)
 
