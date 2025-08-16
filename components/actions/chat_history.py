@@ -1,6 +1,5 @@
 """The actions needed to provide the agent with a chat history."""
 
-import logging
 from typing import override
 
 from llm_mas.action_system.core.action import Action

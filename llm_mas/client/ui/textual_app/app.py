@@ -508,7 +508,6 @@ class ChatScreen(Screen):
                 performing_indicator = await agent_bubble.add_work_step(performing_step)
 
                 params = ActionParams()
-                params.set_param("prompt", user_msg)
 
                 try:
                     res = await asyncio.wait_for(

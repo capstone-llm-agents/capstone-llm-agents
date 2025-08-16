@@ -21,25 +21,29 @@ class SimpleResponse(Action):
     @override
     def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by generating a response from an LLM."""
-        prompt = params.get_param("prompt")
+        chat_history = context.conversation.get_chat_history()
 
-        if not isinstance(prompt, str):
-            msg = "Prompt must be a string."
-            raise TypeError(msg)
+        messages = chat_history.as_dicts()
 
-        if context.last_result.is_empty():
-            meta_prompt = prompt
-        else:
-            meta_prompt = f"""
+        last_message = messages[-1] if messages else None
+
+        if not last_message:
+            msg = "No chat history available to respond to."
+            raise ValueError(msg)
+
+        if not context.last_result.is_empty():
+            # override content
+            last_message["content"] = f"""
             Context:
             {context.last_result.as_json_pretty()}
 
             Prompt:
-            {prompt}
+            {last_message["content"]}
             """
 
-        response = call_llm(meta_prompt)
+        response = call_llm(last_message["content"])
 
         res = ActionResult()
         res.set_param("response", response)
+
         return res
