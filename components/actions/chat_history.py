@@ -6,7 +6,7 @@ from llm_mas.action_system.base.actions.stateful_action import StatefulAction
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.agent.workspace import WorkspaceState
-from llm_mas.model_providers.ollama.call_llm import ChatHistory, Message
+from llm_mas.mas.conversation import ChatHistory, Message
 
 
 class SaveMessageToChatHistory(StatefulAction):

@@ -1,6 +1,7 @@
 """The Multi-Agent System (MAS) contains a system of agents that can collaborate to achieve complex tasks."""
 
 from llm_mas.mas.agent import Agent
+from llm_mas.mas.conversation import ConversationManager
 
 
 class MAS:
@@ -9,6 +10,7 @@ class MAS:
     def __init__(self) -> None:
         """Initialize the MAS with an empty list of agents."""
         self.agents: list[Agent] = []
+        self.conversation_manager = ConversationManager()
 
     def add_agent(self, agent: Agent) -> None:
         """Add an agent to the MAS."""

@@ -18,6 +18,7 @@ from textual.widgets import Button, Footer, Header, Input, Static
 from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, WorkStep
+from llm_mas.mas.conversation import Conversation
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
 
 if TYPE_CHECKING:
@@ -412,8 +413,16 @@ class ChatScreen(Screen):
         self.client = client
         self.chat_container: ScrollableContainer
         self.input: Input
-        self.history: list[tuple[str, str]] = []
         self._current_task: asyncio.Task | None = None
+
+        conversation = self.client.get_mas().conversation_manager.get_conversation("General")
+
+        if not conversation:
+            app_logger.error("No conversation found, cannot proceed with chat")
+            msg = "No conversation available to chat with."
+            raise RuntimeError(msg)
+
+        self.conversation: Conversation = conversation
 
     def compose(self) -> ComposeResult:
         """Compose the chat layout."""
@@ -437,8 +446,24 @@ class ChatScreen(Screen):
             self.chat_container.mount(Static("No assistant agent available to respond."))
             return
 
-        welcome_bubble = AgentMessage(agent, "Hello! I'm your assistant. How can I help you today?")
-        self.chat_container.mount(welcome_bubble)
+        # check length
+        if not self.conversation.chat_history.messages:
+            # add initial message
+            message = "Hello! I'm your assistant. How can I help you today?"
+            self.conversation.add_message(agent, message)
+
+        # display chat history
+        for message in self.conversation.chat_history.messages:
+            if message.role == "user":
+                bubble = UserMessage(message.content)
+            elif message.role == "assistant":
+                bubble = AgentMessage(agent, message.content)
+            else:
+                msg = f"Unknown message role: {message.role}, skipping display"
+                app_logger.warning(msg)
+                continue
+
+            self.chat_container.mount(bubble)
 
     async def simulate_agent_workflow(self, user_msg: str, agent: Agent) -> None:  # noqa: PLR0915
         """Simulate the agent workflow with proper async handling and timeouts."""
@@ -522,6 +547,10 @@ class ChatScreen(Screen):
 
             # extract and display response
             response = await self._extract_response_safe(agent)
+
+            # add to conversation
+            self.conversation.add_message(agent, response)
+
             await agent_bubble.collapse_thinking_and_show_response(response)
             self.chat_container.scroll_end(animate=True)
 
@@ -575,10 +604,11 @@ class ChatScreen(Screen):
         # add user message
         user_bubble = UserMessage(user_msg)
         await self.chat_container.mount(user_bubble)
+
         self.chat_container.scroll_end(animate=True)
 
         # update history
-        self.history.append(("user", user_msg))
+        self.conversation.add_message(self.client.user, user_msg)
 
         agent = self.client.get_mas().get_assistant_agent()
 
@@ -590,7 +620,6 @@ class ChatScreen(Screen):
         # create and track new workflow task
         self._current_task = asyncio.create_task(
             self.simulate_agent_workflow(user_msg, agent),
-            name=f"agent_workflow_{len(self.history)}",
         )
         background_tasks.add(self._current_task)
 

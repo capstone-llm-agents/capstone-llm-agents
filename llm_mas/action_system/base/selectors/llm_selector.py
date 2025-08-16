@@ -17,7 +17,10 @@ from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
-from llm_mas.model_providers.ollama.call_llm import AssistantMessage, Example, UserMessage, call_llm_with_examples
+from llm_mas.mas.conversation import AssistantMessage, UserAssistantExample, UserMessage
+from llm_mas.model_providers.ollama.call_llm import (
+    call_llm_with_examples,
+)
 
 
 # random selection policy
@@ -35,7 +38,7 @@ class LLMSelector(ActionSelector):
         if len(action_space.get_actions()) == 1:
             return action_space.get_actions()[0]
 
-        examples: list[Example] = []
+        examples: list[UserAssistantExample] = []
 
         actions1: list[Action] = [
             GET_RANDOM_NUMBER,
@@ -99,7 +102,7 @@ class LLMSelector(ActionSelector):
 
         return prompt.strip()
 
-    def craft_example(self, actions: list[Action], context: ActionResult, chosen_index: int) -> Example:
+    def craft_example(self, actions: list[Action], context: ActionResult, chosen_index: int) -> UserAssistantExample:
         """Craft an example from a list of actions."""
         prompt = self.get_select_action_prompt(actions, context)
 
@@ -107,7 +110,7 @@ class LLMSelector(ActionSelector):
 
         assistant_message = AssistantMessage(json.dumps(actions[chosen_index].as_json(), indent=4))
 
-        return Example(user_message, assistant_message)
+        return UserAssistantExample(user_message, assistant_message)
 
     def parse_response(self, response: str) -> tuple[str, ActionParams]:
         """Parse the LLM response to extract the selected action."""

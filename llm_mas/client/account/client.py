@@ -2,6 +2,7 @@
 
 from llm_mas.mas.agent import Agent
 from llm_mas.mas.mas import MAS
+from llm_mas.mas.user import User
 from llm_mas.mcp_client.client import MCPClient
 
 
@@ -10,13 +11,13 @@ class Client:
 
     def __init__(self, username: str, mas: MAS, mcp_client: MCPClient) -> None:
         """Initialize the client with a username."""
-        self.username = username
         self.mas = mas
         self.mcp_client = mcp_client
+        self.user = User(name=username)
 
     def get_username(self) -> str:
         """Return the username of the client."""
-        return self.username
+        return self.user.get_name()
 
     def get_mas(self) -> MAS:
         """Return the MAS instance associated with the client."""

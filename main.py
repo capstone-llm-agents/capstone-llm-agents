@@ -12,6 +12,9 @@ def main() -> None:
     """Run the main application logic."""
     mas = MAS()
     mas.add_agent(EXAMPLE_AGENT)
+
+    mas.conversation_manager.start_conversation("General")
+
     mcp_client = MCPClient()
     server = SSEConnectedServer("http://localhost:8080/sse")
     mcp_client.add_connected_server(server)

@@ -10,9 +10,10 @@ from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.agent.workspace import Workspace
+from llm_mas.mas.entity import Entity
 
 
-class Agent:
+class Agent(Entity):
     """Base class for all agents in the system."""
 
     def __init__(
@@ -24,7 +25,7 @@ class Agent:
         workspace: Workspace | None = None,
     ) -> None:
         """Initialize the agent with a name, action space, narrowing policy, and action selection strategy."""
-        self.name = name
+        super().__init__(name, role="assistant")
 
         # full action space for the agent
         self.action_space = action_space
