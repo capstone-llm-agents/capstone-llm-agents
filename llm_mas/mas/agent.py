@@ -1,7 +1,5 @@
 """An agent is an entity that can perform actions to complete tasks."""
 
-from typing import Callable
-
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_narrower import ActionNarrower
