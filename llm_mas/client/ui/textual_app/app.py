@@ -15,7 +15,6 @@ from textual.screen import Screen
 from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Static
 
-from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
