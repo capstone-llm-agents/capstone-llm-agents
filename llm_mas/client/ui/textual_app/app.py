@@ -16,7 +16,6 @@ from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Static
 
 from components.actions.simple_response import SimpleResponse
-from components.agents.example_agent import EXAMPLE_AGENT
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, WorkStep
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
@@ -129,9 +128,10 @@ class WorkStepIndicator(Static):
 class AgentMessage(MessageBubble):
     """A message bubble widget for agent messages with integrated work steps."""
 
-    def __init__(self, message: str = "", *, show_thinking: bool = False) -> None:
+    def __init__(self, agent: Agent, message: str = "", *, show_thinking: bool = False) -> None:
         """Initialize the agent message bubble."""
         super().__init__(message)
+        self.agent = agent
         self.show_thinking = show_thinking
         self.work_steps: list[WorkStepIndicator] = []
         self.thinking_container: Vertical | None = None
@@ -146,7 +146,7 @@ class AgentMessage(MessageBubble):
         with Horizontal(classes="assistant-message-container"):
             self.message_bubble = Vertical(classes="assistant-message-bubble")
             with self.message_bubble:
-                yield Static("Assistant", classes="message-sender")
+                yield Static(self.agent.name, classes="message-sender")
 
                 if self.show_thinking:
                     self.thinking_container = Vertical(classes="thinking-section")
@@ -431,12 +431,18 @@ class ChatScreen(Screen):
         """Handle the mount event to initialize the chat screen."""
         self.input.focus()
 
-        welcome_bubble = AgentMessage("Hello! I'm your assistant. How can I help you today?")
+        agent = self.client.get_mas().get_assistant_agent()
+        if not agent:
+            app_logger.error("No assistant agent found in MAS, cannot proceed with chat")
+            self.chat_container.mount(Static("No assistant agent available to respond."))
+            return
+
+        welcome_bubble = AgentMessage(agent, "Hello! I'm your assistant. How can I help you today?")
         self.chat_container.mount(welcome_bubble)
 
     async def simulate_agent_workflow(self, user_msg: str, agent: Agent) -> None:  # noqa: PLR0915
         """Simulate the agent workflow with proper async handling and timeouts."""
-        agent_bubble = AgentMessage(show_thinking=True)
+        agent_bubble = AgentMessage(show_thinking=True, agent=agent)
         await self.chat_container.mount(agent_bubble)
         self.chat_container.scroll_end(animate=False)
 
@@ -574,9 +580,16 @@ class ChatScreen(Screen):
         # update history
         self.history.append(("user", user_msg))
 
+        agent = self.client.get_mas().get_assistant_agent()
+
+        if not agent:
+            app_logger.error("No assistant agent found in MAS, cannot proceed with chat")
+            await self.chat_container.mount(Static("No assistant agent available to respond."))
+            return
+
         # create and track new workflow task
         self._current_task = asyncio.create_task(
-            self.simulate_agent_workflow(user_msg, EXAMPLE_AGENT),
+            self.simulate_agent_workflow(user_msg, agent),
             name=f"agent_workflow_{len(self.history)}",
         )
         background_tasks.add(self._current_task)

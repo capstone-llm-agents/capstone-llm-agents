@@ -17,3 +17,10 @@ class MAS:
     def get_agents(self) -> list[Agent]:
         """Return the list of agents in the MAS."""
         return self.agents
+
+    # TODO: Actual implementation to find the assistant agent
+    def get_assistant_agent(self) -> Agent | None:
+        """Return the first agent that is an assistant agent."""
+        if not self.agents:
+            return None
+        return self.agents[0]

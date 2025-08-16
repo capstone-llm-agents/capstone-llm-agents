@@ -13,7 +13,7 @@ action_space = ActionSpace()
 narrower = GraphBasedNarrower()
 selector = LLMSelector(call_llm)
 
-EXAMPLE_AGENT = Agent("ExampleAgent", action_space, narrower, selector)
+EXAMPLE_AGENT = Agent("Assistant", action_space, narrower, selector)
 
 
 # add some actions
