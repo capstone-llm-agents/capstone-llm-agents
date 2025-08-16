@@ -541,9 +541,6 @@ class ChatScreen(Screen):
                 # finalize all steps to show proper completion state
                 await agent_bubble.finalize_all_steps()
 
-                # extract and display response
-                response = await self._extract_response_safe(agent)
-
                 self.chat_container.scroll_end(animate=False)
 
                 msg = f"Completed workflow step {step_count}"
@@ -578,13 +575,17 @@ class ChatScreen(Screen):
                     return "I apologize, but I couldn't generate a response. Please try again."
 
                 action, result = action_res_tuple
-                if isinstance(action, SimpleResponse):
-                    response = result.get_param("response")
-                    return (
-                        response if response else "I generated an empty response. Please try rephrasing your question."
-                    )
-                # NOTE: Don't really understand TRY300
-                return "I completed the task but couldn't extract a readable response."  # noqa: TRY300
+
+                response = result.get_param("response")
+
+                if not isinstance(response, str):
+                    msg = "Response is not a string, cannot extract readable response."
+                    app_logger.error(msg)
+                    return "I completed the task but couldn't extract a readable response."
+
+                # NOTE: I don't really understand TRY300
+                return response  # noqa: TRY300
+
             except Exception as e:
                 msg = f"Error extracting response: {e}"
                 app_logger.exception(msg)
