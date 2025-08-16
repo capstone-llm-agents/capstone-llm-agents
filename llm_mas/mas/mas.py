@@ -18,7 +18,7 @@ class MAS:
         """Return the list of agents in the MAS."""
         return self.agents
 
-    # TODO: Actual implementation to find the assistant agent
+    # TODO: Actual implementation to find the assistant agent  # noqa: TD003
     def get_assistant_agent(self) -> Agent | None:
         """Return the first agent that is an assistant agent."""
         if not self.agents:
