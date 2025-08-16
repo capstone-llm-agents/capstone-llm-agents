@@ -18,15 +18,17 @@ EXAMPLE_AGENT = Agent("Assistant", action_space, narrower, selector)
 
 
 # add some actions
-# EXAMPLE_AGENT.add_action(SimpleResponse())
+EXAMPLE_AGENT.add_action(SimpleResponse())
 EXAMPLE_AGENT.add_action(RespondWithChatHistory())
 EXAMPLE_AGENT.add_action(StopAction())
 EXAMPLE_AGENT.add_action(RetrieveKnowledge())
 
 
+narrower.add_default_action(SimpleResponse())
 narrower.add_default_action(RespondWithChatHistory())
 narrower.add_default_action(RetrieveKnowledge())
 
 # add some edges
-narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory()])
+narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory(), SimpleResponse()])
 narrower.add_action_edge(RespondWithChatHistory(), [StopAction()])
+narrower.add_action_edge(SimpleResponse(), [StopAction()])
