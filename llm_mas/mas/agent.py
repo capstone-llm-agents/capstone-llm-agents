@@ -74,7 +74,7 @@ class Agent(Entity):
 
         while not self.finished_working():
             res = await self.act(context)
-            # TODO: Wrap the context properly
+            # TODO: Wrap the context properly  # noqa: TD003
             context = ActionContext(context.conversation, res, context.mcp_client)
 
     def finished_working(self) -> bool:

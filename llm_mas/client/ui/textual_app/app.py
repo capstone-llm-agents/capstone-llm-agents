@@ -473,7 +473,7 @@ class ChatScreen(Screen):
 
             self.chat_container.mount(bubble)
 
-    async def simulate_agent_workflow(self, user_msg: str, agent: Agent) -> None:  # noqa: PLR0915
+    async def simulate_agent_workflow(self, agent: Agent) -> None:  # noqa: PLR0915
         """Simulate the agent workflow with proper async handling and timeouts."""
         agent_bubble = AgentMessage(show_thinking=True, agent=agent)
         await self.chat_container.mount(agent_bubble)
@@ -626,7 +626,7 @@ class ChatScreen(Screen):
 
         # create and track new workflow task
         self._current_task = asyncio.create_task(
-            self.simulate_agent_workflow(user_msg, agent),
+            self.simulate_agent_workflow(agent),
             name=f"agent_workflow_{len(self.history)}",
         )
         background_tasks.add(self._current_task)
