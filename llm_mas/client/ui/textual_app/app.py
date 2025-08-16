@@ -254,9 +254,9 @@ class MainMenu(Screen):
         """Compose the main menu layout."""
         yield Header(show_clock=True)
         with Vertical():
-            yield Button("List Agents", id="list_agents")
             yield Button("Talk to Assistant Agent", id="talk_agent")
             yield Button("MCP Client Info", id="mcp_client_info")
+            yield Button("List Agents", id="list_agents")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
