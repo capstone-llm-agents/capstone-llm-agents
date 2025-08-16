@@ -20,7 +20,7 @@ class RetrieveKnowledge(Action):
         super().__init__(description="Retrieves knowledge from the knowledge base.")
 
     @override
-    def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by printing a greeting."""
         facts = EXAMPLE_KB.query("")
 

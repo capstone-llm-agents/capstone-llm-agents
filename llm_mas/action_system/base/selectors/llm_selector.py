@@ -2,7 +2,7 @@
 
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Awaitable, Callable, Coroutine
 from typing import override
 
 from components.actions.dummy_actions import (
@@ -28,12 +28,12 @@ from llm_mas.model_providers.ollama.call_llm import (
 class LLMSelector(ActionSelector):
     """A selection policy that randomly selects an action from the narrowed action space."""
 
-    def __init__(self, llm_call: Callable[[str], str]) -> None:
+    def __init__(self, llm_call: Callable[[str], Awaitable[str]]) -> None:
         """Initialize the LLMSelector with a callable for LLM calls."""
         self.llm_call = llm_call
 
     @override
-    def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
+    async def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
         """Select an action from the action space using an LLM."""
         # only 1 choice then just quit
         if len(action_space.get_actions()) == 1:
@@ -49,7 +49,7 @@ class LLMSelector(ActionSelector):
 
         res1 = ActionResult()
         res1.set_param("prompt", "What is the weather like today?")
-        context1 = ActionContext(context.conversation, res1)
+        context1 = ActionContext(context.conversation, res1, context.mcp_client)
 
         examples.append(self.craft_example(actions1, context1, 2))
 
@@ -57,11 +57,11 @@ class LLMSelector(ActionSelector):
 
         res2 = ActionResult()
         res2.set_param("prompt", "What is the current date?")
-        context2 = ActionContext(context.conversation, res2)
+        context2 = ActionContext(context.conversation, res2, context.mcp_client)
 
         examples.append(self.craft_example(actions2, context2, 0))
 
-        response = call_llm_with_examples(
+        response = await call_llm_with_examples(
             examples,
             UserMessage(self.get_select_action_prompt(action_space.get_actions(), context)),
         )

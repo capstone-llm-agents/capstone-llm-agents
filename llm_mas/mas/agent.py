@@ -38,17 +38,17 @@ class Agent(Entity):
         # workspace
         self.workspace = workspace if workspace is not None else Workspace()
 
-    def act(self, context: ActionContext, params: ActionParams | None = None) -> ActionResult:
+    async def act(self, context: ActionContext, params: ActionParams | None = None) -> ActionResult:
         """Perform an action in the workspace using the agent's action selection strategy."""
-        action = self.select_action(context)
-        return self.do_selected_action(action, context, params)
+        action = await self.select_action(context)
+        return await self.do_selected_action(action, context, params)
 
-    def select_action(self, context: ActionContext) -> Action:
+    async def select_action(self, context: ActionContext) -> Action:
         """Select an action to perform."""
         narrowed_action_space = self.narrower.narrow(self.workspace, self.action_space)
-        return self.selector.select_action(narrowed_action_space, context)
+        return await self.selector.select_action(narrowed_action_space, context)
 
-    def do_selected_action(
+    async def do_selected_action(
         self,
         action: Action,
         context: ActionContext,
@@ -58,7 +58,7 @@ class Agent(Entity):
         # TODO: Get parameters from some source like ParamProvider  # noqa: TD003
         params = params if params is not None else ActionParams()
 
-        res = action.do(params, context)
+        res = await action.do(params, context)
         self.workspace.action_history.add_action(action, res)
         return res
 
@@ -66,16 +66,16 @@ class Agent(Entity):
         """Add an action to the agent's action space."""
         self.action_space.add_action(action)
 
-    def work(self, context: ActionContext) -> None:
+    async def work(self, context: ActionContext) -> None:
         """Perform work by executing actions in the agent's action space."""
         if not self.action_space.has_action(StopAction()):
             msg = "StopAction must be in the action space to stop the agent."
             raise ValueError(msg)
 
         while not self.finished_working():
-            res = self.act(context)
+            res = await self.act(context)
             # TODO: Wrap the context properly
-            context = ActionContext(context.conversation, res)
+            context = ActionContext(context.conversation, res, context.mcp_client)
 
     def finished_working(self) -> bool:
         """Check if the agent has finished working."""

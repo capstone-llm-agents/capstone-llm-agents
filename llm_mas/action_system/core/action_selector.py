@@ -11,7 +11,7 @@ class ActionSelector:
     """Base class for action selection strategies."""
 
     @abstractmethod
-    def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
+    async def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
         """Select an action for the given agent."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)

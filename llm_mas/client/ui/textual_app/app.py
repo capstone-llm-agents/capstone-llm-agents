@@ -6,8 +6,9 @@ import asyncio
 import contextlib
 import logging
 import weakref
+from collections.abc import Coroutine
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from textual.app import App, ComposeResult
 from textual.containers import Horizontal, ScrollableContainer, Vertical
@@ -27,6 +28,11 @@ if TYPE_CHECKING:
     from llm_mas.client.account.client import Client
     from llm_mas.mas.agent import Agent
     from llm_mas.mas.conversation import Conversation
+
+
+def run_async_in_thread(coroutine: Coroutine) -> Any:  # noqa: ANN401
+    """Run an async coroutine in a thread and return its result."""
+    return asyncio.run(coroutine)
 
 
 def setup_file_only_logger(name: str, log_file: str, level: int = logging.INFO) -> logging.Logger:
@@ -476,7 +482,7 @@ class ChatScreen(Screen):
         try:
             agent.workspace.action_history.clear()
 
-            context = ActionContext(self.conversation, ActionResult())
+            context = ActionContext(self.conversation, ActionResult(), self.client.mcp_client)
             step_count = 0
 
             while not agent.finished_working():
@@ -488,10 +494,7 @@ class ChatScreen(Screen):
                 selecting_indicator = await agent_bubble.add_work_step(selecting_step)
 
                 try:
-                    selected_action = await asyncio.wait_for(
-                        asyncio.to_thread(agent.select_action, context),
-                        timeout=30.0,  # 30 second timeout
-                    )
+                    selected_action = await agent.select_action(context)
                 except TimeoutError:
                     msg = f"Action selection timed out on step {step_count}"
                     app_logger.exception(msg)
@@ -510,13 +513,10 @@ class ChatScreen(Screen):
                 params = ActionParams()
 
                 try:
-                    res = await asyncio.wait_for(
-                        asyncio.to_thread(agent.do_selected_action, selected_action, context, params),
-                        timeout=60.0,  # 60 second timeout for action execution
-                    )
+                    res = await agent.do_selected_action(selected_action, context, params)
 
                     # TODO: Wrap the context properly  # noqa: TD003
-                    context = ActionContext(context.conversation, res)
+                    context = ActionContext(context.conversation, res, context.mcp_client)
 
                 except TimeoutError:
                     msg = f"Action execution timed out on step {step_count}"

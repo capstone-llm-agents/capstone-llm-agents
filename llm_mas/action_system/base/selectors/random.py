@@ -14,7 +14,7 @@ class RandomSelector(ActionSelector):
     """A selection policy that randomly selects an action from the narrowed action space."""
 
     @override
-    def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
+    async def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
         """Select a random action from the given action space."""
         if not action_space.actions:
             msg = "Action space is empty. Cannot select an action."

@@ -16,6 +16,6 @@ class StopAction(Action):
         super().__init__(description="Stops the agent's execution")
 
     @override
-    def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by stopping the agent."""
         return ActionResult()

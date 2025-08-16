@@ -13,7 +13,7 @@ class Action:
         self.name = name if name is not None else self.__class__.__name__
         self.description = description
 
-    def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action with the given agent."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
