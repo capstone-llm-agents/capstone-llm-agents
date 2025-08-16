@@ -13,6 +13,7 @@ from components.actions.dummy_actions import (
     SOLVE_MATH,
 )
 from llm_mas.action_system.core.action import Action
+from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
@@ -32,7 +33,7 @@ class LLMSelector(ActionSelector):
         self.llm_call = llm_call
 
     @override
-    def select_action(self, action_space: ActionSpace, context: ActionResult) -> Action:
+    def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
         """Select an action from the action space using an LLM."""
         # only 1 choice then just quit
         if len(action_space.get_actions()) == 1:
@@ -46,15 +47,17 @@ class LLMSelector(ActionSelector):
             GET_WEATHER,
         ]
 
-        context1 = ActionResult()
-        context1.set_param("prompt", "What is the weather like today?")
+        res1 = ActionResult()
+        res1.set_param("prompt", "What is the weather like today?")
+        context1 = ActionContext(context.conversation, res1)
 
         examples.append(self.craft_example(actions1, context1, 2))
 
         actions2: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, GET_WEATHER, GET_RANDOM_NUMBER]
 
-        context2 = ActionResult()
-        context2.set_param("prompt", "What is the current date?")
+        res2 = ActionResult()
+        res2.set_param("prompt", "What is the current date?")
+        context2 = ActionContext(context.conversation, res2)
 
         examples.append(self.craft_example(actions2, context2, 0))
 
@@ -63,7 +66,7 @@ class LLMSelector(ActionSelector):
             UserMessage(self.get_select_action_prompt(action_space.get_actions(), context)),
         )
 
-        # TODO: use the params
+        # TODO: use the params  # noqa: TD003
         name, params = self.parse_response(response)
 
         # find action
@@ -74,7 +77,7 @@ class LLMSelector(ActionSelector):
         msg = f"Action '{name}' not found in the action space."
         raise ValueError(msg)
 
-    def get_select_action_prompt(self, actions: list[Action], context: ActionResult | None = None) -> str:
+    def get_select_action_prompt(self, actions: list[Action], context: ActionContext) -> str:
         """Generate a prompt for selecting an action from a list of actions."""
         actions_str = json.dumps([action.as_json() for action in actions], indent=4)
 
@@ -86,8 +89,8 @@ class LLMSelector(ActionSelector):
         """
 
         prompt += "\n\n"
-        if context:
-            prompt += f"Context: {context.as_json_pretty()}\n\n"
+        if not context.last_result.is_empty():
+            prompt += f"Context: {context.last_result.as_json_pretty()}\n\n"
 
         prompt += """Respond ONLY with the action name and parameters in JSON format, like this:
         ```json
@@ -102,7 +105,7 @@ class LLMSelector(ActionSelector):
 
         return prompt.strip()
 
-    def craft_example(self, actions: list[Action], context: ActionResult, chosen_index: int) -> UserAssistantExample:
+    def craft_example(self, actions: list[Action], context: ActionContext, chosen_index: int) -> UserAssistantExample:
         """Craft an example from a list of actions."""
         prompt = self.get_select_action_prompt(actions, context)
 

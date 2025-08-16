@@ -1,3 +1,5 @@
+"""Some dummy actions for testing purposes."""
+
 from llm_mas.action_system.core.action import Action
 
 SOLVE_MATH = Action(

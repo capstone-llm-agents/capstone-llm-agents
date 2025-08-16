@@ -3,6 +3,7 @@
 from typing import override
 
 from llm_mas.action_system.core.action import Action
+from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.knowledge_base.knowledge_base import KnowledgeBase
@@ -19,7 +20,7 @@ class RetrieveKnowledge(Action):
         super().__init__(description="Retrieves knowledge from the knowledge base.")
 
     @override
-    def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
+    def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by printing a greeting."""
         facts = EXAMPLE_KB.query("")
 

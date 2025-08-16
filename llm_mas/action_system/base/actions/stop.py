@@ -3,6 +3,7 @@
 from typing import override
 
 from llm_mas.action_system.core.action import Action
+from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 
@@ -15,6 +16,6 @@ class StopAction(Action):
         super().__init__(description="Stops the agent's execution")
 
     @override
-    def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
+    def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by stopping the agent."""
         return ActionResult()

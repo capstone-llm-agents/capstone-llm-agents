@@ -3,6 +3,7 @@
 from typing import override
 
 from llm_mas.action_system.core.action import Action
+from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 
@@ -12,8 +13,7 @@ class Workflow(Action):
 
     def __init__(self, name: str) -> None:
         """Initialize the workflow with a name."""
-        super().__init__()
-        self.name = name
+        super().__init__(description="A workflow that contains multiple actions", name=name)
         self.actions: list[Action] = []
 
     def add_action(self, action: Action) -> None:
@@ -22,11 +22,12 @@ class Workflow(Action):
 
     # TODO: Extend ActionParams to WorkflowActionParams for Workflow actions # noqa: TD003
     @override
-    def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
+    def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Execute all actions in the workflow."""
         for action in self.actions:
             res = action.do(params, context)
-            context = res
+            # TODO: wrap the context properly  # noqa: TD003
+            context = ActionContext(context.conversation, res)
 
-        # TODO: return actual result gg
+        # TODO: return actual result gg  # noqa: TD003
         return ActionResult()

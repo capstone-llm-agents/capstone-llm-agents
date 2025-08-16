@@ -16,7 +16,9 @@ from textual.widget import Widget
 from textual.widgets import Button, Footer, Header, Input, Static
 
 from components.actions.simple_response import SimpleResponse
+from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
+from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, WorkStep
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
 
@@ -475,7 +477,7 @@ class ChatScreen(Screen):
         try:
             agent.workspace.action_history.clear()
 
-            context = None
+            context = ActionContext(self.conversation, ActionResult())
             step_count = 0
 
             while not agent.finished_working():
@@ -510,10 +512,14 @@ class ChatScreen(Screen):
                 params.set_param("prompt", user_msg)
 
                 try:
-                    context = await asyncio.wait_for(
+                    res = await asyncio.wait_for(
                         asyncio.to_thread(agent.do_selected_action, selected_action, context, params),
                         timeout=60.0,  # 60 second timeout for action execution
                     )
+
+                    # TODO: Wrap the context properly  # noqa: TD003
+                    context = ActionContext(context.conversation, res)
+
                 except TimeoutError:
                     msg = f"Action execution timed out on step {step_count}"
                     app_logger.exception(msg)

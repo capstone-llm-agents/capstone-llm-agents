@@ -3,6 +3,7 @@
 from typing import override
 
 from llm_mas.action_system.core.action import Action
+from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.model_providers.ollama.call_llm import call_llm
@@ -18,7 +19,7 @@ class SimpleResponse(Action):
         )
 
     @override
-    def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
+    def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by generating a response from an LLM."""
         prompt = params.get_param("prompt")
 
@@ -26,12 +27,12 @@ class SimpleResponse(Action):
             msg = "Prompt must be a string."
             raise TypeError(msg)
 
-        if context.is_empty():
+        if context.last_result.is_empty():
             meta_prompt = prompt
         else:
             meta_prompt = f"""
             Context:
-            {context.as_json_pretty()}
+            {context.last_result.as_json_pretty()}
 
             Prompt:
             {prompt}

@@ -3,6 +3,7 @@
 from typing import override
 
 from llm_mas.action_system.core.action import Action
+from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 
@@ -15,7 +16,7 @@ class SayHello(Action):
         super().__init__(description="Prints a greeting message")
 
     @override
-    def do(self, params: ActionParams, context: ActionResult) -> ActionResult:
+    def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by printing a greeting."""
         print("Hello world!")  # noqa: T201
         return ActionResult()
