@@ -3,6 +3,7 @@
 from components.actions.chat_history import RespondWithChatHistory
 from components.actions.retrieve_knowledge import RetrieveKnowledge
 from components.actions.simple_response import SimpleResponse
+from components.actions.tools import GetTools
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
 from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
@@ -22,9 +23,11 @@ EXAMPLE_AGENT.add_action(SimpleResponse())
 EXAMPLE_AGENT.add_action(RespondWithChatHistory())
 EXAMPLE_AGENT.add_action(StopAction())
 EXAMPLE_AGENT.add_action(RetrieveKnowledge())
+EXAMPLE_AGENT.add_action(GetTools())
 
 
 narrower.add_default_action(SimpleResponse())
+narrower.add_default_action(GetTools())
 narrower.add_default_action(RespondWithChatHistory())
 narrower.add_default_action(RetrieveKnowledge())
 
@@ -32,3 +35,4 @@ narrower.add_default_action(RetrieveKnowledge())
 narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory(), SimpleResponse()])
 narrower.add_action_edge(RespondWithChatHistory(), [StopAction()])
 narrower.add_action_edge(SimpleResponse(), [StopAction()])
+narrower.add_action_edge(GetTools(), [SimpleResponse()])

@@ -56,7 +56,7 @@ class ConnectedServer:
 
     @abstractmethod
     @asynccontextmanager
-    async def connect(self) -> AsyncGenerator:
+    async def connect(self) -> AsyncGenerator[ClientSession]:
         """Connect to the MCP server and return a session."""
         msg = "Subclasses must implement the connect method."
         raise NotImplementedError(msg)
@@ -71,7 +71,7 @@ class SSEConnectedServer(ConnectedServer):
         super().__init__(server_url)
 
     @asynccontextmanager
-    async def connect(self) -> AsyncGenerator:
+    async def connect(self) -> AsyncGenerator[ClientSession]:
         """Connect to the MCP server using SSE."""
         async with sse_client(url=self.server_url) as streams:  # noqa: SIM117
             async with ClientSession(read_stream=streams[0], write_stream=streams[1]) as session:

@@ -1,13 +1,14 @@
 """Actions that related to tools."""
 
-from typing import override
-
-from mcp import Tool
+from typing import TYPE_CHECKING, override
 
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
+
+if TYPE_CHECKING:
+    from mcp import Tool
 
 
 class GetTools(Action):
@@ -25,9 +26,13 @@ class GetTools(Action):
         tools: list[Tool] = []
         for server in servers:
             async with server.connect() as session:
+                await session.initialize()
                 tools.extend(await server.list_tools(session))
 
+        # convert to dicts
+        tools_dicts = [tool.model_dump() for tool in tools]
+
         res = ActionResult()
-        res.set_param("tools", tools)
+        res.set_param("tools", tools_dicts)
 
         return res

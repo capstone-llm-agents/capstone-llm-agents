@@ -6,7 +6,6 @@ import asyncio
 import contextlib
 import logging
 import weakref
-from collections.abc import Coroutine
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -23,6 +22,8 @@ from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWor
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
 
 if TYPE_CHECKING:
+    from collections.abc import Coroutine
+
     from textual import events
 
     from llm_mas.client.account.client import Client

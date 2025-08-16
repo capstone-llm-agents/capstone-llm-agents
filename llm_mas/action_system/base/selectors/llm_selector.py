@@ -2,7 +2,7 @@
 
 import json
 import re
-from collections.abc import Awaitable, Callable, Coroutine
+from collections.abc import Awaitable, Callable
 from typing import override
 
 from components.actions.dummy_actions import (
@@ -12,6 +12,7 @@ from components.actions.dummy_actions import (
     GET_WEATHER,
     SOLVE_MATH,
 )
+from components.actions.tools import GetTools
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -59,6 +60,13 @@ class LLMSelector(ActionSelector):
         res2.set_param("prompt", "What is the current date?")
         context2 = ActionContext(context.conversation, res2, context.mcp_client)
 
+        actions3: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, GetTools(), GET_WEATHER, GET_RANDOM_NUMBER]
+
+        res3 = ActionResult()
+        res3.set_param("prompt", "What tools do you have?")
+        context3 = ActionContext(context.conversation, res3, context.mcp_client)
+
+        examples.append(self.craft_example(actions3, context3, 2))
         examples.append(self.craft_example(actions2, context2, 0))
 
         response = await call_llm_with_examples(
