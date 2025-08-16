@@ -14,6 +14,6 @@ class MAS:
         """Add an agent to the MAS."""
         self.agents.append(agent)
 
-    def get_agents(self) -> list:
+    def get_agents(self) -> list[Agent]:
         """Return the list of agents in the MAS."""
         return self.agents

@@ -4,7 +4,7 @@ from abc import abstractmethod
 from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 
-from mcp import ClientSession, Resource, Tool
+from mcp import ClientSession, Implementation, Resource, Tool
 from mcp.client.sse import sse_client
 from mcp.types import BlobResourceContents, ContentBlock, TextResourceContents
 from pydantic import AnyUrl
@@ -49,6 +49,11 @@ class ConnectedServer:
         res = await session.read_resource(resource_uri)
         return res.contents
 
+    async def initialize(self, session: ClientSession) -> Implementation:
+        """Initialize the connected server."""
+        res = await session.initialize()
+        return res.serverInfo
+
     @abstractmethod
     @asynccontextmanager
     async def connect(self) -> AsyncGenerator:
@@ -70,5 +75,4 @@ class SSEConnectedServer(ConnectedServer):
         """Connect to the MCP server using SSE."""
         async with sse_client(url=self.server_url) as streams:  # noqa: SIM117
             async with ClientSession(read_stream=streams[0], write_stream=streams[1]) as session:
-                await session.initialize()
                 yield session

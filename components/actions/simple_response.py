@@ -26,13 +26,16 @@ class SimpleResponse(Action):
             msg = "Prompt must be a string."
             raise TypeError(msg)
 
-        meta_prompt = f"""
-        Context:
-        {context.as_json_pretty()}
+        if context.is_empty():
+            meta_prompt = prompt
+        else:
+            meta_prompt = f"""
+            Context:
+            {context.as_json_pretty()}
 
-        Prompt:
-        {prompt}
-        """
+            Prompt:
+            {prompt}
+            """
 
         response = call_llm(meta_prompt)
 

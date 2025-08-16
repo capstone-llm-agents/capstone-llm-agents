@@ -13,16 +13,18 @@ from textual.app import App, ComposeResult
 from textual.containers import Horizontal, ScrollableContainer, Vertical
 from textual.screen import Screen
 from textual.widget import Widget
-from textual.widgets import Button, Footer, Header, Input, LoadingIndicator, Static
+from textual.widgets import Button, Footer, Header, Input, Static
 
 from components.actions.simple_response import SimpleResponse
 from components.agents.example_agent import EXAMPLE_AGENT
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep, WorkStep
+from llm_mas.mcp_client.connected_server import SSEConnectedServer
 
 if TYPE_CHECKING:
     from textual import events
 
+    from llm_mas.client.account.client import Client
     from llm_mas.mas.agent import Agent
 
 
@@ -243,29 +245,152 @@ class AgentMessage(MessageBubble):
 class MainMenu(Screen):
     """Main menu screen of the application."""
 
+    def __init__(self, client: Client) -> None:
+        """Initialize the main menu with a client."""
+        super().__init__()
+        self.client = client
+
     def compose(self) -> ComposeResult:
         """Compose the main menu layout."""
         yield Header(show_clock=True)
         with Vertical():
             yield Button("List Agents", id="list_agents")
             yield Button("Talk to Assistant Agent", id="talk_agent")
+            yield Button("MCP Client Info", id="mcp_client_info")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button presses to navigate to different screens."""
         if event.button.id == "list_agents":
-            self.app.push_screen(AgentListScreen())
+            self.app.push_screen(AgentListScreen(self.client))
         elif event.button.id == "talk_agent":
-            self.app.push_screen(ChatScreen())
+            self.app.push_screen(ChatScreen(self.client))
+        elif event.button.id == "mcp_client_info":
+            self.app.push_screen(MCPClientScreen(self.client))
+
+
+class MCPClientScreen(Screen):
+    """Screen to display MCP client information."""
+
+    CSS_PATH = "./styles/mcp.tcss"
+
+    def __init__(self, client: Client) -> None:
+        """Initialize the MCP client screen with a client."""
+        super().__init__()
+        self.client = client
+        self.server_info_widget: Static | None = None
+        self.error_display: Static | None = None
+
+    def compose(self) -> ComposeResult:
+        """Compose the MCP client layout."""
+        yield Header(name="MCP Client Info")
+
+        mcp_client = self.client.mcp_client
+        initial_content = f"Connected Servers: {len(mcp_client.connected_servers)}\nLoading server details..."
+
+        self.server_info_widget = Static(initial_content, classes="mcp-client-info")
+        yield self.server_info_widget
+
+        # text input and button to add a new server
+        with Horizontal(classes="mcp-add-server"):
+            value = "http://localhost:8080/sse"
+            self.server_input = Input(value=value, placeholder="Enter server URL", id="server_input")
+            yield self.server_input
+        yield Button("Add Server", id="add_server_button")
+
+        # error display widget
+        self.error_display = Static("", classes="error-display")
+        yield self.error_display
+
+        yield Footer()
+
+    async def on_mount(self) -> None:
+        """Load server information after the screen is mounted."""
+        await self._load_server_info()
+
+    def _show_error(self, message: str) -> None:
+        """Display an error message below the input."""
+        if self.error_display:
+            self.error_display.update(message)
+            self.error_display.add_class("visible")
+
+    def _clear_error(self) -> None:
+        """Clear any displayed error message."""
+        if self.error_display:
+            self.error_display.update("")
+            self.error_display.remove_class("visible")
+
+    async def _load_server_info(self) -> None:
+        """Load and display server information asynchronously."""
+        if not self.server_info_widget:
+            return
+
+        mcp_client = self.client.mcp_client
+        content = f"Connected Servers: {len(mcp_client.connected_servers)}\n"
+
+        server_details = ""
+
+        for server in mcp_client.connected_servers:
+            try:
+                async with server.connect() as session:
+                    info = await server.initialize(session)
+                    server_details += f"Server URL: {server.server_url}\nName: {info.name}\n\n"
+            except Exception as e:
+                msg = f"Error connecting to server {server.server_url}: {e!s}"
+                app_logger.exception(msg)
+                server_details += f"({server.server_url}) Error connecting to server. Please check the URL and make sure the server is running.\n\n"  # noqa: E501
+
+        content += server_details
+        self.server_info_widget.update(content)
+
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
+        """Handle button presses to add a new server."""
+        if event.button.id == "add_server_button":
+            server_url = self.server_input.value.strip()
+
+            # already have a server with this URL
+            if any(server.server_url == server_url for server in self.client.mcp_client.connected_servers):
+                self._show_error("Server already added.")
+                return
+
+            if server_url:
+                # clear any previous error
+                self._clear_error()
+
+                try:
+                    new_server = SSEConnectedServer(server_url)
+                    self.server_input.value = ""
+
+                    async with new_server.connect() as session:
+                        await new_server.initialize(session)
+
+                    self.client.mcp_client.add_connected_server(new_server)
+
+                    await self._load_server_info()
+
+                except Exception as e:
+                    msg = f"Failed to add server: {e}"
+                    app_logger.exception(msg)
+                    self._show_error("Could not add server. Please check the URL and make sure the server is running.")
+
+    def on_key(self, event: events.Key) -> None:
+        """Handle key events for navigation."""
+        if event.key == "escape":
+            self.app.pop_screen()
 
 
 class AgentListScreen(Screen):
     """Screen to display a list of agents."""
 
+    def __init__(self, client: Client) -> None:
+        """Initialize the agent list screen with a client."""
+        super().__init__()
+        self.client = client
+
     def compose(self) -> ComposeResult:
         """Compose the agent list layout."""
         yield Header(name="Agent List")
-        agents: list[str] = ["Assistant Agent", "Research Agent", "Data Analysis Agent"]
+        agents: list[str] = [agent.name for agent in self.client.get_mas().get_agents()]
         content: str = "\n".join(agents)
         yield Static(content)
         yield Footer()
@@ -281,9 +406,10 @@ class ChatScreen(Screen):
 
     CSS_PATH = "./styles/screen.tcss"
 
-    def __init__(self) -> None:
+    def __init__(self, client: Client) -> None:
         """Initialize the chat screen."""
         super().__init__()
+        self.client = client
         self.chat_container: ScrollableContainer
         self.input: Input
         self.history: list[tuple[str, str]] = []
@@ -308,7 +434,7 @@ class ChatScreen(Screen):
         welcome_bubble = AgentMessage("Hello! I'm your assistant. How can I help you today?")
         self.chat_container.mount(welcome_bubble)
 
-    async def simulate_agent_workflow(self, user_msg: str, agent: Agent) -> None:
+    async def simulate_agent_workflow(self, user_msg: str, agent: Agent) -> None:  # noqa: PLR0915
         """Simulate the agent workflow with proper async handling and timeouts."""
         agent_bubble = AgentMessage(show_thinking=True)
         await self.chat_container.mount(agent_bubble)
@@ -490,13 +616,17 @@ class ChatScreen(Screen):
 class TextualApp(App):
     """Main application class with optimized async handling."""
 
-    TITLE = "LLM Multi-Agent System"
+    def __init__(self, client: Client) -> None:
+        """Initialize the application with an optional client."""
+        super().__init__()
+        self.client = client
+        self.title = f"Welcome Back - {self.client.get_username()}"
 
     def on_mount(self) -> None:
         """Mount the main menu screen on application start."""
-        self.push_screen(MainMenu())
+        self.push_screen(MainMenu(self.client))
 
-    # TODO: Doesn't actually get called yet, need to find a way to hook into shutdown properly
+    # TODO: Doesn't actually get called yet, need to find a way to hook into shutdown properly  # noqa: TD003
     async def on_shutdown(self) -> None:
         """Handle graceful shutdown of background tasks."""
         # log
@@ -510,15 +640,3 @@ class TextualApp(App):
         # wait for tasks to complete cancellation
         if background_tasks:
             await asyncio.gather(*background_tasks, return_exceptions=True)
-
-
-if __name__ == "__main__":
-    app = TextualApp()
-    try:
-        app.run()
-    except KeyboardInterrupt:
-        app_logger.info("Application interrupted by user")
-    except Exception as e:
-        msg = f"Application crashed: {e}"
-        app_logger.exception(msg)
-        raise

@@ -36,3 +36,7 @@ class ActionResult:
     def as_json_pretty(self) -> str:
         """Return the action result as a pretty JSON string."""
         return json.dumps(self.results, indent=4)
+
+    def is_empty(self) -> bool:
+        """Check if the action result is empty."""
+        return not self.results

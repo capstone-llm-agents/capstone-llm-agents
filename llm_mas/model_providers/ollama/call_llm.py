@@ -59,6 +59,22 @@ class AssistantMessage(Message):
         super().__init__(role="assistant", content=content)
 
 
+class ChatHistory:
+    """Chat history class to store messages."""
+
+    def __init__(self) -> None:
+        """Initialize an empty chat history."""
+        self.messages: list[Message] = []
+
+    def add_message(self, message: Message) -> None:
+        """Add a message to the chat history."""
+        self.messages.append(message)
+
+    def as_dicts(self) -> list[dict]:
+        """Return the chat history as a list of dictionaries."""
+        return [message.as_dict() for message in self.messages]
+
+
 class Example:
     """Example class for LLM interactions."""
 
