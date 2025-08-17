@@ -23,7 +23,11 @@ Clone the repository.
 
 Install Python 3.13 with ```uv python install 3.13```
 
-Run ```uv sync``` to install the packages. It should create a virtual environment automatically.
+Run ```uv venv``` to create the virtual environment.
+
+Run ```source .venv/bin/activate``` to run the virtual environment.
+
+Run ```uv sync``` to install the packages.
 
 ## Running the Project
 
