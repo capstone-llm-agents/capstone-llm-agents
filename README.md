@@ -13,7 +13,17 @@ Intelligent agent technology is an important artificial intelligent (AI) paradig
 
 ## Installation
 
-TODO
+Install ```uv``` from ```https://docs.astral.sh/uv/getting-started/installation/```
+
+Download ```Ollama``` from ```https://ollama.com/```.
+
+Choose a model to install via ```ollama pull <model_name>```. ```ollama pull gemma3``` is recommended.
+
+Clone the repository.
+
+Install Python 3.13 with ```uv python install 3.13```
+
+Run ```uv sync``` to install the packages. It should create a virtual environment automatically.
 
 ## Running the Project
 
