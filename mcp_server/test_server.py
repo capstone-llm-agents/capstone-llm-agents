@@ -8,21 +8,49 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
+import os
+from mem0 import Memory
 
 # create the MCP server
-mcp = FastMCP("SSE Example Server")
+mcp = FastMCP("SSE Utility Server")
+
+
+
+#currently using chromadb to store vector memories however, qdrant can be used and recommended since it gives us a web interface to interact with the memory.
+config = {
+    "vector_store": {
+        "provider": "chroma",
+        "config": {
+            "collection_name": "test",
+            "path": "db",
+        }
+    }
+}
+
+@mcp.tool()
+def greet() -> str:
+    m = Memory.from_config(config)
+    name = m.search(query="name", agent_id="assistant", limit=1) #need to update this to be more dynamic get the agent id from the agnet itself
+    name = "\n".join(f"- {entry['memory']}" for entry in name["results"])
+    return f"Hello, {name}! Welcome." 
+    
+@mcp.tool()
+def memory_search(memory: str, agent_id: str):
+    m = Memory.from_config(config)
+    relevant_memories = m.search(query=memory, agent_id=agent_id, limit=3)
+    memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
+    if memories_str:
+        return f" These are the relating memories {memories_str}"
+    else:
+        return "No memories found"
 
 
 @mcp.tool()
-def greet(name: str) -> str:
-    """Greet a user by name."""
-    return f"Hello, {name}! Welcome to the SSE server."
+def memory_save(agent_id: str, memory: str, metadata: dict):
+     m = Memory.from_config(config)
+     m.add(messages=memory, agent_id=agent_id, metadata=metadata)
+     return "Memory Saved"
 
-
-@mcp.tool()
-def add(a: int, b: int) -> str:
-    """Add two numbers and return the result."""
-    return f"The sum of {a} and {b} is {a + b}."
 
 
 # example resource
