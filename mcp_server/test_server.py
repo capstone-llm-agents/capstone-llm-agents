@@ -15,7 +15,7 @@ from mem0 import Memory
 mcp = FastMCP("SSE Utility Server")
 
 
-
+#jira commit
 #currently using chromadb to store vector memories however, qdrant can be used and recommended since it gives us a web interface to interact with the memory.
 config = {
     "vector_store": {
