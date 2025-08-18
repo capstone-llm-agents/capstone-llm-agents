@@ -9,7 +9,7 @@ from llm_mas.mas.conversation import UserAssistantExample, UserMessage
 async def call_llm(prompt: str) -> str:
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     response = client.chat.completions.create(
-        model="gpt-4o",  # Specify the model you want to use
+        model="gpt-4o-mini",  
         messages=[{"role": "user", "content": prompt}],
     )
     content =  response.choices[0].message.content
@@ -22,7 +22,7 @@ async def call_llm(prompt: str) -> str:
 async def call_llm_with_messages(messages: list[dict]) -> str:
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     response = client.chat.completions.create(
-        model="gpt-4o",  # Specify the model you want to use
+        model="gpt-4o-mini",  
         messages=messages,
     )
     content = response.choices[0].message.content
@@ -40,7 +40,7 @@ async def call_llm_with_examples(
     messages.append(user_message.as_dict())
     client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     response = client.chat.completions.create(
-        model="gpt-4o",  # Specify the model you want to use
+        model="gpt-4o-mini",  
         messages=messages,
     )
     content = response.choices[0].message.content
