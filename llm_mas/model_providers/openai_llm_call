@@ -14,7 +14,7 @@ async def call_llm(prompt: str) -> str:
     )
     content =  response.choices[0].message.content
     if not content:
-        msg = "No content returned from Ollama LLM."
+        msg = "No content returned from OpenAI LLM."
         raise ValueError(msg)
     return content
 
@@ -27,7 +27,7 @@ async def call_llm_with_messages(messages: list[dict]) -> str:
     )
     content = response.choices[0].message.content
     if not content:
-        msg = "No content returned from Ollama LLM."
+        msg = "No content returned from OpenAI LLM."
         raise ValueError(msg)
     return content
 
@@ -45,6 +45,6 @@ async def call_llm_with_examples(
     )
     content = response.choices[0].message.content
     if not content:
-        msg = "No content returned from Ollama LLM with examples."
+        msg = "No content returned from OpenAI LLM with examples."
         raise ValueError(msg)
     return content
