@@ -27,7 +27,7 @@ from tzlocal import get_localzone
 from icalendar import Calendar as Calendar2
 
 #functions file
-from test_callender_functions import convert_ics_to_text, create_ics_file
+from scripts.test_callender_functions import convert_ics_to_text, create_ics_file
 #####Callender imports#######
 
 ########llm agent setup########
