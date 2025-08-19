@@ -1,5 +1,6 @@
 """The graph-based action narrower that narrows the action space based on a graph of action connections."""
 
+import logging
 from typing import override
 
 from components.actions.simple_response import SimpleResponse
@@ -7,6 +8,7 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_narrower import ActionNarrower
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.agent.workspace import Workspace
+from llm_mas.tools.tool_action_creator import ToolAction
 
 
 class ActionEdge:
@@ -33,7 +35,23 @@ class GraphBasedNarrower(ActionNarrower):
 
     def add_action_edge(self, action: Action, next_actions: list[Action]) -> None:
         """Add an action edge to the policy."""
+        # if it already exists, append to that edge instead
+        for edge in self.action_edges:
+            if edge.action == action:
+                edge.next_actions.extend(next_actions)
+                return
+
         self.action_edges.append(ActionEdge(action, next_actions))
+
+    def remove_action_edge(self, a: Action, b: Action) -> None:
+        """Remove an action edge from the policy such that Action A can no longer lead to Action B."""
+        for edge in self.action_edges:
+            if edge.action == a and b in edge.next_actions:
+                edge.next_actions.remove(b)
+                return
+
+        msg = f"No action edge found from {a.name} to {b.name}."
+        raise ValueError(msg)
 
     @override
     def narrow(self, workspace: Workspace, action_space: ActionSpace) -> ActionSpace:
@@ -61,12 +79,49 @@ class GraphBasedNarrower(ActionNarrower):
 
         return new_space
 
+    def action_leads_to(self, action: Action, next_action: Action) -> bool:
+        """Check if the action leads to the next action."""
+        return any(edge.action == action and next_action in edge.next_actions for edge in self.action_edges)
+
+    def get_action_with_name(self, name: str) -> Action | None:
+        """Get an action by its name."""
+        for edge in self.action_edges:
+            if edge.action.name == name:
+                return edge.action
+        return None
+
     @override
     def update_for_new_action(self, action: Action, action_space: ActionSpace) -> None:
         """Update the policy for a new action by adding it to the default actions."""
         # TODO: Implement a more sophisticated update mechanism if needed  # noqa: TD003
-        if action not in self.default_actions and action not in action_space.actions:
-            self.default_actions.append(action)
+
+        # look at the edges
+        logging.getLogger("textual_app").debug(
+            "Action edges before adding new action '%s': %s",
+            action.name,
+            [(edge.action.name, [next_action.name for next_action in edge.next_actions]) for edge in self.action_edges],
+        )
+
+        if isinstance(action, ToolAction):
+            # add an edge from GetRelevantTools
+
+            get_params = self.get_action_with_name("GetParamsForToolCall")
+            if not get_params:
+                msg = "Action 'GetParamsForToolCall' not found in the action space."
+                raise ValueError(msg)
+
+            if self.action_leads_to(get_params, SimpleResponse()):
+                self.remove_action_edge(get_params, SimpleResponse())
+
+            # add the new action to the next actions of GetRelevantTools
+            self.add_action_edge(get_params, [action])
 
         # add an edge for the new action to a response action
         self.add_action_edge(action, [SimpleResponse()])
+
+        # look at the edges
+        logging.getLogger("textual_app").debug(
+            "Action edges after adding new action '%s': %s",
+            action.name,
+            [(edge.action.name, [next_action.name for next_action in edge.next_actions]) for edge in self.action_edges],
+        )

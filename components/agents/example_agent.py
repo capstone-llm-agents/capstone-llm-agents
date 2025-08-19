@@ -3,7 +3,7 @@
 from components.actions.chat_history import RespondWithChatHistory
 from components.actions.retrieve_knowledge import RetrieveKnowledge
 from components.actions.simple_response import SimpleResponse
-from components.actions.tools import UpdateTools
+from components.actions.tools import GetParamsForToolCall, GetRelevantTools, GetTools, UpdateTools
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
 from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
@@ -34,6 +34,9 @@ EXAMPLE_AGENT.add_action(RespondWithChatHistory())
 EXAMPLE_AGENT.add_action(StopAction())
 EXAMPLE_AGENT.add_action(RetrieveKnowledge())
 EXAMPLE_AGENT.add_action(UpdateTools(tool_creator))
+EXAMPLE_AGENT.add_action(GetTools(tool_creator))
+EXAMPLE_AGENT.add_action(GetRelevantTools(tool_creator))
+EXAMPLE_AGENT.add_action(GetParamsForToolCall(tool_creator))
 
 
 # narrower.add_default_action(SimpleResponse())
@@ -45,4 +48,7 @@ narrower.add_default_action(UpdateTools(tool_creator))
 narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory(), SimpleResponse()])
 narrower.add_action_edge(RespondWithChatHistory(), [StopAction()])
 narrower.add_action_edge(SimpleResponse(), [StopAction()])
-narrower.add_action_edge(UpdateTools(tool_creator), [SimpleResponse()])
+narrower.add_action_edge(UpdateTools(tool_creator), [GetTools(tool_creator)])
+narrower.add_action_edge(GetTools(tool_creator), [GetRelevantTools(tool_creator)])
+narrower.add_action_edge(GetRelevantTools(tool_creator), [GetParamsForToolCall(tool_creator)])
+narrower.add_action_edge(GetParamsForToolCall(tool_creator), [SimpleResponse()])

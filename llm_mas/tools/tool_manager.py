@@ -58,3 +58,7 @@ class ToolManager:
             return []
 
         return [tool for tool, srv in self.tools.values() if srv == server]
+
+    def get_all_tools(self) -> list[Tool]:
+        """Get all tools managed by the tool manager."""
+        return [tool for tool, _ in self.tools.values()]

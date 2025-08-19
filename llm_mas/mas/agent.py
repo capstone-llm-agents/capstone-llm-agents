@@ -1,5 +1,7 @@
 """An agent is an entity that can perform actions to complete tasks."""
 
+import logging
+
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
@@ -73,8 +75,9 @@ class Agent(Entity):
 
     def add_action_during_runtime(self, action: Action) -> None:
         """Add an action to the agent's action space during runtime."""
-        self.narrower.update_for_new_action(action, self.action_space)
+        logging.getLogger("textual_app").info("Adding action: %s", action.name)
         self.add_action(action)
+        self.narrower.update_for_new_action(action, self.action_space)
 
     async def work(self, context: ActionContext) -> None:
         """Perform work by executing actions in the agent's action space."""

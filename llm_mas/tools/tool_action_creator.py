@@ -1,8 +1,10 @@
 """The tool action creator defines how an agent creates actions related to tools."""
 
-from typing import override
+import logging
+from typing import Any, override
 
 from mcp import Tool
+from mcp.types import ContentBlock, TextContent
 
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
@@ -26,6 +28,20 @@ class ToolAction(Action):
 
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by calling the tool."""
+        # TODO: Move to a different logger  # noqa: TD003
+        logging.getLogger("textual_app").info("Calling tool: %s with params: %s", self.tool.name, params.to_dict())
+        logging.getLogger("textual_app").info("Context: %s", context.last_result.as_json_pretty())
+
+        passed_in: dict = context.last_result.get_param("params")
+
+        if not passed_in:
+            msg = "No parameters passed in for the tool action."
+            raise ValueError(msg)
+
+        params = ActionParams()
+        for key, value in passed_in.items():
+            params.set_param(key, value)
+
         # check params match schema
         if not params.matches_schema(self.params_schema):
             msg = f"Parameters do not match the tool's input schema: {self.tool.name}"
@@ -37,11 +53,23 @@ class ToolAction(Action):
         # find related server
         tool_res = await tool_manager.call_tool(self.tool.name, params.to_dict())
 
+        serializable = [self.serialize_content(content) for content in tool_res]
+
         # set the result
         result = ActionResult()
-        result.set_param("tool_result", tool_res)
+        result.set_param("tool_result", serializable)
         result.set_param("tool_name", self.tool.name)
         return result
+
+    def serialize_content(self, content: ContentBlock) -> Any:  # noqa: ANN401
+        """Serialize the content of the action."""
+        # TextContent | ImageContent | AudioContent | ResourceLink | EmbeddedResource
+
+        if isinstance(content, TextContent):
+            return content.text
+
+        msg = f"Serializing content of type {type(content)} is not supported."
+        raise NotImplementedError(msg)
 
 
 class ToolActionCreator:
