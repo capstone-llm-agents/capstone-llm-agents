@@ -1,5 +1,6 @@
 """ActionParams module defines the ActionParams class for defining parameters used in actions."""
 
+import logging
 from typing import Any
 
 
@@ -34,7 +35,14 @@ class ActionParams:
 
     def matches_schema(self, schema: dict[str, Any]) -> bool:
         """Check if the parameters match the given schema."""
-        for key, value in schema.items():
-            if key not in self.params or not isinstance(self.params[key], value):
+        logging.getLogger("textual_app").debug("Checking parameters against schema: %s", schema)
+        logging.getLogger("textual_app").debug("Current parameters: %s", self.params)
+
+        # TODO: Make this more robust, include types etc.  # noqa: TD003
+
+        # check if all required properties are present
+        for prop in schema.get("required", []):
+            if prop not in self.params:
+                logging.getLogger("textual_app").warning("Missing required parameter: %s", prop)
                 return False
         return True
