@@ -6,33 +6,47 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
+from llm_mas.tools.tool_action_creator import ToolActionCreator
 
 if TYPE_CHECKING:
-    from mcp import Tool
+    from llm_mas.mcp_client.connected_server import ConnectedServer
 
 
-class GetTools(Action):
-    """An action that retrieves the available tools."""
+class UpdateTools(Action):
+    """An action that updates the list of available tools."""
 
-    def __init__(self) -> None:
-        """Initialize the GetTools action."""
-        super().__init__(description="Retrieves the available tools.")
+    def __init__(self, tool_creator: ToolActionCreator) -> None:
+        """Initialize the UpdateTools action."""
+        super().__init__(description="Updates the list of available tools")
+        self.tool_creator = tool_creator
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
-        """Perform the action by retrieving the tools."""
+        """Perform the action by updating the list of tools."""
         servers = context.mcp_client.connected_servers
 
-        tools: list[Tool] = []
-        for server in servers:
-            async with server.connect() as session:
-                await session.initialize()
-                tools.extend(await server.list_tools(session))
+        tool_manager = context.agent.tool_manager
 
-        # convert to dicts
-        tools_dicts = [tool.model_dump() for tool in tools]
+        new_servers: list[ConnectedServer] = [server for server in servers if not tool_manager.is_known_server(server)]
+
+        if not new_servers:
+            return ActionResult()
+
+        new_tool_names: list[str] = []
+        for server in new_servers:
+            try:
+                await tool_manager.init_tools_from_server(server)
+            except ConnectionError as _:
+                # TODO: log a warning or error  # noqa: TD003
+                continue
+
+            tools = tool_manager.get_tools_from_server(server)
+            for tool in tools:
+                new_tool_names.append(tool.name)
+                actions = self.tool_creator.create_action(context.agent, tool, server)
+                for action in actions:
+                    context.agent.add_action_during_runtime(action)
 
         res = ActionResult()
-        res.set_param("tools", tools_dicts)
-
+        res.set_param("new_tools", new_tool_names)
         return res

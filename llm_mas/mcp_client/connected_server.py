@@ -73,6 +73,10 @@ class SSEConnectedServer(ConnectedServer):
     @asynccontextmanager
     async def connect(self) -> AsyncGenerator[ClientSession]:
         """Connect to the MCP server using SSE."""
-        async with sse_client(url=self.server_url) as streams:  # noqa: SIM117
-            async with ClientSession(read_stream=streams[0], write_stream=streams[1]) as session:
-                yield session
+        try:
+            async with sse_client(url=self.server_url) as streams:  # noqa: SIM117
+                async with ClientSession(read_stream=streams[0], write_stream=streams[1]) as session:
+                    yield session
+        except Exception as e:
+            msg = f"Failed to connect to the server at {self.server_url}: {e}"
+            raise ConnectionError(msg) from e

@@ -2,6 +2,7 @@
 
 from typing import override
 
+from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_narrower import ActionNarrower
 from llm_mas.action_system.core.action_space import ActionSpace
@@ -46,7 +47,7 @@ class GraphBasedNarrower(ActionNarrower):
             narrowed_actions = self.default_actions
 
         else:
-            last_action, _ = last_action_tup
+            last_action, _, _ = last_action_tup
             # find the action edge corresponding to the last action
             for edge in self.action_edges:
                 if edge.action == last_action:
@@ -59,3 +60,13 @@ class GraphBasedNarrower(ActionNarrower):
             new_space.add_action(action)
 
         return new_space
+
+    @override
+    def update_for_new_action(self, action: Action, action_space: ActionSpace) -> None:
+        """Update the policy for a new action by adding it to the default actions."""
+        # TODO: Implement a more sophisticated update mechanism if needed  # noqa: TD003
+        if action not in self.default_actions and action not in action_space.actions:
+            self.default_actions.append(action)
+
+        # add an edge for the new action to a response action
+        self.add_action_edge(action, [SimpleResponse()])

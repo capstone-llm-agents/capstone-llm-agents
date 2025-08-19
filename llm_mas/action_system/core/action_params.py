@@ -27,3 +27,14 @@ class ActionParams:
         new_params = ActionParams()
         new_params.params = self.params.copy()
         return new_params
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert the parameters to a dictionary."""
+        return self.params
+
+    def matches_schema(self, schema: dict[str, Any]) -> bool:
+        """Check if the parameters match the given schema."""
+        for key, value in schema.items():
+            if key not in self.params or not isinstance(self.params[key], value):
+                return False
+        return True
