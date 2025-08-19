@@ -57,6 +57,8 @@ class ToolAction(Action):
 
         # set the result
         result = ActionResult()
+
+        result.set_param("query", context.last_result.get_param("query"))
         result.set_param("tool_result", serializable)
         result.set_param("tool_name", self.tool.name)
         return result

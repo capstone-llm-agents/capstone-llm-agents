@@ -137,6 +137,14 @@ class GetRelevantTools(Action):
             "relevant_tools": []
         }}
         ```
+
+        For example, if the query was about the weather, and the tool was adding two numbers, your response should look like this:
+        ```json
+        {{
+            "relevant_tools": []
+        }}
+        ```
+        because the tool is not relevant to the query.
         """
 
         response = await call_llm(prompt)
@@ -169,6 +177,10 @@ class GetRelevantTools(Action):
         res.set_param("query", last_message["content"])
         res.set_param("relevant_tools", tool_dicts)
 
+        if not tool_dicts:
+            res.set_param("tool_name", None)
+            return res
+
         # TODO: temp
         tool_name = tool_dicts[0]["name"]
 
@@ -195,7 +207,7 @@ class GetParamsForToolCall(Action):
         tool_name = context.last_result.get_param("tool_name")
 
         if not tool_name:
-            msg = "Tool name is required to call a tool."
+            msg = "No tool name provided in the last result."
             raise ValueError(msg)
 
         tool_manager = context.agent.tool_manager

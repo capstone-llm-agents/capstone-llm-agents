@@ -4,6 +4,7 @@ from components.actions.chat_history import RespondWithChatHistory
 from components.actions.retrieve_knowledge import RetrieveKnowledge
 from components.actions.simple_response import SimpleResponse
 from components.actions.tools import GetParamsForToolCall, GetRelevantTools, GetTools, UpdateTools
+from components.actions.websearch import WebSearch
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
 from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
@@ -51,4 +52,4 @@ narrower.add_action_edge(SimpleResponse(), [StopAction()])
 narrower.add_action_edge(UpdateTools(tool_creator), [GetTools(tool_creator)])
 narrower.add_action_edge(GetTools(tool_creator), [GetRelevantTools(tool_creator)])
 narrower.add_action_edge(GetRelevantTools(tool_creator), [GetParamsForToolCall(tool_creator)])
-narrower.add_action_edge(GetParamsForToolCall(tool_creator), [SimpleResponse()])
+narrower.add_action_edge(GetParamsForToolCall(tool_creator), [SimpleResponse(), WebSearch()])
