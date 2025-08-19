@@ -31,7 +31,7 @@ async def main() -> None:
             print("Callender creation result:", result.content)
 
             # call callender reading tool
-            ics_file_read = "my_callender.ics"
+            ics_file_read = "export_test.ics"
             result = await session.call_tool("read_calender", {"file_name": ics_file_read})
             print("Read callender output:", result.content)
 
