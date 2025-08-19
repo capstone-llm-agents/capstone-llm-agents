@@ -52,7 +52,7 @@ class Agent(Entity):
 
     async def select_action(self, context: ActionContext) -> Action:
         """Select an action to perform."""
-        narrowed_action_space = self.narrower.narrow(self.workspace, self.action_space)
+        narrowed_action_space = self.narrower.narrow(self.workspace, self.action_space, context)
         return await self.selector.select_action(narrowed_action_space, context)
 
     async def do_selected_action(
