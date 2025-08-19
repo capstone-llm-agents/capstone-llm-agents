@@ -26,3 +26,9 @@ GET_RANDOM_NUMBER = Action(
     name="Get Random Number",
     description="Generates a random number within a specified range.",
 )
+
+GET_WEB_RESULT = Action(
+    name="Get web result",
+    description="Return a response from a websearch.",
+)
+# is this being used??

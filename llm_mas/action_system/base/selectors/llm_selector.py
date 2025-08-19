@@ -9,7 +9,7 @@ from components.actions.dummy_actions import (
     GET_CURRENT_DATE,
     GET_CURRENT_TIME,
     GET_RANDOM_NUMBER,
-    GET_WEATHER,
+    GET_WEB_RESULT,
     SOLVE_MATH,
 )
 from components.actions.tools import GetTools
@@ -19,6 +19,8 @@ from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
+from components.actions.websearch import WebSearch
+from components.actions.website_summary import SummariseURL
 from llm_mas.mas.conversation import AssistantMessage, UserAssistantExample, UserMessage
 from llm_mas.model_providers.ollama.call_llm import (
     call_llm_with_examples,
@@ -45,22 +47,23 @@ class LLMSelector(ActionSelector):
         actions1: list[Action] = [
             GET_RANDOM_NUMBER,
             SOLVE_MATH,
-            GET_WEATHER,
+            WebSearch(),
+            SummariseURL(),
         ]
 
         res1 = ActionResult()
-        res1.set_param("prompt", "What is the weather like today?")
+        res1.set_param("prompt", "What won movie of the year 2021?")
         context1 = ActionContext(context.conversation, res1, context.mcp_client)
 
         examples.append(self.craft_example(actions1, context1, 2))
 
-        actions2: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, GET_WEATHER, GET_RANDOM_NUMBER]
+        actions2: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, WebSearch(), SummariseURL()]
 
         res2 = ActionResult()
         res2.set_param("prompt", "What is the current date?")
         context2 = ActionContext(context.conversation, res2, context.mcp_client)
 
-        actions3: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, GetTools(), GET_WEATHER, GET_RANDOM_NUMBER]
+        actions3: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, GetTools(), WebSearch(), SummariseURL()]
 
         res3 = ActionResult()
         res3.set_param("prompt", "What tools do you have?")
