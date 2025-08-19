@@ -36,9 +36,9 @@ class BookAccommodation(Action):
             "accommodation_id": accommodation_id,
             "confirmation_code": confirmation_code,
             "status": "confirmed",
-            "booked_at": "2025-08-20T10:00:00Z"  # Spoofed timestamp
+            "booked_at": "2025-08-20T10:00:00Z",  # Spoofed timestamp
         }
 
         res = ActionResult()
-        res.set_param("booking_details", booking_details)
+        res.set_param("response", booking_details)
         return res

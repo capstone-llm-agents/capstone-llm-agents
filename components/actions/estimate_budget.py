@@ -70,7 +70,7 @@ class EstimateBudget(Action):
         final_estimate = total_estimate + buffer
 
         res = ActionResult()
-        res.set_param("estimated_cost", {
+        res.set_param("response", {
             "daily_cost": round(daily_cost, 2),
             "total_estimate_without_buffer": round(total_estimate, 2),
             "final_estimate": round(final_estimate, 2),

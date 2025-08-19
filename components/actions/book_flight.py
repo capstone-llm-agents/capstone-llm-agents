@@ -31,7 +31,7 @@ class BookFlight(Action):
             raise ValueError(msg)
 
         # Expect the flight number to be passed as a parameter
-        flight_number = params.get("flight_number")
+        flight_number = params.get_param("flight_number")
 
         if not flight_number:
             msg = "Flight number is required to book a flight."
@@ -48,6 +48,6 @@ class BookFlight(Action):
         }
 
         res = ActionResult()
-        res.set_param("booking_details", booking_details)
+        res.set_param("response", booking_details)
 
         return res

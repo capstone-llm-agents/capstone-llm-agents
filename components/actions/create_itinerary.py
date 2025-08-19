@@ -49,7 +49,7 @@ class CreateItinerary(Action):
         try:
             response = await call_llm(prompt_with_instructions)
             res = ActionResult()
-            res.set_param("itinerary", response)
+            res.set_param("response", response)
             return res
         except Exception as e:
             msg = f"An error occurred while calling the LLM to create the itinerary: {e}"

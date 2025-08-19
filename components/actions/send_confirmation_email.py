@@ -41,8 +41,8 @@ class SendConfirmationEmail(Action):
         )
 
         res = ActionResult()
-        res.set_param("status", "email_sent_simulated")
-        return res    
+        res.set_param("response", "email_sent_simulated")
+        return res
 
         # Code for sending an actual email if we had a server...
         # Create the email message
