@@ -53,4 +53,4 @@ class CreateItinerary(Action):
             return res
         except Exception as e:
             msg = f"An error occurred while calling the LLM to create the itinerary: {e}"
-            return ActionResult(error=msg)
+            raise ValueError(msg)

@@ -35,7 +35,7 @@ class BookFlight(Action):
 
         if not flight_number:
             msg = "Flight number is required to book a flight."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         # Spoofing the booking process
         confirmation_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))  # noqa: S311

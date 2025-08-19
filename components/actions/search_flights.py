@@ -27,7 +27,7 @@ class SearchFlights(Action):
         """Perform the action by searching for flights using the Aviationstack API."""
         if not self.api_key:
             msg = "Aviationstack API key not found. Please set the AVIATIONSTACK_API_KEY environment variable."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         chat_history = context.conversation.get_chat_history()
         messages = chat_history.as_dicts()
@@ -45,11 +45,11 @@ class SearchFlights(Action):
         # after it has processed the user's request.
         origin = get_city_iata(params.get_param("origin"))
         destination = get_city_iata(params.get_param("destination"))
-        flight_date = params.get_param("flight_date") # YYYY-MM-DD format e.g., '2025-12-24'
+        # flight_date = params.get_param("flight_date") # YYYY-MM-DD format e.g., '2025-12-24'
 
-        if not all([origin, destination, flight_date]):
-            msg = "Missing required parameters: origin, destination, or flight_date."
-            return ActionResult(error=msg)
+        if not all([origin, destination]):
+            msg = "Missing required parameters: origin, destination."
+            raise ValueError(msg)
 
         try:
             # We'll use a session for async requests
@@ -58,7 +58,6 @@ class SearchFlights(Action):
                     "access_key": self.api_key,
                     "dep_iata": origin.upper(),
                     "arr_iata": destination.upper(),
-                    "flight_date": flight_date,
                 }
 
                 # Build the URL with encoded parameters
@@ -69,8 +68,8 @@ class SearchFlights(Action):
                     data = await response.json()
 
                     if not data or not data.get("data"):
-                        msg = f"No flights found for the route {origin} to {destination} on {flight_date}."
-                        return ActionResult(error=msg)
+                        msg = f"No flights found for the route {origin} to {destination}."
+                        raise ValueError(msg)
 
                     # Process the data to extract key details
                     flights = []
@@ -89,7 +88,7 @@ class SearchFlights(Action):
 
         except aiohttp.ClientError as e:
             msg = f"API request failed: {e}"
-            return ActionResult(error=msg)
+            raise ValueError(msg)
         except Exception as e:
             msg = f"An unexpected error occurred: {e}"
-            return ActionResult(error=msg)
+            raise ValueError(msg)

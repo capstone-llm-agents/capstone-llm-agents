@@ -26,7 +26,7 @@ class BookAccommodation(Action):
 
         if not accommodation_id:
             msg = "Accommodation ID is required to book a room."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         # Spoofing the booking process
         confirmation_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=10)) # noqa: S311

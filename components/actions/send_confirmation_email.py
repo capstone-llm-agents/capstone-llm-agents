@@ -24,12 +24,12 @@ class SendConfirmationEmail(Action):
         email = params.get("email")
         if not email:
             msg = "Email address is required to send a confirmation."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         # The `context.last_result` will contain the booking details
         if context.last_result.is_empty():
             msg = "No booking context to send a confirmation email for."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         booking_details = context.last_result.as_json_pretty()
 
@@ -85,8 +85,8 @@ class SendConfirmationEmail(Action):
         #         except smtplib.SMTPAuthenticationError:
         #             msg = "Failed to log in to the SMTP server. Check your email and app password."
         #             logging.getLogger("textual_app").error(msg)
-        #             return ActionResult(error=msg)
+        #             raise ValueError(msg)
         #         except Exception as e:
         #             msg = f"An error occurred while sending the email: {e}"
         #             logging.getLogger("textual_app").error(msg)
-        #             return ActionResult(error=msg)
+        #             raise ValueError(msg)

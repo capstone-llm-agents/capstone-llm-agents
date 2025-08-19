@@ -43,13 +43,13 @@ class SearchAccommodations(Action):
         """Perform the action by searching for accommodations."""
         if not self.api_key or not self.api_secret:
             msg = "Amadeus API key or secret not found. Please set environment variables."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         city_code = get_city_iata(params.get_param("city"))
 
         if not city_code:
             msg = "Missing required parameter: city."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         try:
             # Get the access token
@@ -66,7 +66,7 @@ class SearchAccommodations(Action):
 
                     if not data or not data.get("data"):
                         msg = f"No accommodations found in {city_code}."
-                        return ActionResult(error=msg)
+                        raise ValueError(msg)
 
                     accommodations = []
                     for hotel in data["data"]:
@@ -84,7 +84,7 @@ class SearchAccommodations(Action):
 
         except aiohttp.ClientError as e:
             msg = f"API request failed: {e}"
-            return ActionResult(error=msg)
+            raise ValueError(msg)
         except Exception as e:
             msg = f"An unexpected error occurred: {e}"
-            return ActionResult(error=msg)
+            raise ValueError(msg)

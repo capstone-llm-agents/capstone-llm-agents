@@ -49,7 +49,7 @@ class EstimateBudget(Action):
 
         if not destination or not duration_days:
             msg = "Missing required parameters: destination or duration_days."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         # Get the full city data, not just the IATA code
         # We need to assume that get_city_iata has been modified or a similar function `get_city_data` exists.
@@ -57,7 +57,7 @@ class EstimateBudget(Action):
         city_data = get_city_iata(destination)
         if not city_data:
             msg = f"No budget data available for {destination}."
-            return ActionResult(error=msg)
+            raise ValueError(msg)
 
         base_cost = self.base_daily_costs.get(travel_style, self.base_daily_costs["mid"])
 
