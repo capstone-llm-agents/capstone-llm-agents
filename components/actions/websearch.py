@@ -1,16 +1,20 @@
 """An action that performs a web search using OpenAI."""
 
+import os
 from typing import override
+
+from dotenv import load_dotenv
+from openai import OpenAI
 
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 
-from openai import OpenAI
-
 # remove key when commit please
-client = OpenAI()
+load_dotenv()
+client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+
 
 class WebSearch(Action):
     """An action that does a basic websearch."""
@@ -26,17 +30,20 @@ class WebSearch(Action):
 
         last_message = messages[-1] if messages else None
         if not last_message:
-            raise ValueError("No chat history available for web search.")
+            msg = "No chat history available for web search."
+            raise ValueError(msg)
 
         query = last_message["content"]
 
         # do the damn search
         response = client.responses.create(
             model="gpt-4o-mini",
-            tools=[{
-                "type": "web_search_preview",
-                "search_context_size": "low",
-            }],
+            tools=[
+                {
+                    "type": "web_search_preview",
+                    "search_context_size": "low",
+                },
+            ],
             input=query,
         )
 
