@@ -9,9 +9,11 @@ from components.actions.dummy_actions import (
     GET_CURRENT_DATE,
     GET_CURRENT_TIME,
     GET_RANDOM_NUMBER,
-    GET_WEATHER,
+    GET_WEB_RESULT,
     SOLVE_MATH,
 )
+from components.actions.websearch import WebSearch
+from components.actions.website_summary import SummariseURL
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -44,14 +46,15 @@ class LLMSelector(ActionSelector):
         actions1: list[Action] = [
             GET_RANDOM_NUMBER,
             SOLVE_MATH,
-            GET_WEATHER,
+            WebSearch(),
+            SummariseURL(),
         ]
 
         res1 = ActionResult()
         res1.set_param("prompt", "What is the weather like today?")
         context1 = ActionContext.from_action_result(res1, context)
 
-        actions2: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, GET_WEATHER, GET_RANDOM_NUMBER]
+        actions2: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, WebSearch(), SummariseURL()]
 
         res2 = ActionResult()
         res2.set_param("prompt", "What is the current date?")
