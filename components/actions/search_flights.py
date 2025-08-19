@@ -83,7 +83,7 @@ class SearchFlights(Action):
                         })
 
                     res = ActionResult()
-                    res.set_param("response", flights)
+                    res.set_param("response", str(flights[:10]))  # Limit to first 10 flights
                     return res
 
         except aiohttp.ClientError as e:

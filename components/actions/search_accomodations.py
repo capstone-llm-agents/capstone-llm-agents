@@ -79,7 +79,8 @@ class SearchAccommodations(Action):
 
                     # We only return a limited number of results to not overload the LLM
                     res = ActionResult()
-                    res.set_param("accommodations", accommodations[:5])
+                    accommodations_str = "\n".join([f"{hotel['name']} ({hotel['address']})" for hotel in accommodations[:10]])
+                    res.set_param("response", accommodations_str)
                     return res
 
         except aiohttp.ClientError as e:
