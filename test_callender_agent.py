@@ -19,6 +19,12 @@ async def main() -> None:
             response = await session.list_tools()
             print("Available tools:", [tool.name for tool in response.tools])
 
+            #########NOTE###########
+            # my vission for how this will work is:
+            # - Currently where tasks are will instead take another agents output for the prompt. this is so the previouse agent can make sure the user is putting in a useful request and isn't to vauge
+            # - the ics files will need to be intergrated into the gui for both one to upload for optional context as well as the outputted file for the user to download
+
+
             # call callender creation tool
             ics_file = "my_callender.ics"
             result = await session.call_tool("create_ics_callender", {"tasks": "Maths at 10am for two hours, english at 6pm for 1 hour and history at 12pm tommorow", "ics_file": ics_file})
