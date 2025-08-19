@@ -1,5 +1,6 @@
 """The graph-based action narrower that narrows the action space based on a graph of action connections."""
 
+from collections.abc import Callable
 from typing import override
 
 from llm_mas.action_system.core.action import Action
@@ -12,36 +13,61 @@ from llm_mas.agent.workspace import Workspace
 class DynamicEdge(ActionNarrower):
     """Uses a callback to determine the next actions dynamically."""
 
-    def __init__(self, action: Action) -> None:
+    def __init__(self, action: Action, narrower: ActionNarrower) -> None:
         """Initialize the dynamic edge with an action and a callback for next actions."""
         self.action = action
+        self.narrower = narrower
 
     @override
     def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
         """Return the next actions based on the context."""
-        msg = "This method should be overridden by subclasses."
-        raise NotImplementedError(msg)
+        return self.narrower.narrow(workspace, action_space, context)
 
 
-class IndividualConditionNarrower(DynamicEdge):
-    """A dynamic edge that selects each action if its condition is met."""
+class IndividualConditionNarrower(ActionNarrower):
+    """An action narrower that selects each action if its condition is met."""
 
-    def __init__(self, action: Action, next_action: Action) -> None:
+    def __init__(
+        self,
+        next_action: Action,
+        select_condition: Callable[[Workspace, ActionSpace, ActionContext], bool],
+    ) -> None:
         """Initialize the dynamic edge with an action and a list of next actions."""
-        super().__init__(action)
         self.next_action = next_action
-
-    def select(self, context: ActionContext) -> bool:
-        """Check if the action's condition is met."""
-        msg = "This method should be overridden by subclasses."
-        raise NotImplementedError(msg)
+        self.select_condition = select_condition
 
     @override
     def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
         """Return the next actions based on the context."""
         new_space = ActionSpace()
-        if self.select(context):
+        if self.select_condition(workspace, action_space, context):
             new_space.add_action(self.next_action)
+        return new_space
+
+
+class SwitchNarrower(ActionNarrower):
+    """A narrower that selects one or more of the next actions based on a condition."""
+
+    def __init__(
+        self,
+        next_actions: list[Action],
+        select_condition: Callable[[Workspace, ActionSpace, ActionContext, list[Action]], list[Action]],
+    ) -> None:
+        """Initialize the switch narrower with a list of next actions and a selection condition."""
+        self.next_actions = next_actions
+        self.select_condition = select_condition
+
+    @override
+    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+        """Return the next action based on the selection condition."""
+        new_space = ActionSpace()
+        selected_actions = self.select_condition(workspace, action_space, context, self.next_actions)
+        for action in selected_actions:
+            if action in self.next_actions:
+                new_space.add_action(action)
+            else:
+                msg = f"Action {action.name} is not in the list of next actions."
+                raise ValueError(msg)
         return new_space
 
 
@@ -91,25 +117,20 @@ class ReductiveMultiNarrower(ActionNarrower):
         return new_space
 
 
-class AlwaysNarrower(DynamicEdge):
-    """A dynamic edge that always returns the same actions."""
+class AlwaysNarrower(ActionNarrower):
+    """A narrower that always returns the same actions."""
 
-    def __init__(self, action: Action) -> None:
-        """Initialize the dynamic edge with an action and a list of next actions."""
-        super().__init__(action)
-        self.next_actions = []
+    def __init__(self, actions: list[Action]) -> None:
+        """Initialize the always narrower with a list of actions."""
+        self.actions = actions
 
     @override
     def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
-        """Return the next actions."""
+        """Return the actions defined in this narrower."""
         new_space = ActionSpace()
-        for action in self.next_actions:
+        for action in self.actions:
             new_space.add_action(action)
         return new_space
-
-    def add_action(self, action: Action) -> None:
-        """Add an action to the next actions."""
-        self.next_actions.append(action)
 
 
 class DynamicNarrower(ActionNarrower):
@@ -122,6 +143,10 @@ class DynamicNarrower(ActionNarrower):
 
     def add_default_action(self, action: Action) -> None:
         """Add a default action to the policy."""
+        if action in self.default_actions:
+            msg = f"Action {action.name} is already a default action."
+            raise ValueError(msg)
+
         self.default_actions.append(action)
 
     @override
@@ -154,3 +179,11 @@ class DynamicNarrower(ActionNarrower):
         """Update the policy for a new action by adding it to the default actions."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
+
+    def add_dynamic_edge(self, action: Action, narrower: ActionNarrower) -> None:
+        """Add a dynamic edge to the policy."""
+        if any(edge.action == action for edge in self.dynamic_narrowers):
+            msg = f"Dynamic edge for action {action.name} already exists."
+            raise ValueError(msg)
+
+        self.dynamic_narrowers.append(DynamicEdge(action, narrower))
