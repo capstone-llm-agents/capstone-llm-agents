@@ -13,8 +13,8 @@ def main() -> None:
     """Run the main application logic."""
     mas = MAS()
 
-    mas.add_agent(WEBSEARCH_AGENT)
     mas.add_agent(EXAMPLE_AGENT)
+    mas.add_agent(WEBSEARCH_AGENT)
 
     mas.conversation_manager.start_conversation("General")
 

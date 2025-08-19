@@ -483,7 +483,7 @@ class ChatScreen(Screen):
         try:
             agent.workspace.action_history.clear()
 
-            context = ActionContext(self.conversation, ActionResult(), self.client.mcp_client)
+            context = ActionContext(self.conversation, ActionResult(), self.client.mcp_client, agent, self.client.user)
             step_count = 0
 
             while not agent.finished_working():
@@ -517,7 +517,7 @@ class ChatScreen(Screen):
                     res = await agent.do_selected_action(selected_action, context, params)
 
                     # TODO: Wrap the context properly  # noqa: TD003
-                    context = ActionContext(context.conversation, res, context.mcp_client)
+                    context = ActionContext.from_action_result(res, context)
 
                 except TimeoutError:
                     msg = f"Action execution timed out on step {step_count}"
@@ -573,7 +573,7 @@ class ChatScreen(Screen):
                 if action_res_tuple is None:
                     return "I apologize, but I couldn't generate a response. Please try again."
 
-                action, result = action_res_tuple
+                action, result, _ = action_res_tuple
 
                 response = result.get_param("response")
 

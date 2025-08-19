@@ -1,6 +1,7 @@
 """The random selector module provides a base class for random selection of actions in the action system."""
 
 import json
+import logging
 import re
 from collections.abc import Awaitable, Callable
 from typing import override
@@ -9,22 +10,21 @@ from components.actions.dummy_actions import (
     GET_CURRENT_DATE,
     GET_CURRENT_TIME,
     GET_RANDOM_NUMBER,
-    GET_WEB_RESULT,
     SOLVE_MATH,
 )
-from components.actions.tools import GetTools
+from components.actions.websearch import WebSearch
+from components.actions.website_summary import SummariseURL
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
-from components.actions.websearch import WebSearch
-from components.actions.website_summary import SummariseURL
 from llm_mas.mas.conversation import AssistantMessage, UserAssistantExample, UserMessage
 from llm_mas.model_providers.ollama.call_llm import (
     call_llm_with_examples,
 )
+from llm_mas.utils.json_parser import extract_json_from_response
 
 
 # random selection policy
@@ -38,6 +38,11 @@ class LLMSelector(ActionSelector):
     @override
     async def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
         """Select an action from the action space using an LLM."""
+        # if the action space is empty, raise an error
+        if not action_space.get_actions():
+            msg = "Action space is empty. Cannot select an action."
+            raise ValueError(msg)
+
         # only 1 choice then just quit
         if len(action_space.get_actions()) == 1:
             return action_space.get_actions()[0]
@@ -52,24 +57,16 @@ class LLMSelector(ActionSelector):
         ]
 
         res1 = ActionResult()
-        res1.set_param("prompt", "What won movie of the year 2021?")
-        context1 = ActionContext(context.conversation, res1, context.mcp_client)
-
-        examples.append(self.craft_example(actions1, context1, 2))
+        res1.set_param("prompt", "What is the weather like today?")
+        context1 = ActionContext.from_action_result(res1, context)
 
         actions2: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, WebSearch(), SummariseURL()]
 
         res2 = ActionResult()
         res2.set_param("prompt", "What is the current date?")
-        context2 = ActionContext(context.conversation, res2, context.mcp_client)
+        context2 = ActionContext.from_action_result(res2, context)
 
-        actions3: list[Action] = [GET_CURRENT_DATE, GET_CURRENT_TIME, GetTools(), WebSearch(), SummariseURL()]
-
-        res3 = ActionResult()
-        res3.set_param("prompt", "What tools do you have?")
-        context3 = ActionContext(context.conversation, res3, context.mcp_client)
-
-        examples.append(self.craft_example(actions3, context3, 2))
+        examples.append(self.craft_example(actions1, context1, 2))
         examples.append(self.craft_example(actions2, context2, 0))
 
         response = await call_llm_with_examples(
@@ -79,6 +76,14 @@ class LLMSelector(ActionSelector):
 
         # TODO: use the params  # noqa: TD003
         name, params = self.parse_response(response)
+
+        logging.getLogger("textual_app").info("LLM selected action: %s with params: %s", name, params.to_dict())
+        logging.getLogger("textual_app").info("Context: %s", context.last_result.as_json_pretty())
+        logging.getLogger("textual_app").debug(
+            "Prompt: %s",
+            self.get_select_action_prompt(action_space.get_actions(), context),
+        )
+        logging.getLogger("textual_app").debug("LLM response: %s", response)
 
         # find action
         for action in action_space.get_actions():
@@ -91,6 +96,8 @@ class LLMSelector(ActionSelector):
     def get_select_action_prompt(self, actions: list[Action], context: ActionContext) -> str:
         """Generate a prompt for selecting an action from a list of actions."""
         actions_str = json.dumps([action.as_json() for action in actions], indent=4)
+
+        logging.getLogger("textual_app").debug("Actions: %s", actions_str)
 
         prompt = ""
 
@@ -112,6 +119,16 @@ class LLMSelector(ActionSelector):
                 "param2": "value2"
             }}
         }}`
+
+        For example, if you choose the 'WebSearch' action, your response should look like this:
+        ```json
+        {
+            "name": "WebSearch",
+            "params": {
+                "query": "What is the weather like today?"
+            }
+        }
+        ```
         """
 
         return prompt.strip()
@@ -128,7 +145,10 @@ class LLMSelector(ActionSelector):
 
     def parse_response(self, response: str) -> tuple[str, ActionParams]:
         """Parse the LLM response to extract the selected action."""
-        choice_str = self.extract_json_from_response(response)
+        choice_str = extract_json_from_response(response)
+
+        logging.getLogger("textual_app").debug(f"LLM response raw: {response}")
+        logging.getLogger("textual_app").debug(f"LLM response: {choice_str}")
 
         choice = json.loads(choice_str)
 
@@ -142,10 +162,3 @@ class LLMSelector(ActionSelector):
             raise ValueError(msg)
 
         return name, params
-
-    def extract_json_from_response(self, response: str) -> str:
-        """Extract and parse JSON from a string, removing markdown formatting if needed."""
-        # Remove ```json ... ``` or ``` ... ``` blocks
-        match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", response, re.DOTALL)
-        json_str = match.group(1) if match else response.strip()
-        return json_str.strip()
