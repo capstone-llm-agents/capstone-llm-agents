@@ -51,7 +51,7 @@ mcp = FastMCP("SSE Example Server")
 ########## Callender agent tools ###############
 @mcp.tool()
 #Takes in a users request or potentialy a formated request by another LLM agent and then the file_handeler agent converts it into what it belives would be the best names, descriptions times etc.
-def create_ics_callender(tasks: str) -> str:
+def create_ics_callender(tasks: str, ics_file) -> str:
     current_date = datetime.now().date()
 
     prompt = f"""
@@ -79,12 +79,40 @@ def create_ics_callender(tasks: str) -> str:
     """
 
     formated_plan = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
-
-    ics_file = "my_callender.ics"
     print(formated_plan)
 
     create_ics_file(formated_plan["content"], ics_file)
     return formated_plan["content"]
+
+@mcp.tool()
+#This function first converts a specified ics file to text from which the LLM agent formats its content into readable text
+def read_calender(file_name) -> str:
+    calender_content = convert_ics_to_text(file_name)
+
+    prompt = f"""
+    You are to explain what the date, tasks and times are based off this ics calender.
+
+    calender content: {calender_content}
+
+    Respond with a list of each task and their related time for the date provided. also convert the time to 24 hour format such as 16:15 pm.
+    Make sure to convert these times from UCD to the provided timezone.
+    Follow the example format bellow and do not add anything else.
+    EXAMPLE:
+    1. Task: Research for Report
+    Date: 2022-07-13
+    Description: Research reliable details online
+    Start: 09:00
+    End: 09:30
+
+    2. Task: Write Draft
+    Date: 2022-07-13
+    Description: Handwriten reaserch report about computers
+    Start: 09:30
+    End: 10:00
+    """
+
+    result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
+    return result["content"]
 ########## Callender agent tools ###############
 
 @mcp.tool()
