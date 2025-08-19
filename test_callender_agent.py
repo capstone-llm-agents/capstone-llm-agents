@@ -25,9 +25,15 @@ async def main() -> None:
             print("Callender creation result:", result.content)
 
             # call callender reading tool
-            ics_file = "my_callender.ics"
-            result = await session.call_tool("read_calender", {"file_name": ics_file})
+            ics_file_read = "my_callender.ics"
+            result = await session.call_tool("read_calender", {"file_name": ics_file_read})
             print("Read callender output:", result.content)
+
+            # call callender read and creation tool
+            ics_file1 = "my_callender.ics"
+            ics_file2 = "my_callender_reformatted.ics"
+            result = await session.call_tool("create_ics_callender_with_context", {"tasks": "Between maths and english book me a 1 hour meeting with Anton.", "file_name_read": ics_file1, "file_name_write": ics_file2})
+            print("Reformeted callender creation result:", result.content)
 
 
 

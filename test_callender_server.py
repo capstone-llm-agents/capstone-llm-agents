@@ -113,6 +113,51 @@ def read_calender(file_name) -> str:
 
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
     return result["content"]
+
+@mcp.tool()
+#this function takes in a user/agent task creation request as well as a ics file to consider when making a new scedual and a new one to write an updated scedual to.
+def create_ics_callender_with_context(tasks: str, file_name_read, file_name_write):
+    current_date = datetime.now().date()
+    calender_dates = convert_ics_to_text(file_name_read)
+
+    #uses the extracted calender dates to create a new scedual.
+    extracted_prompt = f"""
+    Break down the following tasks into realistic time frames, using the provided start time as a reference.
+
+    Tasks: {tasks}
+    Current Date: {current_date}
+    Pre Existing Plans: {calender_dates}
+
+    Respond with a schedule in a structured format suitable for creating a calendar file (e.g., Task Name, Description, Start Time, End Time).
+    Use 24 hour notation for times to make it unambiguous.
+    Only give a date if specified by either the Tasks or Preferences otherwise use the current date instead
+    Do not clash any new sceduals with pre existing plans.
+    Make sure to add all pre existing plans to this new scedual.
+    Directly and only answer with the follow format:
+    1. Task: Research for Report
+    Date: 2022-07-13
+    Description: Research reliable details online
+    Start: 09:00
+    End: 09:30
+
+    2. Task: Write Draft
+    Date: 2022-07-13
+    Description: Handwriten reaserch report about computers
+    Start: 09:30
+    End: 10:00
+    ...
+    """
+    result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": extracted_prompt}])
+    print("#####################################")
+    print("New callender dates content")
+    print("#####################################")
+    print(result["content"])
+
+    #creates new scedual here
+    create_ics_file(result["content"], file_name_write)
+
+
+    return result["content"]
 ########## Callender agent tools ###############
 
 @mcp.tool()
