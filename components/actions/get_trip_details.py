@@ -62,6 +62,7 @@ class GetTripDetails(Action):
         ```
 
         If they don't provide any trip details, ask them kindly to provide the details that are missing.
+        If some details are missing, you don't need to add the missing properties to the JSON.
         """
 
         # TODO: Move to a different logger  # noqa: TD003

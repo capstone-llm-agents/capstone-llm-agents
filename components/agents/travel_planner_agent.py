@@ -43,6 +43,10 @@ TRAVEL_PLANNER_AGENT.add_action(SearchFlights())
 TRAVEL_PLANNER_AGENT.add_action(SearchAccommodations())
 TRAVEL_PLANNER_AGENT.add_action(SearchActivities())
 
+TRAVEL_PLANNER_AGENT.add_action(TravelResponse())
+TRAVEL_PLANNER_AGENT.add_action(GetTripDetails())
+TRAVEL_PLANNER_AGENT.add_action(StopAction())
+
 # add edges
 narrower.add_action_edge(EstimateBudget(), [SearchFlights(), SearchAccommodations(), SearchActivities()])
 narrower.add_action_edge(SearchFlights(), [BookFlight()])

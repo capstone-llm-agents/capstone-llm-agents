@@ -4,6 +4,7 @@ import logging
 from typing import override
 
 from components.actions.simple_response import SimpleResponse
+from components.actions.travel_context import TRAVEL_CONTEXT
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_narrower import ActionNarrower
@@ -33,6 +34,18 @@ class GraphBasedNarrower(ActionNarrower):
     def add_default_action(self, action: Action) -> None:
         """Add a default action to the policy."""
         self.default_actions.append(action)
+
+    def remove_default_action(self, action: Action) -> None:
+        """Remove a default action from the policy."""
+        if action in self.default_actions:
+            self.default_actions.remove(action)
+        else:
+            msg = f"Action {action.name} is not a default action."
+            raise ValueError(msg)
+
+    def has_default_action(self, action: Action) -> bool:
+        """Check if the policy has a default action."""
+        return action in self.default_actions
 
     def add_action_edge(self, action: Action, next_actions: list[Action]) -> None:
         """Add an action edge to the policy."""
@@ -77,6 +90,17 @@ class GraphBasedNarrower(ActionNarrower):
 
         for action in narrowed_actions:
             new_space.add_action(action)
+
+        # TODO: remove this. TEMPORARY HACK !!
+        get_trip_action = action_space.get_action_with_name("GetTripDetails")
+
+        if not get_trip_action:
+            msg = "Action 'GetTripDetails' not found in the action space."
+            raise ValueError(msg)
+
+        if TRAVEL_CONTEXT.has_main_details() and self.has_default_action(get_trip_action):
+            # remove get trip details action if we have main details
+            self.remove_default_action(get_trip_action)
 
         return new_space
 

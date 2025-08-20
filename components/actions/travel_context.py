@@ -105,32 +105,41 @@ class TravelContext:
 
     def __str__(self) -> str:
         """Return a string representation of the travel context."""
+        accommodation_str = ", ".join(str(acc) for acc in self.accommodations) if self.accommodations else "None"
         return (
             f"Origin: {self.origin}, "
             f"City: {self.city}, Duration Days: {self.duration_days}, "
             f"Travel Style: {self.travel_style}, Flight Number: {self.flight_number}, "
             f"Itinerary: {self.itinerary}, Accommodation ID: {self.accommodation_id}, "
             f"Accommodation Details: {self.accommodation_details}, "
-            f"Flight Details: {self.flight_details}, Budget Details: {self.budget_details}"
+            f"Flight Details: {self.flight_details}, Budget Details: {self.budget_details},"
+            f"Accommodations: {accommodation_str}"
+        )
+
+    def has_main_details(self) -> bool:
+        """Check if the travel context has main details."""
+        return (
+            self.city is not None
+            and self.duration_days is not None
+            and self.travel_style is not None
+            and self.origin is not None
         )
 
 
-# TRAVEL_CONTEXT = TravelContext()
-
 TRAVEL_CONTEXT = TravelContext()
-TRAVEL_CONTEXT.origin = "Sydney"
-TRAVEL_CONTEXT.city = "Melbourne"
-TRAVEL_CONTEXT.duration_days = 3
-TRAVEL_CONTEXT.travel_style = "luxury"
-TRAVEL_CONTEXT.itinerary = "Day 1: Arrival, Day 2: Sightseeing, Day 3: Departure"
-TRAVEL_CONTEXT.budget_details = BudgetDetails(
-    daily_cost=200.0,
-    total_estimate_without_buffer=600.0,
-    final_estimate=720.0,
-    currency="AUD",
-    details="Includes accommodation, meals, and activities.",
-)
-TRAVEL_CONTEXT.accommodations = [
-    Accommodation(name="Luxury Hotel", hotel_id="hotel_123", address="123 Luxury St, Melbourne"),
-    Accommodation(name="Budget Inn", hotel_id="hotel_456", address="456 Budget Ave, Melbourne"),
-]
+# TRAVEL_CONTEXT.origin = "Sydney"
+# TRAVEL_CONTEXT.city = "Melbourne"
+# TRAVEL_CONTEXT.duration_days = 3
+# TRAVEL_CONTEXT.travel_style = "luxury"
+# TRAVEL_CONTEXT.itinerary = "Day 1: Arrival, Day 2: Sightseeing, Day 3: Departure"
+# TRAVEL_CONTEXT.budget_details = BudgetDetails(
+#     daily_cost=200.0,
+#     total_estimate_without_buffer=600.0,
+#     final_estimate=720.0,
+#     currency="AUD",
+#     details="Includes accommodation, meals, and activities.",
+# )
+# TRAVEL_CONTEXT.accommodations = [
+#     Accommodation(name="Luxury Hotel", hotel_id="hotel_123", address="123 Luxury St, Melbourne"),
+#     Accommodation(name="Budget Inn", hotel_id="hotel_456", address="456 Budget Ave, Melbourne"),
+# ]
