@@ -128,7 +128,6 @@ narrower.add_default_filter(
         "make planning",
     ],
 )
-
 narrower.add_default_filter(
     GetTripDetails(),
     [
