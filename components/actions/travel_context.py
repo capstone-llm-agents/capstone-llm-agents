@@ -1,7 +1,5 @@
 """Hack to make sure that the travel planner has relative info always."""
 
-from llm_mas.action_system.core.action_context import ActionContext
-
 
 class AccommodationBookingDetails:
     """Class to hold booking details."""

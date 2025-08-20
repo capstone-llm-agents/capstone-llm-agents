@@ -56,7 +56,7 @@ class GetTripDetails(Action):
         {{
             "origin": "<starting city>",
             "destination": "<destination city>",
-            "travel_style": "<low/mid/high>",
+            "budget": "<low/mid/high>",
             "duration_days": "<number of days>",
         }}
         ```
@@ -85,7 +85,7 @@ class GetTripDetails(Action):
             trip_details = {
                 "origin": loaded_json.get("origin", None),
                 "destination": loaded_json.get("destination", None),
-                "travel_style": loaded_json.get("travel_style", None),
+                "travel_style": loaded_json.get("budget", None),
                 "duration_days": loaded_json.get("duration_days", None),
             }
 
