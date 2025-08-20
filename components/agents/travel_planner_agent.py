@@ -45,8 +45,10 @@ TRAVEL_PLANNER_AGENT.add_action(SearchActivities())
 
 # add edges
 narrower.add_action_edge(EstimateBudget(), [SearchFlights(), SearchAccommodations(), SearchActivities()])
-narrower.add_action_edge(SearchFlights(), [BookFlight(), EstimateBudget()])
-narrower.add_action_edge(SearchAccommodations(), [TravelResponse()])
+narrower.add_action_edge(SearchFlights(), [BookFlight()])
+narrower.add_action_edge(BookFlight(), [TravelResponse()])
+narrower.add_action_edge(SearchAccommodations(), [BookAccommodation()])
+narrower.add_action_edge(BookAccommodation(), [TravelResponse()])
 narrower.add_action_edge(SearchActivities(), [TravelResponse()])
 narrower.add_action_edge(CreateItinerary(), [EstimateBudget()])
 narrower.add_action_edge(TravelResponse(), [StopAction()])
@@ -55,3 +57,5 @@ narrower.add_action_edge(GetTripDetails(), [TravelResponse()])
 
 # default action
 narrower.add_default_action(GetTripDetails())
+narrower.add_default_action(SearchFlights())
+narrower.add_default_action(SearchAccommodations())

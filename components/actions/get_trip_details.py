@@ -54,10 +54,10 @@ class GetTripDetails(Action):
         Put the trip details in a JSON format like so:
         ```json
         {{
-            "origin": "Melbourne",
-            "destination": "Tokyo",
-            "travel_style": "luxury", ("low", "mid", "high")
-            "duration_days": 7,
+            "origin": "<starting city>",
+            "destination": "<destination city>",
+            "travel_style": "<low/mid/high>",
+            "duration_days": "<number of days>",
         }}
         ```
 
