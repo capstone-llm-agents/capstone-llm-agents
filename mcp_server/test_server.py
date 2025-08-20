@@ -12,7 +12,16 @@ from starlette.routing import Mount, Route
 # create the MCP server
 mcp = FastMCP("SSE Example Server")
 
-
+config = {
+    "vector_store": {
+        "provider": "chroma",
+        "config": {
+            "collection_name": "test",
+            "path": "db",
+        }
+    }
+}
+ 
 @mcp.tool()
 def greet(name: str) -> str:
     """Greet a user by name."""
@@ -24,7 +33,23 @@ def add(a: int, b: int) -> str:
     """Add two numbers and return the result."""
     return f"The sum of {a} and {b} is {a + b}."
 
+@mcp.tool()
+def memory_search(memory: str, agent_id: str):
+    m = Memory.from_config(config)
+    relevant_memories = m.search(query=memory, agent_id=agent_id, limit=3)
+    memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
+    if memories_str:
+        return f" These are the relating memories {memories_str}"
+    else:
+        return "No memories found"
 
+
+@mcp.tool()
+def memory_save(agent_id: str, memory: str, metadata: dict):
+    m = Memory.from_config(config)
+    m.add(messages=memory, agent_id=agent_id, metadata=metadata)
+    return "Memory Saved"
+    
 # example resource
 @mcp.resource(uri="resource://hello")
 def hello_resource() -> str:
