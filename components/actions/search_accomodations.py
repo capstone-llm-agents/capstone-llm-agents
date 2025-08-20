@@ -87,6 +87,7 @@ class SearchAccommodations(Action):
                     # Return top 5
                     res = ActionResult()
                     TRAVEL_CONTEXT.accommodations = accommodations[:5]
+                    TRAVEL_CONTEXT.accommodation_id = accommodations[0].hotel_id if accommodations else None
                     accommodations_str = "\n".join(str(acc) for acc in accommodations[:5])
                     res.set_param("response", accommodations_str)
                     res.set_param("travel_context", str(TRAVEL_CONTEXT))

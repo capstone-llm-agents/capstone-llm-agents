@@ -90,6 +90,8 @@ class SearchFlights(Action):
                             }
                         )
 
+                    TRAVEL_CONTEXT.flight_number = flights[0]["flight_number"] if flights else None
+
                     res = ActionResult()
                     res.set_param("response", str(flights[:10]))  # Limit to first 10 flights
                     res.set_param("travel_context", str(TRAVEL_CONTEXT))
