@@ -40,7 +40,7 @@ class EstimateBudget(Action):
         visitor_multiplier = 1 + (city_data.get("visitors", 10000000) / 50000000)
 
         # Combine the multipliers
-        adjusted_cost = base_cost * rank_multiplier * visitor_multiplier
+        adjusted_cost = int(base_cost) * rank_multiplier * visitor_multiplier
         return adjusted_cost  # noqa: RET504
 
     @override

@@ -10,6 +10,7 @@ from components.actions.search_activities import SearchActivities
 from components.actions.search_flights import SearchFlights
 from components.actions.travel_narrower import TravelNarrower
 from components.actions.travel_response import TravelResponse
+from components.actions.websearch import WebSearch
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
 from llm_mas.action_system.core.action_space import ActionSpace
@@ -38,6 +39,7 @@ TRAVEL_PLANNER_AGENT.add_action(BookAccommodation())
 TRAVEL_PLANNER_AGENT.add_action(BookFlight())
 TRAVEL_PLANNER_AGENT.add_action(CreateItinerary())
 TRAVEL_PLANNER_AGENT.add_action(EstimateBudget())
+TRAVEL_PLANNER_AGENT.add_action(WebSearch())
 
 TRAVEL_PLANNER_AGENT.add_action(SearchFlights())
 TRAVEL_PLANNER_AGENT.add_action(SearchAccommodations())
@@ -56,6 +58,7 @@ narrower.add_action_edge(BookAccommodation(), [TravelResponse()])
 narrower.add_action_edge(SearchActivities(), [TravelResponse()])
 narrower.add_action_edge(CreateItinerary(), [EstimateBudget()])
 narrower.add_action_edge(TravelResponse(), [StopAction()])
+narrower.add_action_edge(WebSearch(), [TravelResponse()])
 
 narrower.add_action_edge(GetTripDetails(), [TravelResponse()])
 
@@ -67,6 +70,7 @@ narrower.add_default_action(EstimateBudget())
 narrower.add_default_action(SearchActivities())
 narrower.add_default_action(TravelResponse())
 narrower.add_default_action(CreateItinerary())
+narrower.add_default_action(WebSearch())
 
 # word filters
 narrower.add_default_filter(
@@ -136,5 +140,20 @@ narrower.add_default_filter(
         "get trip information",
         "trip data",
         "get trip data",
+    ],
+)
+
+narrower.add_default_filter(
+    WebSearch(),
+    [
+        "web search",
+        "search the web",
+        "search online",
+        "find information",
+        "look up",
+        "search for",
+        "find",
+        "search",
+        "look for",
     ],
 )
