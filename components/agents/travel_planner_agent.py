@@ -8,6 +8,7 @@ from components.actions.get_trip_details import GetTripDetails
 from components.actions.search_accomodations import SearchAccommodations
 from components.actions.search_activities import SearchActivities
 from components.actions.search_flights import SearchFlights
+from components.actions.travel_narrower import TravelNarrower
 from components.actions.travel_response import TravelResponse
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
@@ -20,7 +21,7 @@ from llm_mas.tools.tool_manager import ToolManager
 from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
-narrower = GraphBasedNarrower()
+narrower = TravelNarrower()
 selector = LLMSelector(call_llm)
 
 # tools
@@ -48,7 +49,7 @@ TRAVEL_PLANNER_AGENT.add_action(GetTripDetails())
 TRAVEL_PLANNER_AGENT.add_action(StopAction())
 
 # add edges
-narrower.add_action_edge(EstimateBudget(), [SearchFlights(), SearchAccommodations(), SearchActivities()])
+narrower.add_action_edge(EstimateBudget(), [TravelResponse()])
 narrower.add_action_edge(SearchFlights(), [BookFlight()])
 narrower.add_action_edge(BookFlight(), [TravelResponse()])
 narrower.add_action_edge(SearchAccommodations(), [BookAccommodation()])
@@ -63,3 +64,79 @@ narrower.add_action_edge(GetTripDetails(), [TravelResponse()])
 narrower.add_default_action(GetTripDetails())
 narrower.add_default_action(SearchFlights())
 narrower.add_default_action(SearchAccommodations())
+narrower.add_default_action(EstimateBudget())
+narrower.add_default_action(SearchActivities())
+narrower.add_default_action(TravelResponse())
+narrower.add_default_action(CreateItinerary())
+
+# word filters
+narrower.add_default_filter(
+    SearchFlights(),
+    ["flight", "flights", "airline", "airlines", "book flight", "book flights", "search flight", "search flights"],
+)
+narrower.add_default_filter(
+    SearchAccommodations(),
+    [
+        "accommodation",
+        "accommodations",
+        "hotel",
+        "hotels",
+        "book accommodation",
+        "book accommodations",
+        "search accommodation",
+        "search accommodations",
+    ],
+)
+narrower.add_default_filter(
+    SearchActivities(),
+    [
+        "activity",
+        "activities",
+        "tour",
+        "tours",
+        "book activity",
+        "book activities",
+        "search activity",
+        "search activities",
+    ],
+)
+narrower.add_default_filter(
+    EstimateBudget(),
+    [
+        "budget",
+        "cost",
+        "price",
+        "estimate budget",
+        "estimate cost",
+        "estimate price",
+        "calculate budget",
+        "calculate cost",
+        "calculate price",
+    ],
+)
+narrower.add_default_filter(
+    CreateItinerary(),
+    [
+        "itinerary",
+        "plan",
+        "planning",
+        "create itinerary",
+        "create plan",
+        "create planning",
+        "make itinerary",
+        "make plan",
+        "make planning",
+    ],
+)
+
+narrower.add_default_filter(
+    GetTripDetails(),
+    [
+        "trip details",
+        "get trip details",
+        "trip information",
+        "get trip information",
+        "trip data",
+        "get trip data",
+    ],
+)

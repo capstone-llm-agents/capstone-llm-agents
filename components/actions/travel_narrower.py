@@ -3,8 +3,10 @@
 import logging
 from typing import override
 
+from components.actions.get_trip_details import GetTripDetails
 from components.actions.simple_response import SimpleResponse
 from components.actions.travel_context import TRAVEL_CONTEXT
+from components.actions.travel_response import TravelResponse
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_narrower import ActionNarrower
@@ -22,7 +24,7 @@ class ActionEdge:
         self.next_actions = next_actions
 
 
-class GraphBasedNarrower(ActionNarrower):
+class TravelNarrower(ActionNarrower):
     """A policy that narrows the action space based on a graph of actions."""
 
     def __init__(self) -> None:
@@ -30,6 +32,8 @@ class GraphBasedNarrower(ActionNarrower):
         self.action_edges: list[ActionEdge] = []
 
         self.default_actions: list[Action] = []
+
+        self.word_filters: dict[Action, list[str]] = {}
 
     def add_default_action(self, action: Action) -> None:
         """Add a default action to the policy."""
@@ -75,9 +79,37 @@ class GraphBasedNarrower(ActionNarrower):
         # get last action from workspace action history
         last_action_tup = workspace.action_history.get_last_action()
 
-        if last_action_tup is None:
-            narrowed_actions = self.default_actions
+        chat_history = context.conversation.get_chat_history()
 
+        last_message = chat_history.messages[-1] if chat_history.messages else None
+
+        if last_message is None:
+            msg = "No last message found in chat history."
+            raise ValueError(msg)
+
+        if last_action_tup is None:
+            narrowed_actions = []
+
+            message = last_message.content.lower()
+
+            get_trip_action = action_space.get_action_with_name("GetTripDetails")
+            if not get_trip_action:
+                msg = "Action 'GetTripDetails' not found in the action space."
+                raise ValueError(msg)
+
+            if TRAVEL_CONTEXT.has_main_details():
+                for action in self.default_actions:
+                    # filter actions based on the last message content
+                    word_filter = self.word_filters.get(action, [])
+                    if any(word in message for word in word_filter):
+                        narrowed_actions.append(action)
+
+            # no actions add GetTripDetails as default
+            if not narrowed_actions or not TRAVEL_CONTEXT.has_main_details():
+                if not TRAVEL_CONTEXT.has_main_details():
+                    narrowed_actions.append(get_trip_action)
+                else:
+                    narrowed_actions.append(TravelResponse())
         else:
             last_action, _, _ = last_action_tup
             # find the action edge corresponding to the last action
@@ -92,6 +124,21 @@ class GraphBasedNarrower(ActionNarrower):
             new_space.add_action(action)
 
         return new_space
+
+    def add_default_filter(self, action: Action, words: list[str]) -> bool:
+        """Add a filter to the action to show only if the action matches the words."""
+        if action not in self.default_actions:
+            msg = f"Action {action.name} is not a default action."
+            raise ValueError(msg)
+
+        if action not in self.word_filters:
+            self.word_filters[action] = []
+
+        for word in words:
+            if word not in self.word_filters[action]:
+                self.word_filters[action].append(word)
+
+        return True
 
     def action_leads_to(self, action: Action, next_action: Action) -> bool:
         """Check if the action leads to the next action."""
