@@ -11,7 +11,6 @@ from components.actions.search_flights import SearchFlights
 from components.actions.travel_narrower import TravelNarrower
 from components.actions.travel_response import TravelResponse
 from llm_mas.action_system.base.actions.stop import StopAction
-from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
 from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.agent import Agent
