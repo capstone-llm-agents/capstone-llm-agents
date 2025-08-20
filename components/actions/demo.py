@@ -11,7 +11,13 @@ def get_city_iata(city: str) -> str:
         {"rank": 2, "city": "Istanbul", "country": "Turkey", "visitors": 23000000, "iata_code": "IST"},
         {"rank": 3, "city": "London", "country": "United Kingdom", "visitors": 21700000, "iata_code": "LHR"},
         {"rank": 4, "city": "Hong Kong", "country": "Hong Kong", "visitors": 20500000, "iata_code": "HKG"},
-        {"rank": 5, "city": "Mecca", "country": "Saudi Arabia", "visitors": 19300000, "iata_code": "JED"}, # JED is the IATA code for Jeddah, the closest major international airport to Mecca.
+        {
+            "rank": 5,
+            "city": "Mecca",
+            "country": "Saudi Arabia",
+            "visitors": 19300000,
+            "iata_code": "JED",
+        },  # JED is the IATA code for Jeddah, the closest major international airport to Mecca.
         {"rank": 6, "city": "Antalya", "country": "Turkey", "visitors": 19300000, "iata_code": "AYT"},
         {"rank": 7, "city": "Dubai", "country": "United Arab Emirates", "visitors": 18200000, "iata_code": "DXB"},
         {"rank": 8, "city": "Macau", "country": "Macau", "visitors": 18000000, "iata_code": "MFM"},
@@ -112,6 +118,6 @@ def get_city_iata(city: str) -> str:
     # Return the IATA code for the given city
     for city_info in top_cities:
         if city_info["city"].lower() == city.lower():
-            return city_info["iata_code"]
+            return city_info
 
     return ""

@@ -17,7 +17,7 @@ class ActionParams:
 
     def get_param(self, key: str) -> Any:  # noqa: ANN401
         """Get a parameter value."""
-        return self.params.get(key)
+        return self.params.get(key, None)
 
     def has_param(self, key: str) -> bool:
         """Check if a parameter exists."""

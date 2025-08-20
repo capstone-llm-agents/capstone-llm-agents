@@ -7,6 +7,7 @@ from typing import override
 import aiohttp
 
 from components.actions.demo import get_city_iata
+from components.actions.travel_context import TRAVEL_CONTEXT, Accommodation
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -19,8 +20,8 @@ class SearchAccommodations(Action):
     def __init__(self) -> None:
         """Initialize the SearchAccommodations action."""
         super().__init__(description="Finds hotel options in a city for specified dates.")
-        self.api_key = os.getenv("AMADEUS_API_KEY") # This is your Client ID
-        self.api_secret = os.getenv("AMADEUS_API_SECRET") # This is your Client Secret
+        self.api_key = os.getenv("AMADEUS_API_KEY")  # This is your Client ID
+        self.api_secret = os.getenv("AMADEUS_API_SECRET")  # This is your Client Secret
         self.base_url = "https://test.api.amadeus.com/v1/reference-data/locations/hotels/by-city"
 
     async def get_access_token(self) -> str:
@@ -45,7 +46,11 @@ class SearchAccommodations(Action):
             msg = "Amadeus API key or secret not found. Please set environment variables."
             raise ValueError(msg)
 
-        city_code = get_city_iata(params.get_param("city"))
+        # if not TRAVEL_CONTEXT.city:
+        #     msg = "City is required to search for accommodations."
+        #     raise ValueError(msg)
+
+        city_code = get_city_iata(TRAVEL_CONTEXT.city or "Tokyo")
 
         if not city_code:
             msg = "Missing required parameter: city."
@@ -56,10 +61,11 @@ class SearchAccommodations(Action):
             token = await self.get_access_token()
             headers = {"Authorization": f"Bearer {token}"}
 
-            async with aiohttp.ClientSession() as session:
-                query_params = {"cityCode": city_code}
-                url = f"{self.base_url}?{urllib.parse.urlencode(query_params)}"
+            city_code = city_code["iata_code"]
+            query_params = {"cityCode": city_code}
+            url = f"{self.base_url}?{urllib.parse.urlencode(query_params)}"
 
+            async with aiohttp.ClientSession() as session:
                 async with session.get(url, headers=headers) as response:
                     response.raise_for_status()
                     data = await response.json()
@@ -70,17 +76,20 @@ class SearchAccommodations(Action):
 
                     accommodations = []
                     for hotel in data["data"]:
-                        # Extract and format the data we need
-                        accommodations.append({
-                            "name": hotel["name"],
-                            "hotel_id": hotel["hotelId"],
-                            "address": hotel["address"].get("lines", ["N/A"])[0],
-                        })
+                        accommodations.append(
+                            Accommodation(
+                                name=hotel.get("name", "Unknown"),
+                                hotel_id=hotel.get("hotelId", "N/A"),
+                                address=(hotel.get("address", {}).get("lines") or ["N/A"])[0],
+                            )
+                        )
 
-                    # We only return a limited number of results to not overload the LLM
+                    # Return top 5
                     res = ActionResult()
-                    accommodations_str = "\n".join([f"{hotel['name']} ({hotel['address']})" for hotel in accommodations[:10]])
+                    TRAVEL_CONTEXT.accommodations = accommodations[:5]
+                    accommodations_str = "\n".join(str(acc) for acc in accommodations[:5])
                     res.set_param("response", accommodations_str)
+                    res.set_param("travel_context", str(TRAVEL_CONTEXT))
                     return res
 
         except aiohttp.ClientError as e:

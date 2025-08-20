@@ -4,6 +4,7 @@ import random
 import string
 from typing import override
 
+from components.actions.travel_context import TRAVEL_CONTEXT, FlightBookingDetails
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -31,7 +32,7 @@ class BookFlight(Action):
             raise ValueError(msg)
 
         # Expect the flight number to be passed as a parameter
-        flight_number = params.get_param("flight_number")
+        flight_number = TRAVEL_CONTEXT.flight_number
 
         if not flight_number:
             msg = "Flight number is required to book a flight."
@@ -41,13 +42,14 @@ class BookFlight(Action):
         confirmation_code = "".join(random.choices(string.ascii_uppercase + string.digits, k=8))  # noqa: S311
 
         # In a real application, you would log this to a database or a file
-        booking_details = {
-            "flight_number": flight_number,
-            "confirmation_code": confirmation_code,
-            "status": "confirmed",
-        }
+        TRAVEL_CONTEXT.flight_details = FlightBookingDetails(
+            flight_number=flight_number,
+            confirmation_code=confirmation_code,
+            status="confirmed",
+        )
 
         res = ActionResult()
-        res.set_param("response", booking_details)
+        res.set_param("response", str(TRAVEL_CONTEXT.flight_details))
+        res.set_param("travel_context", str(TRAVEL_CONTEXT))
 
         return res

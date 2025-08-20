@@ -3,6 +3,7 @@
 from typing import override
 
 from components.actions.demo import get_city_iata
+from components.actions.travel_context import TRAVEL_CONTEXT, BudgetDetails
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -14,7 +15,9 @@ class EstimateBudget(Action):
 
     def __init__(self) -> None:
         """Initialize the EstimateBudget action."""
-        super().__init__(description="Provides a rough budget estimate for a trip based on destination and duration, with a heuristic.")  # noqa: E501
+        super().__init__(
+            description="Provides a rough budget estimate for a trip based on destination and duration, with a heuristic."
+        )  # noqa: E501
 
         # Base daily costs for a 'mid-range' trip. These will be adjusted by the heuristic.
         self.base_daily_costs = {
@@ -43,9 +46,9 @@ class EstimateBudget(Action):
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by estimating the budget."""
-        destination = params.get_param("destination").lower()
-        duration_days = params.get_param("duration_days")
-        travel_style = params.get_param("travel_style").lower()
+        destination = TRAVEL_CONTEXT.city or "Tokyo"
+        duration_days = TRAVEL_CONTEXT.duration_days or 7
+        travel_style = TRAVEL_CONTEXT.travel_style or "mid"
 
         if not destination or not duration_days:
             msg = "Missing required parameters: destination or duration_days."
@@ -69,13 +72,16 @@ class EstimateBudget(Action):
         buffer = total_estimate * 0.15
         final_estimate = total_estimate + buffer
 
+        TRAVEL_CONTEXT.budget_details = BudgetDetails(
+            daily_cost=round(daily_cost, 2),
+            total_estimate_without_buffer=round(total_estimate, 2),
+            final_estimate=round(final_estimate, 2),
+            currency="USD",
+            details=f"This is an estimated cost for a {travel_style}-style trip to {destination} for {duration_days} days, adjusted based on the city's popularity and visitor count. It includes a 15% buffer for miscellaneous expenses.",
+        )
+
         res = ActionResult()
-        res.set_param("response", {
-            "daily_cost": round(daily_cost, 2),
-            "total_estimate_without_buffer": round(total_estimate, 2),
-            "final_estimate": round(final_estimate, 2),
-            "currency": "USD",
-            "details": f"This is an estimated cost for a {travel_style}-style trip to {destination} for {duration_days} days, adjusted based on the city's popularity and visitor count. It includes a 15% buffer for miscellaneous expenses."
-        })
+        res.set_param("response", str(TRAVEL_CONTEXT.budget_details))
+        res.set_param("travel_context", str(TRAVEL_CONTEXT))
 
         return res

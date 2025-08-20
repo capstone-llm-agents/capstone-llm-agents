@@ -2,6 +2,7 @@
 
 from typing import override
 
+from components.actions.travel_context import TRAVEL_CONTEXT
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -40,7 +41,7 @@ class CreateItinerary(Action):
         Include details like suggested times, brief descriptions, and any relevant travel info (e.g., "Take a train").
         Make it sound engaging and helpful.
 
-        User Request: {last_message['content']}
+        User Request: {last_message["content"]}
 
         Relevant Travel Data:
         {relevant_data}
@@ -50,6 +51,7 @@ class CreateItinerary(Action):
             response = await call_llm(prompt_with_instructions)
             res = ActionResult()
             res.set_param("response", response)
+            res.set_param("travel_context", str(TRAVEL_CONTEXT))
             return res
         except Exception as e:
             msg = f"An error occurred while calling the LLM to create the itinerary: {e}"

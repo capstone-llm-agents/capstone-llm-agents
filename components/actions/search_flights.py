@@ -7,6 +7,7 @@ from typing import override
 import aiohttp
 
 from components.actions.demo import get_city_iata
+from components.actions.travel_context import TRAVEL_CONTEXT
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -18,7 +19,9 @@ class SearchFlights(Action):
 
     def __init__(self) -> None:
         """Initialize the SearchFlights action."""
-        super().__init__(description="Searches for real-time flights using an external API based on origin, destination, and dates.")
+        super().__init__(
+            description="Searches for real-time flights using an external API based on origin, destination, and dates."
+        )
         self.api_key = os.getenv("AVIATIONSTACK_API_KEY")
         self.base_url = "http://api.aviationstack.com/v1/flights"
 
@@ -43,9 +46,9 @@ class SearchFlights(Action):
         # origin, destination, and dates. For this example, we'll extract them
         # from the action parameters which are assumed to be provided by the LLM
         # after it has processed the user's request.
-        origin = get_city_iata(params.get_param("origin"))
-        destination = get_city_iata(params.get_param("destination"))
-        # flight_date = params.get_param("flight_date") # YYYY-MM-DD format e.g., '2025-12-24'
+
+        origin = get_city_iata(TRAVEL_CONTEXT.origin or "Melbourne")
+        destination = get_city_iata(TRAVEL_CONTEXT.city or "Tokyo")
 
         if not all([origin, destination]):
             msg = "Missing required parameters: origin, destination."
@@ -54,10 +57,13 @@ class SearchFlights(Action):
         try:
             # We'll use a session for async requests
             async with aiohttp.ClientSession() as session:
+                origin_code = origin["iata_code"]
+                destination_code = destination["iata_code"]
+
                 query_params = {
                     "access_key": self.api_key,
-                    "dep_iata": origin.upper(),
-                    "arr_iata": destination.upper(),
+                    "dep_iata": origin_code.upper(),
+                    "arr_iata": destination_code.upper(),
                 }
 
                 # Build the URL with encoded parameters
@@ -74,16 +80,19 @@ class SearchFlights(Action):
                     # Process the data to extract key details
                     flights = []
                     for flight_data in data["data"]:
-                        flights.append({
-                            "flight_number": flight_data["flight"]["iata"],
-                            "airline": flight_data["airline"]["name"],
-                            "departure_time": flight_data["departure"]["scheduled"],
-                            "arrival_time": flight_data["arrival"]["scheduled"],
-                            "status": flight_data["flight_status"],
-                        })
+                        flights.append(
+                            {
+                                "flight_number": flight_data["flight"]["iata"],
+                                "airline": flight_data["airline"]["name"],
+                                "departure_time": flight_data["departure"]["scheduled"],
+                                "arrival_time": flight_data["arrival"]["scheduled"],
+                                "status": flight_data["flight_status"],
+                            }
+                        )
 
                     res = ActionResult()
                     res.set_param("response", str(flights[:10]))  # Limit to first 10 flights
+                    res.set_param("travel_context", str(TRAVEL_CONTEXT))
                     return res
 
         except aiohttp.ClientError as e:
