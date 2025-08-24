@@ -116,6 +116,10 @@ def read_calender(file_name) -> str:
     """
 
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
+    print("#####################################")
+    print("Read calender interpretation")
+    print("#####################################")
+    print(result["content"])
     return result["content"]
 
 @mcp.tool()
