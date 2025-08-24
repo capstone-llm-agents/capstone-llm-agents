@@ -79,9 +79,13 @@ def create_ics_callender(tasks: str, ics_file) -> str:
     """
 
     formated_plan = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
-    print(formated_plan)
+    print("#####################################")
+    print("New callender dates content")
+    print("#####################################")
+    print(formated_plan["content"])
 
     create_ics_file(formated_plan["content"], ics_file)
+
     return formated_plan["content"]
 
 @mcp.tool()
