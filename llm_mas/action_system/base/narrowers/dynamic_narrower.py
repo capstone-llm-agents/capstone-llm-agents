@@ -50,24 +50,18 @@ class SwitchNarrower(ActionNarrower):
 
     def __init__(
         self,
-        next_actions: list[Action],
-        select_condition: Callable[[Workspace, ActionSpace, ActionContext, list[Action]], list[Action]],
+        select_condition: Callable[[Workspace, ActionSpace, ActionContext], list[Action]],
     ) -> None:
         """Initialize the switch narrower with a list of next actions and a selection condition."""
-        self.next_actions = next_actions
         self.select_condition = select_condition
 
     @override
     def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
         """Return the next action based on the selection condition."""
         new_space = ActionSpace()
-        selected_actions = self.select_condition(workspace, action_space, context, self.next_actions)
+        selected_actions = self.select_condition(workspace, action_space, context)
         for action in selected_actions:
-            if action in self.next_actions:
-                new_space.add_action(action)
-            else:
-                msg = f"Action {action.name} is not in the list of next actions."
-                raise ValueError(msg)
+            new_space.add_action(action)
         return new_space
 
 
