@@ -144,10 +144,19 @@ def deduce_weather_result(prompt, weather_data):
     Weather Data: {weather_data}
 
     Based on the prompt you have been asked as well as the weather details provided answer the question the best you can.
-    Remember not all details are needed for example if the wind speed is not asked for you don't need to include it.
-    Here is a guide to an example format:
+    Remember not all details are needed unless specifically asked for.
+    If no details are provided then just state the temperature and rain chance for 12pm
+    Do not add any unesisary text make sure to get strait to the point.
+    Here is a guide to an example formated output:
     Example:
-    The weather in hawthorne at 12pm will be 16.1 degrees with a 65% chance of showers.
+    The weather in hawthorne at 12pm will be:
+    Tempreture: 16.1 degrees
+    Chance of rain: 65%
+    Precipitation amount: 2.5 mm
+    Wind Speed: 2km/h
+    Max wind gust: 5km/h
+    UV index: 1.27
+
     """
 
     extracted_details = weather_agent.generate_reply(messages=[{"role": "user", "content": agent_prompt}])
@@ -159,6 +168,7 @@ def deduce_weather_result(prompt, weather_data):
     result = extracted_details["content"]
     return result
 
-weather = obtain_weather_details("What is the weather in Pakenham victoria tomorow at 12pm?")
+weather = obtain_weather_details("What is the weather in Pakenham victoria tomorrow at 3pm?")
+#weather = obtain_weather_details("What is the weather in Sydney tomorrow?")
 print("\n\n\n\n\n\n########## Weather reading ##########")
 print(weather)
