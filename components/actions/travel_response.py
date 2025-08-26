@@ -7,10 +7,10 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.model_providers.ollama.call_llm import call_llm, call_llm_with_messages
 
 
-class SimpleResponse(Action):
+class TravelResponse(Action):
     """The action that generates a simple response using an LLM."""
 
     def __init__(self) -> None:
@@ -35,10 +35,15 @@ class SimpleResponse(Action):
         if not context.last_result.is_empty():
             # override content
             last_message["content"] = f"""
-            Context:
-            {context.last_result.as_json_pretty()}
 
-            Prompt:
+            You are an expert travel agent. Your task is to provide a detailed and helpful response to the user's request.
+            
+            Please consider the following context:
+            {context.last_result.as_json_pretty()}
+            
+            Based on the provided user request and context, please generate a detailed response that addresses the user's needs and provides relevant information.
+            
+            user_request:
             {last_message["content"]}
             """
 
@@ -46,7 +51,7 @@ class SimpleResponse(Action):
         logging.getLogger("textual_app").info("Calling LLM with message: %s", last_message)
         logging.getLogger("textual_app").info("Context: %s", context.last_result.as_json_pretty())
 
-        response = await call_llm(last_message["content"])
+        response = await call_llm_with_messages(messages)
 
         res = ActionResult()
         res.set_param("response", response)

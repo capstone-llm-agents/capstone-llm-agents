@@ -4,7 +4,7 @@ import os
 from typing import override
 
 from dotenv import load_dotenv
-from openai import OpenAI
+from openai import AsyncOpenAI
 
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
@@ -13,7 +13,7 @@ from llm_mas.action_system.core.action_result import ActionResult
 
 # remove key when commit please
 load_dotenv()
-client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 
 class WebSearch(Action):
@@ -35,8 +35,8 @@ class WebSearch(Action):
 
         query = last_message["content"]
 
-        # do the damn search
-        response = client.responses.create(
+        # do the search asynchronously
+        response = await client.responses.create(
             model="gpt-4o-mini",
             tools=[
                 {
