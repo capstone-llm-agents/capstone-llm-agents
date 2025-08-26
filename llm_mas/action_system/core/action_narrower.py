@@ -8,11 +8,21 @@ from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.agent.workspace import Workspace
 
 
+class NarrowerContext:
+    """Context for the action narrower."""
+
+
 class ActionNarrower:
     """Base class for policies that narrow down the action space based on the current state."""
 
     @abstractmethod
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Narrow the action space based on the policy."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
