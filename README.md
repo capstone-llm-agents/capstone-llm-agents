@@ -42,3 +42,15 @@ Running a script in the scripts folder called "script_name". Replace with the ac
 For example if I have a script called "test_actions.py", "script_name" would be "test_actions".
 
 ```python -m scripts.test_actions```
+
+## Running MCP servers
+
+For some of the agents, they need their tools to work better, or work at all.
+
+These servers are found in the ```mcp_server``` directory.
+
+Run them with ```python ./mcp_server/<server_file_name>```
+
+For example, ```python ./mcp_server/calendar_server.py``` to run the server with the calendar tools.
+
+The application also supports external servers you can add them through the GUI. Currently it doesn't support headers, so most servers don't work. This will be fixed later on.
