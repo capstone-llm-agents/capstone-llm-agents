@@ -48,13 +48,13 @@ mcp = FastMCP("SSE Example Server")
 ########## Callender agent tools ###############
 @mcp.tool()
 # Takes in a users request or potentialy a formated request by another LLM agent and then the file_handeler agent converts it into what it belives would be the best names, descriptions times etc.
-def create_ics_callender(tasks: str, ics_file) -> str:
+def create_ics_callender(prompt: str, ics_file: str = "./scripts/my_callender.ics") -> str:
     current_date = datetime.now().date()
 
     prompt = f"""
     Break down the following tasks into realistic time frames, using the provided start time as a reference.
 
-    Tasks: {tasks}
+    Tasks: {prompt}
     Current Date: {current_date}
 
     Respond with a schedule in a structured format suitable for creating a calendar file (e.g., Task Name, Description, Start Time, End Time).
@@ -123,7 +123,9 @@ def read_calender(file_name) -> str:
 
 @mcp.tool()
 # this function takes in a user/agent task creation request as well as a ics file to consider when making a new scedual and a new one to write an updated scedual to.
-def create_ics_callender_with_context(tasks: str, file_name_read, file_name_write):
+def create_ics_callender_with_context(
+    prompt: str, file_name_read: str = "./scripts/my_callender.ics", file_name_write: str = "./scripts/my_callender.ics"
+):
     current_date = datetime.now().date()
     calender_dates = convert_ics_to_text(file_name_read)
 
@@ -131,7 +133,7 @@ def create_ics_callender_with_context(tasks: str, file_name_read, file_name_writ
     extracted_prompt = f"""
     Break down the following tasks into realistic time frames, using the provided start time as a reference.
 
-    Tasks: {tasks}
+    Tasks: {prompt}
     Current Date: {current_date}
     Pre Existing Plans: {calender_dates}
 
