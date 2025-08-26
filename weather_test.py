@@ -24,48 +24,51 @@ weather_agent = ConversableAgent(
 ########llm agent setup########
 
 def obtain_weather_details(prompt):
-    current_date = datetime.now().date()
+    try:
+        current_date = datetime.now().date()
 
-    agent_prompt = f"""
-    Break down the following tasks into the latitude and longitude of the given location as well as the date range you would expect to find the weather information.
+        agent_prompt = f"""
+        Break down the following tasks into the latitude and longitude of the given location as well as the date range you would expect to find the weather information.
 
-    Tasks: {prompt}
-    Current Date: {current_date}
+        Tasks: {prompt}
+        Current Date: {current_date}
 
-    If no date is given assume the date is today for both the beginning and the end dates otherwise deduce the required date range.
-    Directly and only answer with the follow format:
-    Latitude: -10.6531
-    Longitude: 14.2315
-    Start date: 2025-02-27
-    End date: 2025-02-28
-    """
+        If no date is given assume the date is today for both the beginning and the end dates otherwise deduce the required date range.
+        Directly and only answer with the follow format:
+        Latitude: -10.6531
+        Longitude: 14.2315
+        Start date: 2025-02-27
+        End date: 2025-02-28
+        """
 
-    extracted_details = weather_agent.generate_reply(messages=[{"role": "user", "content": agent_prompt}])
-    print("#####################################")
-    print("Extracted location and date")
-    print("#####################################")
-    print(extracted_details["content"])
+        extracted_details = weather_agent.generate_reply(messages=[{"role": "user", "content": agent_prompt}])
+        print("#####################################")
+        print("Extracted location and date")
+        print("#####################################")
+        print(extracted_details["content"])
 
-    for line in extracted_details["content"].splitlines():
-        if "Latitude:" in line:
-            latitude = line.split(": ")[1].strip()
-        elif "Longitude:" in line:
-            longitude = line.split(": ")[1].strip()
-        elif "Start date:" in line:
-            start_date = line.split(": ")[1].strip()
-        elif "End date:" in line:
-            end_date = line.split(": ")[1].strip()
+        for line in extracted_details["content"].splitlines():
+            if "Latitude:" in line:
+                latitude = line.split(": ")[1].strip()
+            elif "Longitude:" in line:
+                longitude = line.split(": ")[1].strip()
+            elif "Start date:" in line:
+                start_date = line.split(": ")[1].strip()
+            elif "End date:" in line:
+                end_date = line.split(": ")[1].strip()
 
-    print("\n\n\n")
-    print("#####################################")
-    print("Generated weather data")
-    print("#####################################")
-    weather_data = generate_weather_data(latitude, longitude, start_date, end_date)
-    print(weather_data)
-    print("\n\n\n")
+        print("\n\n\n")
+        print("#####################################")
+        print("Generated weather data")
+        print("#####################################")
+        weather_data = generate_weather_data(latitude, longitude, start_date, end_date)
+        print(weather_data)
+        print("\n\n\n")
 
-    result = deduce_weather_result(prompt, weather_data)
-    #print(result)
+        result = deduce_weather_result(prompt, weather_data)
+        #print(result)
+    except:
+        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"#temporary error catching
 
     return result
 
