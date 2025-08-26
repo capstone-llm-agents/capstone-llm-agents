@@ -25,6 +25,8 @@ def main() -> None:
     mcp_client = MCPClient()
     server = SSEConnectedServer("http://localhost:8080/sse")
     mcp_client.add_connected_server(server)
+    server = SSEConnectedServer("http://localhost:8081/sse")
+    mcp_client.add_connected_server(server)
     client = Client("Test User", mas, mcp_client)
     app = TextualApp(client)
     app.run()
