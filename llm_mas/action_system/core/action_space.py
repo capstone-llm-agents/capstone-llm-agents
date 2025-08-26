@@ -35,3 +35,10 @@ class ActionSpace:
         """Return a pretty-printed JSON representation of the action space."""
         # 4 indent
         return json.dumps([action.as_json() for action in self.actions], indent=4, ensure_ascii=False)
+
+    def get_action_with_name(self, name: str) -> Action | None:
+        """Get an action by its name."""
+        for action in self.actions:
+            if action.name == name:
+                return action
+        return None

@@ -39,6 +39,9 @@ class RespondWithChatHistory(Action):
             {last_message["content"]}
             """
 
+        # cap it to last 10 messages
+        messages = messages[-10:]
+
         response = await call_llm_with_messages(messages)
 
         res = ActionResult()
