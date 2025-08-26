@@ -6,6 +6,7 @@ from retry_requests import retry
 from autogen import ConversableAgent, GroupChat, GroupChatManager, UserProxyAgent
 from pytz import timezone
 from tzlocal import get_localzone
+from datetime import datetime
 
 ########llm agent setup########
 llm_config = {
@@ -13,8 +14,8 @@ llm_config = {
     "model": "gemma3",
 }
 
-file_handler_agent = ConversableAgent(
-    name="file_handler",
+weather_agent = ConversableAgent(
+    name="weather_agent",
     system_message="""Your Job is to assist the user with their tasks.
     """,
     llm_config=llm_config,
@@ -22,8 +23,48 @@ file_handler_agent = ConversableAgent(
 )
 ########llm agent setup########
 
+def obtain_weather_details(prompt):
+    current_date = datetime.now().date()
 
-def obtain_weather_details(latitude, longitude, start_date, end_date):
+    agent_prompt = f"""
+    Break down the following tasks into the latitude and longitude of the given location as well as the date range you would expect to find the weather information.
+
+    Tasks: {prompt}
+    Current Date: {current_date}
+
+    If no date is given assume the date is today for both the beginning and the end dates otherwise deduce the required date range.
+    Directly and only answer with the follow format:
+    Latitude: -10.6531
+    Longitude: 14.2315
+    Start date: 2025-02-27
+    End date: 2025-02-28
+    """
+
+    extracted_details = weather_agent.generate_reply(messages=[{"role": "user", "content": agent_prompt}])
+    print("#####################################")
+    print("Extracted location and date")
+    print("#####################################")
+    print(extracted_details["content"])
+
+    for line in extracted_details["content"].splitlines():
+        if "Latitude:" in line:
+            latitude = line.split(": ")[1].strip()
+        elif "Longitude:" in line:
+            longitude = line.split(": ")[1].strip()
+        elif "Start date:" in line:
+            start_date = line.split(": ")[1].strip()
+        elif "End date:" in line:
+            end_date = line.split(": ")[1].strip()
+
+    weather_data = generate_weather_data(latitude, longitude, start_date, end_date)
+    print(weather_data)
+
+    result = "Place holder"
+    return result
+
+
+
+def generate_weather_data(latitude, longitude, start_date, end_date):
     # Setup the Open-Meteo API client with cache and retry on error
     cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
     retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
@@ -77,11 +118,38 @@ def obtain_weather_details(latitude, longitude, start_date, end_date):
     hourly_data["wind_gusts_10m"] = hourly_wind_gusts_10m
 
     hourly_dataframe = pd.DataFrame(data = hourly_data)
-    print("\nHourly data\n", hourly_dataframe)
+    #print("\nHourly data\n", hourly_dataframe)
+
+    result = hourly_dataframe
+    return result
+
+def deduce_weather_result(prompt, weather_data):
+    current_date = datetime.now().date()
+
+    agent_prompt = f"""
+    Break down the following prompt and deduce what kind of weather matches with the prompt.
+
+    Prompt: {prompt}
+    Current Date: {current_date}
+    Weather Data: {weather_data}
+
+    Based on the prompt you have been asked as well as the weather details provided answer the question the best you can.
+    Remember not all details are needed for example if the wind speed is not asked for you don't need to include it.
+    Here is a guide to an example format:
+    Example:
+    The weather in hawthorne at 12pm will be 16.1 degrees with a 65% chance of showers.
+    """
+
+    extracted_details = weather_agent.generate_reply(messages=[{"role": "user", "content": agent_prompt}])
+    print("#####################################")
+    print("Resulting weather based off request")
+    print("#####################################")
+    print(extracted_details["content"])
 
     result = "Place holder"
     return result
 
-#weather_result = obtain_weather_details(-38.0702, 145.4741, "2025-08-27", "2025-08-27")#pakenham
-weather_result = obtain_weather_details(48.8534, 2.3488, "2025-08-27", "2025-08-27")#paris
-print(weather_result)
+obtain_weather_details("What is the weather in Pakenham victoria tomorow?")
+#weather_result = generate_weather_data(-38.0702, 145.4741, "2025-08-27", "2025-08-27")#pakenham
+#weather_result = generate_weather_data(48.8534, 2.3488, "2025-08-27", "2025-08-27")#paris
+#print(weather_result)
