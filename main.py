@@ -1,5 +1,6 @@
 """Main entry point for the capstone-llm-agents project."""
 
+from components.agents.calendar_agent import CALENDAR_AGENT
 from components.agents.example_agent import EXAMPLE_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
 from llm_mas.client.account.client import Client
@@ -13,6 +14,7 @@ def main() -> None:
     """Run the main application logic."""
     mas = MAS()
 
+    mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
     mas.add_agent(EXAMPLE_AGENT)
 

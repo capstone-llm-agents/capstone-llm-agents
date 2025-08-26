@@ -1,33 +1,29 @@
 """The test server to connect to the LLM MAS client."""
 
+from datetime import datetime
+
 import uvicorn
+
+#####Callender imports#######
+from autogen import ConversableAgent, GroupChat, GroupChatManager, UserProxyAgent
+from dotenv import load_dotenv
+from icalendar import Calendar as Calendar2
+from ics import Calendar, Event
 from mcp.server import Server
 from mcp.server.fastmcp import FastMCP
 from mcp.server.sse import SseServerTransport
+from openai import OpenAI
+from pydantic import BaseModel
+from pytz import timezone
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
-
-
-#####Callender imports#######
-from autogen import ConversableAgent, UserProxyAgent
-from autogen import GroupChat
-from autogen import GroupChatManager
-
-from pydantic import BaseModel
-
-from openai import OpenAI
-from ics import Calendar, Event
-from datetime import datetime
-from dotenv import load_dotenv
-from pytz import timezone
 from tzlocal import get_localzone
 
-from icalendar import Calendar as Calendar2
-
-#functions file
+# functions file
 from scripts.test_callender_functions import convert_ics_to_text, create_ics_file
+
 #####Callender imports#######
 
 ########llm agent setup########
@@ -48,9 +44,10 @@ file_handler_agent = ConversableAgent(
 # create the MCP server
 mcp = FastMCP("SSE Example Server")
 
+
 ########## Callender agent tools ###############
 @mcp.tool()
-#Takes in a users request or potentialy a formated request by another LLM agent and then the file_handeler agent converts it into what it belives would be the best names, descriptions times etc.
+# Takes in a users request or potentialy a formated request by another LLM agent and then the file_handeler agent converts it into what it belives would be the best names, descriptions times etc.
 def create_ics_callender(tasks: str, ics_file) -> str:
     current_date = datetime.now().date()
 
@@ -88,8 +85,9 @@ def create_ics_callender(tasks: str, ics_file) -> str:
 
     return formated_plan["content"]
 
+
 @mcp.tool()
-#This function first converts a specified ics file to text from which the LLM agent formats its content into readable text
+# This function first converts a specified ics file to text from which the LLM agent formats its content into readable text
 def read_calender(file_name) -> str:
     calender_content = convert_ics_to_text(file_name)
 
@@ -122,13 +120,14 @@ def read_calender(file_name) -> str:
     print(result["content"])
     return result["content"]
 
+
 @mcp.tool()
-#this function takes in a user/agent task creation request as well as a ics file to consider when making a new scedual and a new one to write an updated scedual to.
+# this function takes in a user/agent task creation request as well as a ics file to consider when making a new scedual and a new one to write an updated scedual to.
 def create_ics_callender_with_context(tasks: str, file_name_read, file_name_write):
     current_date = datetime.now().date()
     calender_dates = convert_ics_to_text(file_name_read)
 
-    #uses the extracted calender dates to create a new scedual.
+    # uses the extracted calender dates to create a new scedual.
     extracted_prompt = f"""
     Break down the following tasks into realistic time frames, using the provided start time as a reference.
 
@@ -161,12 +160,14 @@ def create_ics_callender_with_context(tasks: str, file_name_read, file_name_writ
     print("#####################################")
     print(result["content"])
 
-    #creates new scedual here
+    # creates new scedual here
     create_ics_file(result["content"], file_name_write)
 
-
     return result["content"]
+
+
 ########## Callender agent tools ###############
+
 
 @mcp.tool()
 def greet(name: str) -> str:
@@ -223,7 +224,7 @@ if __name__ == "__main__":
     # create Starlette app with SSE support
     starlette_app = create_starlette_app(mcp_server, debug=True)
 
-    port = 8080
+    port = 8081
 
     # run the server using uvicorn
     uvicorn.run(starlette_app, host="localhost", port=port)
