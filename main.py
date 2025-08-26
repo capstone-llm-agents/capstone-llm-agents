@@ -1,5 +1,6 @@
 """Main entry point for the capstone-llm-agents project."""
 
+from components.agents.calendar_agent import CALENDAR_AGENT
 from components.agents.example_agent import EXAMPLE_AGENT
 from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
@@ -14,6 +15,7 @@ def main() -> None:
     """Run the main application logic."""
     mas = MAS()
 
+    mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(EXAMPLE_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
@@ -22,6 +24,8 @@ def main() -> None:
 
     mcp_client = MCPClient()
     server = SSEConnectedServer("http://localhost:8080/sse")
+    mcp_client.add_connected_server(server)
+    server = SSEConnectedServer("http://localhost:8081/sse")
     mcp_client.add_connected_server(server)
     client = Client("Test User", mas, mcp_client)
     app = TextualApp(client)

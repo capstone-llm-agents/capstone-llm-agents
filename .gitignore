@@ -204,3 +204,5 @@ __marimo__/
 
 # Hide logs
 logs
+
+*.ics
