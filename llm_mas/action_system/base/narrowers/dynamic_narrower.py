@@ -5,7 +5,7 @@ from typing import override
 
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
-from llm_mas.action_system.core.action_narrower import ActionNarrower
+from llm_mas.action_system.core.action_narrower import ActionNarrower, NarrowerContext
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.agent.workspace import Workspace
 
@@ -19,9 +19,15 @@ class DynamicEdge(ActionNarrower):
         self.narrower = narrower
 
     @override
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Return the next actions based on the context."""
-        return self.narrower.narrow(workspace, action_space, context)
+        return self.narrower.narrow(workspace, action_space, context, narrower_context)
 
 
 class IndividualConditionNarrower(ActionNarrower):
@@ -30,17 +36,23 @@ class IndividualConditionNarrower(ActionNarrower):
     def __init__(
         self,
         next_action: Action,
-        select_condition: Callable[[Workspace, ActionSpace, ActionContext], bool],
+        select_condition: Callable[[Workspace, ActionSpace, ActionContext, NarrowerContext | None], bool],
     ) -> None:
         """Initialize the dynamic edge with an action and a list of next actions."""
         self.next_action = next_action
         self.select_condition = select_condition
 
     @override
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Return the next actions based on the context."""
         new_space = ActionSpace()
-        if self.select_condition(workspace, action_space, context):
+        if self.select_condition(workspace, action_space, context, narrower_context):
             new_space.add_action(self.next_action)
         return new_space
 
@@ -50,16 +62,22 @@ class SwitchNarrower(ActionNarrower):
 
     def __init__(
         self,
-        select_condition: Callable[[Workspace, ActionSpace, ActionContext], list[Action]],
+        select_condition: Callable[[Workspace, ActionSpace, ActionContext, NarrowerContext | None], list[Action]],
     ) -> None:
         """Initialize the switch narrower with a list of next actions and a selection condition."""
         self.select_condition = select_condition
 
     @override
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Return the next action based on the selection condition."""
         new_space = ActionSpace()
-        selected_actions = self.select_condition(workspace, action_space, context)
+        selected_actions = self.select_condition(workspace, action_space, context, narrower_context)
         for action in selected_actions:
             new_space.add_action(action)
         return new_space
@@ -77,11 +95,17 @@ class CumulativeMultiNarrower(ActionNarrower):
         self.narrowers.append(narrower)
 
     @override
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Narrow the action space by combining the actions from all narrowers."""
         new_space = ActionSpace()
         for narrower in self.narrowers:
-            narrowed_space = narrower.narrow(workspace, action_space, context)
+            narrowed_space = narrower.narrow(workspace, action_space, context, narrower_context)
             for action in narrowed_space.get_actions():
                 new_space.add_action(action)
         return new_space
@@ -99,14 +123,20 @@ class ReductiveMultiNarrower(ActionNarrower):
         self.narrowers.append(narrower)
 
     @override
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Narrow the action space by intersecting the actions from all narrowers."""
         if not self.narrowers:
             return ActionSpace()
 
         new_space = action_space
         for narrower in self.narrowers:
-            narrowed_space = narrower.narrow(workspace, action_space, context)
+            narrowed_space = narrower.narrow(workspace, action_space, context, narrower_context)
             new_space.actions = [action for action in new_space.actions if action in narrowed_space.get_actions()]
         return new_space
 
@@ -119,7 +149,13 @@ class AlwaysNarrower(ActionNarrower):
         self.actions = actions
 
     @override
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Return the actions defined in this narrower."""
         new_space = ActionSpace()
         for action in self.actions:
@@ -144,7 +180,13 @@ class DynamicNarrower(ActionNarrower):
         self.default_actions.append(action)
 
     @override
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Narrow the action space based on the defined action edges."""
         new_space = ActionSpace()
         next_actions: list[Action] = []
@@ -155,13 +197,15 @@ class DynamicNarrower(ActionNarrower):
         if last_action_tup is None:
             next_actions = self.default_actions
         else:
+            action = last_action_tup[0]
+
             # narrow based on its dynamic narrower
-            narrower = next((n for n in self.dynamic_narrowers if n.action == last_action_tup[0]), None)
+            narrower = next((n for n in self.dynamic_narrowers if n.action == action), None)
             if narrower is None:
-                msg = f"No dynamic narrower found for action {last_action_tup[0].name}."
+                msg = f"No dynamic narrower found for action {action.name}."
                 raise ValueError(msg)
 
-            next_actions = narrower.narrow(workspace, action_space, context).get_actions()
+            next_actions = narrower.narrow(workspace, action_space, context, narrower_context).get_actions()
 
         for action in next_actions:
             new_space.add_action(action)
