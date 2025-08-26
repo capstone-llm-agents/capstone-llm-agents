@@ -3,13 +3,12 @@
 import logging
 from typing import override
 
-from components.actions.get_trip_details import GetTripDetails
 from components.actions.simple_response import SimpleResponse
 from components.actions.travel_context import TRAVEL_CONTEXT
 from components.actions.travel_response import TravelResponse
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
-from llm_mas.action_system.core.action_narrower import ActionNarrower
+from llm_mas.action_system.core.action_narrower import ActionNarrower, NarrowerContext
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.agent.workspace import Workspace
 from llm_mas.tools.tool_action_creator import ToolAction
@@ -72,7 +71,13 @@ class TravelNarrower(ActionNarrower):
         raise ValueError(msg)
 
     @override
-    def narrow(self, workspace: Workspace, action_space: ActionSpace, context: ActionContext) -> ActionSpace:
+    def narrow(
+        self,
+        workspace: Workspace,
+        action_space: ActionSpace,
+        context: ActionContext,
+        narrower_context: NarrowerContext | None = None,
+    ) -> ActionSpace:
         """Narrow the action space based on the defined action edges."""
         narrowed_actions: list[Action] = []
 
