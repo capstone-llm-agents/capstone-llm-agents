@@ -29,10 +29,6 @@ def obtain_weather_details(latitude, longitude, start_date, end_date):
     retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
     openmeteo = openmeteo_requests.Client(session = retry_session)
 
-    #Time zone to automanicaly adjust to where you currently are at
-    local_time_zone = get_localzone()
-    local_time_zone = str(local_time_zone)
-
     # Make sure all required weather variables are listed here
     # The order of variables in hourly or daily is important to assign them correctly below
     url = "https://api.open-meteo.com/v1/forecast"
@@ -41,7 +37,7 @@ def obtain_weather_details(latitude, longitude, start_date, end_date):
         "longitude": longitude,
         "hourly": ["temperature_2m", "uv_index", "precipitation_probability", "precipitation", "wind_speed_10m", "wind_gusts_10m"],
         #"forecast_days": 16,#i think it will be best to query results based off the date instead of searching up the dates just because of how the api doesn't always get the right range(actually giving the full dataframe could also be useful for multi questions)
-        "timezone": local_time_zone,
+        "timezone": "auto",
         "start_date": start_date,
         "end_date": end_date,
     }
@@ -63,9 +59,12 @@ def obtain_weather_details(latitude, longitude, start_date, end_date):
     hourly_wind_speed_10m = hourly.Variables(4).ValuesAsNumpy()
     hourly_wind_gusts_10m = hourly.Variables(5).ValuesAsNumpy()
 
+    meteo_time_zone = response.Timezone()
+    meteo_time_zone = meteo_time_zone.decode()
+    #print(meteo_time_zone)
     hourly_data = {"date": pd.date_range(
-        start = pd.to_datetime(hourly.Time(), unit = "s", utc = True).tz_convert(local_time_zone),
-        end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True).tz_convert(local_time_zone),
+        start = pd.to_datetime(hourly.Time(), unit = "s", utc = True).tz_convert(meteo_time_zone),
+        end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True).tz_convert(meteo_time_zone),
         freq = pd.Timedelta(seconds = hourly.Interval()),
         inclusive = "left"
     )}
@@ -83,9 +82,6 @@ def obtain_weather_details(latitude, longitude, start_date, end_date):
     result = "Place holder"
     return result
 
-weather_result = obtain_weather_details(-38.0702, 145.4741, "2025-08-27", "2025-08-27")#pakenham
-#weather_result = obtain_weather_details(48.8534, 2.3488, "2025-08-27", "2025-08-27")#paris
+#weather_result = obtain_weather_details(-38.0702, 145.4741, "2025-08-27", "2025-08-27")#pakenham
+weather_result = obtain_weather_details(48.8534, 2.3488, "2025-08-27", "2025-08-27")#paris
 print(weather_result)
-local_time_zone = get_localzone()
-local_time_zone = str(local_time_zone)
-print(local_time_zone)
