@@ -56,10 +56,17 @@ def obtain_weather_details(prompt):
         elif "End date:" in line:
             end_date = line.split(": ")[1].strip()
 
+    print("\n\n\n")
+    print("#####################################")
+    print("Generated weather data")
+    print("#####################################")
     weather_data = generate_weather_data(latitude, longitude, start_date, end_date)
     print(weather_data)
+    print("\n\n\n")
 
-    result = "Place holder"
+    result = deduce_weather_result(prompt, weather_data)
+    #print(result)
+
     return result
 
 
@@ -146,10 +153,9 @@ def deduce_weather_result(prompt, weather_data):
     print("#####################################")
     print(extracted_details["content"])
 
-    result = "Place holder"
+    result = extracted_details["content"]
     return result
 
-obtain_weather_details("What is the weather in Pakenham victoria tomorow?")
-#weather_result = generate_weather_data(-38.0702, 145.4741, "2025-08-27", "2025-08-27")#pakenham
-#weather_result = generate_weather_data(48.8534, 2.3488, "2025-08-27", "2025-08-27")#paris
-#print(weather_result)
+weather = obtain_weather_details("What is the weather in Pakenham victoria tomorow at 12pm?")
+print("\n\n\n\n\n\n########## Weather reading ##########")
+print(weather)
