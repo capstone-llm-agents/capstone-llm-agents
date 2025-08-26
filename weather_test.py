@@ -16,9 +16,8 @@ params = {
 	"latitude": -38.0702,
 	"longitude": 145.4741,
 	"hourly": ["temperature_2m", "uv_index", "precipitation_probability", "precipitation", "wind_speed_10m", "wind_gusts_10m"],
-	"timezone": "auto",
 	"forecast_days": 16,#i think it will be best to query results based off the date instead of searching up the dates just because of how the api doesn't always get the right range
-    "timezone": "Australia/Sydney",
+    "timezone": "Australia/Melbourne",
     #"start_date": "2025-08-27",
     #"end_date": "2025-08-27"
 }
