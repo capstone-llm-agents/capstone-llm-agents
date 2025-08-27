@@ -12,7 +12,7 @@ class Entity:
         self.role = role
 
         # friends
-        self.friends: list[Entity] = []
+        self.friends: set[Entity] = set()
 
     def get_name(self) -> str:
         """Return the name of the entity."""
@@ -24,4 +24,7 @@ class Entity:
 
     def add_friend(self, friend: Entity) -> None:
         """Add a friend to the entity."""
-        self.friends.append(friend)
+        # two-way friendship
+        self.friends.add(friend)
+        if self not in friend.friends:
+            friend.add_friend(self)

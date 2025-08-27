@@ -101,7 +101,14 @@ class ChatScreen(Screen):
         try:
             agent.workspace.action_history.clear()
 
-            context = ActionContext(self.conversation, ActionResult(), self.client.mcp_client, agent, self.client.user)
+            context = ActionContext(
+                self.conversation,
+                ActionResult(),
+                self.client.mcp_client,
+                agent,
+                self.client.user,
+                self.client.get_mas().conversation_manager,
+            )
             step_count = 0
 
             while not agent.finished_working():

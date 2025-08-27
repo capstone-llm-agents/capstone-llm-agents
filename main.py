@@ -15,9 +15,10 @@ def main() -> None:
     """Run the main application logic."""
     mas = MAS()
 
-    mas.add_agent(CALENDAR_AGENT)
-    mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(EXAMPLE_AGENT)
+
+    mas.add_agent(TRAVEL_PLANNER_AGENT)
+    mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
 
     # TODO: remove this test conversation  # noqa: TD003
@@ -27,6 +28,7 @@ def main() -> None:
 
     agent1 = TRAVEL_PLANNER_AGENT
     agent2 = CALENDAR_AGENT
+    agent3 = EXAMPLE_AGENT
 
     agent_to_agent_conversation.add_message(
         agent1,
@@ -46,6 +48,14 @@ def main() -> None:
     server = SSEConnectedServer("http://localhost:8081/sse")
     mcp_client.add_connected_server(server)
     client = Client("Test User", mas, mcp_client)
+
+    # user
+    user = client.user
+
+    # friendships
+    user.add_friend(agent3)
+    agent3.add_friend(agent2)
+
     app = TextualApp(client)
     app.run()
 

@@ -25,7 +25,7 @@ tool_manager = ToolManager(
     tool_narrower,
 )
 
-CALENDAR_AGENT = Agent("Calendar Agent", action_space, narrower, selector, tool_manager)
+CALENDAR_AGENT = Agent("CalendarAgent", action_space, narrower, selector, tool_manager)
 
 
 # add some actions
