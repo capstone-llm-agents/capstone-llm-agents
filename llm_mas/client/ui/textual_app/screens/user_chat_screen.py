@@ -39,7 +39,6 @@ class UserChatScreen(BaseChatScreen):
 
     def on_mount(self) -> None:
         """Focus input and add initial assistant message if needed."""
-        super().on_mount()
         self.input.focus()
 
         agent = self.client.get_mas().get_assistant_agent()

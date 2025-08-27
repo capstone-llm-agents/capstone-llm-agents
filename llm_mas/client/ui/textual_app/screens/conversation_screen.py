@@ -43,6 +43,7 @@ class ConversationsScreen(Screen):
 
         # Scrollable containers for each section
         yield Static("My Conversations", classes="section-title")
+
         self.user_container = ScrollableContainer(id="user-conv-container")
         yield self.user_container
 
@@ -61,13 +62,14 @@ class ConversationsScreen(Screen):
             else:
                 self.agent_container.mount(btn)
 
-    def on_button_pressed(self, event: Button.Pressed) -> None:
+    async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button actions."""
         if event.button.id == "add-btn":
             self.client.mas.conversation_manager.start_conversation("NewConversation")
 
             conversation = self.client.mas.conversation_manager.get_conversation("NewConversation")
 
+            self.app.pop_screen()
             self.app.push_screen(UserChatScreen(self.client, conversation=conversation))
 
         elif event.button.id == "clear-btn":
@@ -79,8 +81,10 @@ class ConversationsScreen(Screen):
             conversation = self.client.mas.conversation_manager.get_conversation(str(conv_name))
 
             if conversation.is_user_conversation():
+                self.app.pop_screen()
                 self.app.push_screen(UserChatScreen(self.client, conversation=conversation))
             else:
+                self.app.pop_screen()
                 self.app.push_screen(AgentChatScreen(self.client, conversation=conversation))
 
     # esc key
