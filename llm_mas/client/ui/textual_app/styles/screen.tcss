@@ -175,3 +175,7 @@ MessageBubble {
     padding: 0;
     text-align: left;
 }
+
+#chat-header-bar {
+    height: 3;
+}

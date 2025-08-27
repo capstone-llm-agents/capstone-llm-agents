@@ -6,6 +6,9 @@ import uvicorn
 
 #####Callender imports#######
 from autogen import ConversableAgent, GroupChat, GroupChatManager, UserProxyAgent
+
+# functions file
+from calendar_functions import convert_ics_to_text, create_ics_file
 from dotenv import load_dotenv
 from icalendar import Calendar as Calendar2
 from ics import Calendar, Event
@@ -20,9 +23,6 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
 from tzlocal import get_localzone
-
-# functions file
-from scripts.test_callender_functions import convert_ics_to_text, create_ics_file
 
 #####Callender imports#######
 
