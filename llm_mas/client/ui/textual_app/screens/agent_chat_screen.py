@@ -13,7 +13,7 @@ class AgentChatScreen(BaseChatScreen):
 
     def __init__(self, client: Client, conversation: Conversation) -> None:
         """Initialize with client and conversation."""
-        super().__init__(client, conversation, title="Agent Conversations")
+        super().__init__(client, conversation, title="Agent Conversation")
 
     def compose(self) -> ComposeResult:
         """Compose the chat screen layout without input field."""

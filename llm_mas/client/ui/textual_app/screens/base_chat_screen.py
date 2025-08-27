@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from textual.containers import ScrollableContainer
+from textual.containers import Horizontal, ScrollableContainer
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header, Static
 
@@ -39,6 +39,9 @@ class BaseChatScreen(Screen):
 
         self.chat_container = ScrollableContainer(id="chat-container")
         yield self.chat_container
+
+        with Horizontal(id="chat-header-bar"):
+            yield Button("<< Back", id="back-btn")
 
         yield Footer()
 
