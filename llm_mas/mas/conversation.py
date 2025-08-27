@@ -1,15 +1,18 @@
 """The conversation module defines messages, chat history and conversation management for the multi-agent system."""
 
+from llm_mas.mas.agent import Agent
 from llm_mas.mas.entity import Entity
+from llm_mas.mas.user import User
 
 
 class Message:
     """Message class for LLM interactions."""
 
-    def __init__(self, role: str, content: str) -> None:
+    def __init__(self, role: str, content: str, sender: Entity) -> None:
         """Initialize the message with a role and content."""
         self.role = role
         self.content = content
+        self.sender = sender
 
     def as_dict(self) -> dict:
         """Return the message as a dictionary."""
@@ -19,17 +22,17 @@ class Message:
 class UserMessage(Message):
     """User message class for LLM interactions."""
 
-    def __init__(self, content: str) -> None:
+    def __init__(self, content: str, sender: User) -> None:
         """Initialize the user message with content."""
-        super().__init__(role="user", content=content)
+        super().__init__(role="user", content=content, sender=sender)
 
 
 class AssistantMessage(Message):
     """Assistant message class for LLM interactions."""
 
-    def __init__(self, content: str) -> None:
+    def __init__(self, content: str, sender: Agent) -> None:
         """Initialize the assistant message with content."""
-        super().__init__(role="assistant", content=content)
+        super().__init__(role="assistant", content=content, sender=sender)
 
 
 class ChatHistory:
@@ -67,7 +70,7 @@ class Conversation:
 
     def add_message(self, entity: Entity, content: str) -> None:
         """Add a message to the conversation."""
-        message = Message(role=entity.role, content=content)
+        message = Message(role=entity.role, content=content, sender=entity)
         self.chat_history.add_message(message)
         self.participants.add(entity)
 
