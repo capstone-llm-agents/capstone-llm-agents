@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from textual.containers import ScrollableContainer
 from textual.screen import Screen
-from textual.widgets import Button, Footer, Header, Input, Static
+from textual.widgets import Footer, Header, Input, Static
 
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams

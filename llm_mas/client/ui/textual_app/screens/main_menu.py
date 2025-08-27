@@ -5,10 +5,7 @@ from textual.containers import Vertical
 from textual.screen import Screen
 from textual.widgets import Button, Footer, Header
 
-from components.agents.calendar_agent import CALENDAR_AGENT
-from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from llm_mas.client.account.client import Client
-from llm_mas.client.ui.textual_app.screens.agent_chat_screen import AgentChatScreen
 from llm_mas.client.ui.textual_app.screens.agent_list import AgentListScreen
 from llm_mas.client.ui.textual_app.screens.conversation_screen import ConversationsScreen
 from llm_mas.client.ui.textual_app.screens.mcp_client import MCPClientScreen

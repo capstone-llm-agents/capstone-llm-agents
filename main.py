@@ -6,7 +6,6 @@ from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
 from llm_mas.client.account.client import Client
 from llm_mas.client.ui.textual_app.app import TextualApp
-from llm_mas.mas.conversation import Conversation
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer

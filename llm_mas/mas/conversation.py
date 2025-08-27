@@ -1,6 +1,5 @@
 """The conversation module defines messages, chat history and conversation management for the multi-agent system."""
 
-from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.agent import Agent
 from llm_mas.mas.entity import Entity
 from llm_mas.mas.user import User
