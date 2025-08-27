@@ -73,10 +73,15 @@ class ConversationsScreen(Screen):
 
             conversation = self.client.mas.conversation_manager.get_conversation(conversation_name)
 
+            self.conversations = self.client.mas.conversation_manager.get_all_conversations()
+
+            await self.refresh_screen()
             self.app.push_screen(UserChatScreen(self.client, conversation=conversation))
 
         elif event.button.id == "clear-btn":
             self.client.mas.conversation_manager.clear_conversations()
+            await self.refresh_screen()
+
         elif event.button.id and event.button.id.startswith("conv-"):
             conv_name = event.button.label
 
@@ -86,6 +91,20 @@ class ConversationsScreen(Screen):
                 self.app.push_screen(UserChatScreen(self.client, conversation=conversation))
             else:
                 self.app.push_screen(AgentChatScreen(self.client, conversation=conversation))
+
+    async def refresh_screen(self) -> None:
+        """Refresh the conversation screen to reflect updates."""
+        await self.user_container.remove_children()
+        await self.agent_container.remove_children()
+
+        self.conversations = self.client.mas.conversation_manager.get_all_conversations()
+
+        for conversation in self.conversations:
+            btn = Button(conversation.name, id=f"conv-{conversation.name}", classes="conversation-btn")
+            if conversation.is_user_conversation():
+                await self.user_container.mount(btn)
+            else:
+                await self.agent_container.mount(btn)
 
     # esc key
     def on_key(self, event: events.Key) -> None:
