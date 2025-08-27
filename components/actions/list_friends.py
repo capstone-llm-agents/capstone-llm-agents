@@ -92,14 +92,25 @@ class AskFriendForHelp(Action):
             Could you help?
             """
         else:
-            message = f"""The user asked me {last_message["content"]}. Could you help?"""
+            message = f"""The user asked me "{last_message["content"]}". But I'm not sure how to answer their request. Could you help?"""
 
         conversation.add_message(entity, message)
 
-        action_result = await friend.act(context)
+        # set new agent in context
+        context.agent = friend
+
+        action_result, context = await friend.work(context)
+
+        # get the message before the last one (the last one is the StopAction)
+        action_history_tuple = context.agent.workspace.action_history.get_history_at_index(-2)
+
+        action_result = action_history_tuple[1] if action_history_tuple else ActionResult()
 
         response = action_result.get_param("response")
-        conversation.add_message(friend, response)
+
+        wrapped_res = f"I completed the task. Relay this response to the user: {response}"
+
+        conversation.add_message(friend, wrapped_res)
 
         res = ActionResult()
         res.set_param("response", response)

@@ -6,9 +6,6 @@ import uvicorn
 
 #####Callender imports#######
 from autogen import ConversableAgent, GroupChat, GroupChatManager, UserProxyAgent
-
-# functions file
-from calendar_functions import convert_ics_to_text, create_ics_file
 from dotenv import load_dotenv
 from icalendar import Calendar as Calendar2
 from ics import Calendar, Event
@@ -23,6 +20,9 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
 from tzlocal import get_localzone
+
+# functions file
+from scripts.calendar_functions import convert_ics_to_text, create_ics_file
 
 #####Callender imports#######
 
@@ -48,7 +48,7 @@ mcp = FastMCP("SSE - Calendar Tools Server")
 ########## Callender agent tools ###############
 @mcp.tool()
 # Takes in a users request or potentialy a formated request by another LLM agent and then the file_handeler agent converts it into what it belives would be the best names, descriptions times etc.
-def create_ics_callender(prompt: str, ics_file: str = "./calendars/test_calendar.ics") -> str:
+def create_ics_callender(prompt: str, ics_file: str = "./scripts/test_calendar.ics") -> str:
     current_date = datetime.now().date()
 
     prompt = f"""
@@ -88,7 +88,7 @@ def create_ics_callender(prompt: str, ics_file: str = "./calendars/test_calendar
 
 @mcp.tool()
 # This function first converts a specified ics file to text from which the LLM agent formats its content into readable text
-def read_calender(file_name: str = "./calendars/test_calendar.ics") -> str:
+def read_calender(file_name: str = "./scripts/test_calendar.ics") -> str:
     calender_content = convert_ics_to_text(file_name)
 
     prompt = f"""
@@ -125,8 +125,8 @@ def read_calender(file_name: str = "./calendars/test_calendar.ics") -> str:
 # this function takes in a user/agent task creation request as well as a ics file to consider when making a new scedual and a new one to write an updated scedual to.
 def create_ics_callender_with_context(
     prompt: str,
-    file_name_read: str = "./calendars/test_calendar.ics",
-    file_name_write: str = "./calendars/test_calendar.ics",
+    file_name_read: str = "./scripts/test_calendar.ics",
+    file_name_write: str = "./scripts/test_calendar.ics",
 ):
     current_date = datetime.now().date()
     calender_dates = convert_ics_to_text(file_name_read)
