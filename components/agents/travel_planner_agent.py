@@ -11,18 +11,22 @@ from components.actions.search_flights import SearchFlights
 from components.actions.travel_narrower import TravelNarrower
 from components.actions.travel_response import TravelResponse
 from components.actions.websearch import WebSearch
+from components.actions.memory import MemorySearchlong, MemorySavelong
+from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
 from llm_mas.action_system.core.action_space import ActionSpace
+from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.mas.agent import Agent
-from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.model_providers.ollama.call_llm import call_llm as ollamaAI
+from llm_mas.model_providers.openai.call_llm import call_llm as gptAI
 from llm_mas.tools.tool_action_creator import DefaultToolActionCreator
 from llm_mas.tools.tool_manager import ToolManager
 from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = TravelNarrower()
-selector = LLMSelector(call_llm)
+selector = LLMSelector(gptAI)
 
 # tools
 tool_narrower = DefaultToolNarrower()
@@ -40,28 +44,29 @@ TRAVEL_PLANNER_AGENT.add_action(BookFlight())
 TRAVEL_PLANNER_AGENT.add_action(CreateItinerary())
 TRAVEL_PLANNER_AGENT.add_action(EstimateBudget())
 TRAVEL_PLANNER_AGENT.add_action(WebSearch())
-
+TRAVEL_PLANNER_AGENT.add_action(MemorySearchlong())
 TRAVEL_PLANNER_AGENT.add_action(SearchFlights())
 TRAVEL_PLANNER_AGENT.add_action(SearchAccommodations())
 TRAVEL_PLANNER_AGENT.add_action(SearchActivities())
-
+TRAVEL_PLANNER_AGENT.add_action(SimpleResponse())
 TRAVEL_PLANNER_AGENT.add_action(TravelResponse())
 TRAVEL_PLANNER_AGENT.add_action(GetTripDetails())
 TRAVEL_PLANNER_AGENT.add_action(StopAction())
-
+TRAVEL_PLANNER_AGENT.add_action(MemorySavelong())
 # add edges
-narrower.add_action_edge(EstimateBudget(), [TravelResponse()])
-narrower.add_action_edge(SearchFlights(), [BookFlight()])
-narrower.add_action_edge(BookFlight(), [TravelResponse()])
-narrower.add_action_edge(SearchAccommodations(), [BookAccommodation()])
-narrower.add_action_edge(BookAccommodation(), [TravelResponse()])
-narrower.add_action_edge(SearchActivities(), [TravelResponse()])
-narrower.add_action_edge(CreateItinerary(), [EstimateBudget()])
+narrower.add_action_edge(EstimateBudget(), [MemorySearchlong()])
+narrower.add_action_edge(SearchFlights(), [BookFlight(), MemorySearchlong()])
+narrower.add_action_edge(BookFlight(), [MemorySearchlong(), MemorySavelong()])
+narrower.add_action_edge(SearchAccommodations(), [BookAccommodation(), MemorySearchlong()])
+narrower.add_action_edge(BookAccommodation(), [ MemorySearchlong()])
+narrower.add_action_edge(SearchActivities(), [ MemorySearchlong(), MemorySavelong()])
+narrower.add_action_edge(CreateItinerary(), [MemorySearchlong(), MemorySavelong() ])
 narrower.add_action_edge(TravelResponse(), [StopAction()])
-narrower.add_action_edge(WebSearch(), [TravelResponse()])
-
-narrower.add_action_edge(GetTripDetails(), [TravelResponse()])
-
+narrower.add_action_edge(WebSearch(), [MemorySavelong()])
+narrower.add_action_edge(GetTripDetails(), [MemorySearchlong()])
+narrower.add_action_edge(MemorySearchlong(), [SimpleResponse(), TravelResponse()])
+narrower.add_action_edge(SimpleResponse(), [StopAction()])
+narrower.add_action_edge(MemorySavelong(), [SimpleResponse(), TravelResponse()])
 # default action
 narrower.add_default_action(GetTripDetails())
 narrower.add_default_action(SearchFlights())
@@ -71,7 +76,9 @@ narrower.add_default_action(SearchActivities())
 narrower.add_default_action(TravelResponse())
 narrower.add_default_action(CreateItinerary())
 narrower.add_default_action(WebSearch())
-
+narrower.add_default_action(SimpleResponse())
+narrower.add_default_action(MemorySearchlong())
+narrower.add_default_action(MemorySavelong())
 # word filters
 narrower.add_default_filter(
     SearchFlights(),
@@ -155,5 +162,14 @@ narrower.add_default_filter(
         "find",
         "search",
         "look for",
+    ],
+)
+narrower.add_default_filter(
+    MemorySearchlong(),
+    [
+        "name",
+        "destination",
+        "past",
+        "hello"
     ],
 )
