@@ -23,6 +23,18 @@ class MemorySavelong(Action):
                             }
                         }
                     }
+        """
+        chroma config
+            config = {
+                "vector_store": {
+                    "provider": "chroma",
+                    "config": {
+                        "collection_name": "test",
+                        "path": "db",
+                    }
+                }
+            }
+        """
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         m = Mem.from_config(self.config)
