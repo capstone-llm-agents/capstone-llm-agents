@@ -6,6 +6,7 @@ from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
 from llm_mas.client.account.client import Client
 from llm_mas.client.ui.textual_app.app import TextualApp
+from llm_mas.mas.conversation import Conversation
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
@@ -20,7 +21,23 @@ def main() -> None:
     mas.add_agent(EXAMPLE_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
 
-    mas.conversation_manager.start_conversation("General")
+    # TODO: remove this test conversation  # noqa: TD003
+    mas.conversation_manager.start_conversation("AgentToAgentChat")
+
+    agent_to_agent_conversation = mas.conversation_manager.get_conversation("AgentToAgentChat")
+
+    agent1 = TRAVEL_PLANNER_AGENT
+    agent2 = CALENDAR_AGENT
+
+    agent_to_agent_conversation.add_message(
+        agent1,
+        content="Hello, I am planning a trip and need to schedule some events. Can you help me with that?",
+    )
+    agent_to_agent_conversation.add_message(
+        agent2,
+        content="Sure! I can help you schedule events. What dates are you looking at for your trip?",
+    )
+    agent_to_agent_conversation.add_message(agent1, content="I'm looking at traveling from June 10th to June 20th.")
 
     mcp_client = MCPClient()
     server = SSEConnectedServer("http://localhost:8080/sse")
