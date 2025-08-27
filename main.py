@@ -38,6 +38,8 @@ def main() -> None:
     )
     agent_to_agent_conversation.add_message(agent1, content="I'm looking at traveling from June 10th to June 20th.")
 
+    mas.conversation_manager.start_conversation("DefaultChat")
+
     mcp_client = MCPClient()
     server = SSEConnectedServer("http://localhost:8080/sse")
     mcp_client.add_connected_server(server)

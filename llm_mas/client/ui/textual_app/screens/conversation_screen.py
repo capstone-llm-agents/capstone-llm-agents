@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import random
 from typing import TYPE_CHECKING
 
 from textual.containers import Horizontal, ScrollableContainer
@@ -10,7 +11,6 @@ from textual.widgets import Button, Footer, Header, Static
 
 from llm_mas.client.ui.textual_app.screens.agent_chat_screen import AgentChatScreen
 from llm_mas.client.ui.textual_app.screens.user_chat_screen import UserChatScreen
-from llm_mas.logging.loggers import APP_LOGGER
 
 if TYPE_CHECKING:
     from textual import events
@@ -65,26 +65,26 @@ class ConversationsScreen(Screen):
     async def on_button_pressed(self, event: Button.Pressed) -> None:
         """Handle button actions."""
         if event.button.id == "add-btn":
-            self.client.mas.conversation_manager.start_conversation("NewConversation")
+            # random sequence of letters and numbers for conversation name
+            conversation_id = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))  # noqa: S311
+            conversation_name = f"Conversation-{conversation_id}"
 
-            conversation = self.client.mas.conversation_manager.get_conversation("NewConversation")
+            self.client.mas.conversation_manager.start_conversation(conversation_name)
 
-            self.app.pop_screen()
+            conversation = self.client.mas.conversation_manager.get_conversation(conversation_name)
+
             self.app.push_screen(UserChatScreen(self.client, conversation=conversation))
 
         elif event.button.id == "clear-btn":
-            # TODO: implement clearing conversations  # noqa: TD003
-            APP_LOGGER.info("Clear conversations clicked")
+            self.client.mas.conversation_manager.clear_conversations()
         elif event.button.id and event.button.id.startswith("conv-"):
             conv_name = event.button.label
 
             conversation = self.client.mas.conversation_manager.get_conversation(str(conv_name))
 
             if conversation.is_user_conversation():
-                self.app.pop_screen()
                 self.app.push_screen(UserChatScreen(self.client, conversation=conversation))
             else:
-                self.app.pop_screen()
                 self.app.push_screen(AgentChatScreen(self.client, conversation=conversation))
 
     # esc key
