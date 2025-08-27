@@ -26,7 +26,7 @@ from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = TravelNarrower()
-selector = LLMSelector(gptAI)
+selector = LLMSelector(ollamaAI)
 
 # tools
 tool_narrower = DefaultToolNarrower()
