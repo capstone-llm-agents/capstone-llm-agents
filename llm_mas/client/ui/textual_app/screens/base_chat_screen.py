@@ -37,11 +37,11 @@ class BaseChatScreen(Screen):
         """Compose the chat screen layout."""
         yield Header(name=self.title)
 
-        self.chat_container = ScrollableContainer(id="chat-container")
-        yield self.chat_container
-
         with Horizontal(id="chat-header-bar"):
             yield Button("<< Back", id="back-btn")
+
+        self.chat_container = ScrollableContainer(id="chat-container")
+        yield self.chat_container
 
         yield Footer()
 
