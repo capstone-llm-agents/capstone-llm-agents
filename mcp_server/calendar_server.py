@@ -86,8 +86,6 @@ def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.
     """
 
     plan = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
-    print("### New Calendar Content ###")
-    print(plan["content"])
 
     create_ics_file(plan["content"], ics_file)
     return plan["content"]
@@ -122,8 +120,6 @@ def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
     """
 
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
-    print("### Calendar Interpretation ###")
-    print(result["content"])
     return result["content"]
 
 
@@ -165,8 +161,6 @@ def create_ics_calendar_with_context(
     """
 
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": extracted_prompt}])
-    print("### Updated Calendar Content ###")
-    print(result["content"])
 
     create_ics_file(result["content"], file_name_write)
     return result["content"]
@@ -197,7 +191,7 @@ def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlett
     sse = SseServerTransport("/messages/")
 
     async def handle_sse(request: Request) -> Response:
-        async with sse.connect_sse(request.scope, request.receive, request._send) as (read_stream, write_stream):
+        async with sse.connect_sse(request.scope, request.receive, request._send) as (read_stream, write_stream):  # noqa: SLF001
             await mcp_server.run(
                 read_stream,
                 write_stream,
