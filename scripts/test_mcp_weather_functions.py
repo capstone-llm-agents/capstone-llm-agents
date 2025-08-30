@@ -132,7 +132,7 @@ def break_down_result(weather_data, time):
         #print(str(row["date"]))
         if time in str(row["date"]):
             data_found = str(row)
-            print(data_found)
+            #print(data_found)
 
     #print(weather_data["date"])
     return data_found

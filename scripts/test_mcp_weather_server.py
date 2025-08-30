@@ -53,18 +53,38 @@ def obtain_weather_details(prompt):
         current_date = datetime.now().date()
 
         agent_prompt = f"""
-        Break down the following tasks into the latitude and longitude of the given location as well as the date range you would expect to find the weather information.
+        Break down the following tasks into the latitude and longitude of the given location as well as the date you would expect to find the weather information.
 
         Tasks: {prompt}
         Current Date: {current_date}
 
-        If no date is given assume the date is today for both the beginning and the end dates otherwise deduce the required date range.
+        If the date requested is not clear assume they are talking about today for both the beginning and the end dates.
+        Remember if the user requests for tomorrows weather add a day to the current date.
+        Always keep the start date and end date the same for each task.
         Directly and only answer with the follow format:
+        Reading) 1
+        Location) Paris
         Latitude) -10.6531
         Longitude) 14.2315
         Start date) 2025-02-27
-        End date) 2025-02-28
+        End date) 2025-02-27
         Time) 15:00
+
+        Reading) 2
+        Location) Paris
+        Latitude) -10.6531
+        Longitude) 14.2315
+        Start date) 2025-02-28
+        End date) 2025-02-28
+        Time) 11:00
+
+        Reading) 3
+        Location) London
+        Latitude) -20.2187
+        Longitude) 27.9102
+        Start date) 2025-02-28
+        End date) 2025-02-28
+        Time) 21:00
         """
 
         extracted_details = weather_agent.generate_reply(messages=[{"role": "user", "content": agent_prompt}])
