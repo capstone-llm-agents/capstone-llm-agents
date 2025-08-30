@@ -125,7 +125,7 @@ def deduce_weather_result(prompt, weather_data):
     result = extracted_details["content"]
     return result
 
-def break_down_result(weather_data, time):
+def break_down_result(weather_data, time, location):
 
     for index, row in weather_data.iterrows():
         #print("###########new_row###############")
@@ -134,7 +134,7 @@ def break_down_result(weather_data, time):
             data_found = str(row)
             #print(data_found)
 
-    #print(weather_data["date"])
+    data_found = data_found + "\n Reading location: " + location
     return data_found
 
 

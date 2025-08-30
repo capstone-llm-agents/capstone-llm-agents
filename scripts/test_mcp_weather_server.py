@@ -123,7 +123,7 @@ def obtain_weather_details(prompt):
                 time = None
 
         print(all_locations)
-
+        combined_weather_data = []
         for locations in all_locations:
             print("\n\n\n")
             print("#####################################")
@@ -133,12 +133,17 @@ def obtain_weather_details(prompt):
             print(weather_data)
             print("\n\n\n")
 
-            reformated_weather_data = break_down_result(weather_data, locations[6])
+            reformated_weather_data = break_down_result(weather_data, locations[6], locations[1])
             print(reformated_weather_data)
 
-            combined_weather_data = deduce_weather_result(prompt, reformated_weather_data)
-        result = combined_weather_data
-        #print(result)
+            ######could potentially remove this part and just use simple response to work it out maybe?#########
+            resulting_weather_reading = deduce_weather_result(prompt, reformated_weather_data)
+            combined_weather_data.append(resulting_weather_reading)
+        #print(combined_weather_data)
+        result = ""
+        for data in combined_weather_data:
+            result = result + "\n\n" + data
+        print(result)
     except:
         result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"#temporary error catching
 
