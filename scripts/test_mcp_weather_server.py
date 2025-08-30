@@ -139,6 +139,7 @@ def obtain_weather_details(prompt):
             ######could potentially remove this part and just use simple response to work it out maybe?#########
             resulting_weather_reading = deduce_weather_result(prompt, reformated_weather_data)
             combined_weather_data.append(resulting_weather_reading)
+            #combined_weather_data.append(reformated_weather_data)#Option 2 just the raw data
         #print(combined_weather_data)
         result = ""
         for data in combined_weather_data:
