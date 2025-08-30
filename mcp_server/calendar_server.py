@@ -61,29 +61,31 @@ def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.
     """Generate a calendar schedule from a task prompt and write it to an ICS file."""
     current_date = datetime.now().date()
 
-    prompt_template = f"""
+    prompt = f"""
     Break down the following tasks into realistic time frames, using the provided start time as a reference.
 
     Tasks: {prompt}
     Current Date: {current_date}
 
-    Respond with a structured schedule for a calendar file:
-    - Task
-    - Date
-    - Description
-    - Start
-    - End
-
-    Use 24-hour notation. If no date is specified, use the current date.
-    Example:
+    Respond with a schedule in a structured format suitable for creating a calendar file (e.g., Task Name, Description, Start Time, End Time).
+    Use 24 hour notation for times to make it unambiguous.
+    Only give a date if specified by either the Tasks or Preferences otherwise use the current date instead
+    Directly and only answer with the follow format:
     1. Task: Research for Report
-       Date: 2022-07-13
-       Description: Research reliable details online
-       Start: 09:00
-       End: 09:30
+    Date: 2022-07-13
+    Description: Research reliable details online
+    Start: 09:00
+    End: 09:30
+
+    2. Task: Write Draft
+    Date: 2022-07-13
+    Description: Handwritten research report about computers
+    Start: 09:30
+    End: 10:00
+    ...
     """
 
-    plan = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt_template}])
+    plan = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
     print("### New Calendar Content ###")
     print(plan["content"])
 
@@ -98,18 +100,25 @@ def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
     calendar_content = convert_ics_to_text(file_name)
 
     prompt = f"""
-    Explain the tasks, dates, and times in the following ICS calendar:
+    You are to explain what the date, tasks and times are based off this ics calender.
 
-    {calendar_content}
+    calender content: {calendar_content}
 
-    - Convert all times to 24-hour format
-    - Convert from UTC to the local timezone
-    - Use this format:
-      1. Task: Example Task
-         Date: 2022-07-13
-         Description: Example description
-         Start: 09:00
-         End: 09:30
+    Respond with a list of each task and their related time for the date provided. also convert the time to 24 hour format such as 16:15 pm.
+    Make sure to convert these times from UCD to the provided timezone.
+    Follow the example format bellow and do not add anything else.
+    EXAMPLE:
+    1. Task: Research for Report
+    Date: 2022-07-13
+    Description: Research reliable details online
+    Start: 09:00
+    End: 09:30
+
+    2. Task: Write Draft
+    Date: 2022-07-13
+    Description: Handwritten research report about computers
+    Start: 09:30
+    End: 10:00
     """
 
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
@@ -133,13 +142,26 @@ def create_ics_calendar_with_context(
 
     Tasks: {prompt}
     Current Date: {current_date}
-    Existing Plans: {existing_events}
+    Pre Existing Plans: {existing_events}
 
-    Requirements:
-    - Do not overlap with existing plans
-    - Include all existing plans in the new schedule
-    - Use 24-hour time
-    - Only specify a date if explicitly mentioned, otherwise use the current date
+    Respond with a schedule in a structured format suitable for creating a calendar file (e.g., Task Name, Description, Start Time, End Time).
+    Use 24 hour notation for times to make it unambiguous.
+    Only give a date if specified by either the Tasks or Preferences otherwise use the current date instead
+    Do not clash any new schedules with pre existing plans.
+    Make sure to add all pre existing plans to this new schedule.
+    Directly and only answer with the follow format:
+    1. Task: Research for Report
+    Date: 2022-07-13
+    Description: Research reliable details online
+    Start: 09:00
+    End: 09:30
+
+    2. Task: Write Draft
+    Date: 2022-07-13
+    Description: Handwritten research report about computers
+    Start: 09:30
+    End: 10:00
+    ...
     """
 
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": extracted_prompt}])
