@@ -78,5 +78,5 @@ class SSEConnectedServer(ConnectedServer):
                 async with ClientSession(read_stream=streams[0], write_stream=streams[1]) as session:
                     yield session
         except Exception as e:
-            msg = f"Failed to connect to the server at {self.server_url}: {e}"
+            msg = f"Failed to connect to the server at {self.server_url} - {e}"
             raise ConnectionError(msg) from e
