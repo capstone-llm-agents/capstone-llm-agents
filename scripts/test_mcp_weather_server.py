@@ -59,31 +59,24 @@ def obtain_weather_details(prompt):
         Current Date: {current_date}
 
         If the date requested is not clear assume they are talking about today for both the beginning and the end dates.
-        Remember if the user requests for tomorrows weather add a day to the current date.
+        Remember if the user requests for tomorrows weather add a day to the current date. Likewise if they specify a date use that for the start and end dates.
         Always keep the start date and end date the same for each task.
+        If no time is provided use 12:00
         Directly and only answer with the follow format:
         Reading) 1
-        Location) Paris
+        Location) Ottawa
         Latitude) -10.6531
         Longitude) 14.2315
-        Start date) 2025-02-27
-        End date) 2025-02-27
+        Start date) yyyy-mm-dd
+        End date) yyyy-mm-dd
         Time) 15:00
 
         Reading) 2
-        Location) Paris
-        Latitude) -10.6531
-        Longitude) 14.2315
-        Start date) 2025-02-28
-        End date) 2025-02-28
-        Time) 11:00
-
-        Reading) 3
-        Location) London
+        Location) Rosedale
         Latitude) -20.2187
         Longitude) 27.9102
-        Start date) 2025-02-28
-        End date) 2025-02-28
+        Start date) yyyy-mm-dd
+        End date) yyyy-mm-dd
         Time) 21:00
         """
 
@@ -144,6 +137,7 @@ def obtain_weather_details(prompt):
         result = ""
         for data in combined_weather_data:
             result = result + "\n\n" + data
+        print("########Final Result########")
         print(result)
     except:
         result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"#temporary error catching

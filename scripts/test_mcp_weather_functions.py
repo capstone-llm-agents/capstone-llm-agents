@@ -87,26 +87,17 @@ def deduce_weather_result(prompt, weather_data):
     current_date = datetime.now().date()
 
     agent_prompt = f"""
-    Break down the following prompt and deduce what kind of weather matches with the prompt.
+    Break down the following prompt and deduce what kind of weather matches with the Location and Time.
 
-    Prompt: {prompt}
     Current Date: {current_date}
     Weather Data: {weather_data}
 
-    Based on the prompt you have been asked as well as the weather details provided answer the question the best you can.
+    Based on the weather details provided Reformat the data to the provided example.
     Remember to keep your responses small and consise.
-    Do not add any unesisary text make sure to get strait to the point.
+    Do not add any unesisary text.
     Here is a guide to an example formated output:
     Example:
-    The weather in hawthorne at 12pm 12/07/2025 will be:
-    Tempreture: 16.1 degrees
-    Chance of rain: 65%
-    Precipitation amount: 2.5 mm
-    Wind Speed: 2km/h
-    Max wind gust: 5km/h
-    UV index: 1.27
-
-    The weather in hawthorne at 4pm 12/07/2025 will be:
+    The weather in Rosedale at 4pm 12/07/2025 will be:
     Tempreture: 14.1 degrees
     Chance of rain: 35%
     Precipitation amount: 1.0 mm
