@@ -19,7 +19,7 @@ class ToolAction(Action):
 
     def __init__(self, tool: Tool, server: ConnectedServer) -> None:
         """Initialize the ToolAction with a specific tool."""
-        name = tool.name.capitalize()
+        name = tool.name
         description = tool.description or f"Calls the tool: {name}"
         params_schema = tool.inputSchema
         super().__init__(name=name, description=description, params_schema=params_schema)
