@@ -2,26 +2,18 @@
 
 from datetime import datetime
 
-import openmeteo_requests
-import pandas as pd
-import requests_cache
 import uvicorn
-from autogen import ConversableAgent, GroupChat, GroupChatManager, UserProxyAgent
+from autogen import ConversableAgent
 from mcp.server import Server
 from mcp.server.fastmcp import FastMCP
 from mcp.server.sse import SseServerTransport
-from pytz import timezone
-from retry_requests import retry
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
-from tzlocal import get_localzone
 
 # functions file
 from scripts.test_mcp_weather_functions import break_down_result, deduce_weather_result, generate_weather_data
-
-#####Callender imports#######
 
 ########llm agent setup########
 llm_config = {
@@ -142,25 +134,6 @@ def obtain_weather_details(prompt):
 
 
 ########## Weather agent tools ###############
-
-
-@mcp.tool()
-def greet(name: str) -> str:
-    """Greet a user by name."""
-    return f"Hello, {name}! Welcome to the SSE server."
-
-
-@mcp.tool()
-def add(a: int, b: int) -> str:
-    """Add two numbers and return the result."""
-    return f"The sum of {a} and {b} is {a + b}."
-
-
-# example resource
-@mcp.resource(uri="resource://hello")
-def hello_resource() -> str:
-    """Return a greeting."""
-    return "Hello from the resource!"
 
 
 def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:
