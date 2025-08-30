@@ -23,7 +23,7 @@ from mcp.server.fastmcp import FastMCP
 from mcp.server.sse import SseServerTransport
 
 # functions file
-from scripts.test_mcp_weather_functions import generate_weather_data, deduce_weather_result
+from scripts.test_mcp_weather_functions import generate_weather_data, deduce_weather_result, break_down_result
 
 #####Callender imports#######
 
@@ -60,10 +60,11 @@ def obtain_weather_details(prompt):
 
         If no date is given assume the date is today for both the beginning and the end dates otherwise deduce the required date range.
         Directly and only answer with the follow format:
-        Latitude: -10.6531
-        Longitude: 14.2315
-        Start date: 2025-02-27
-        End date: 2025-02-28
+        Latitude) -10.6531
+        Longitude) 14.2315
+        Start date) 2025-02-27
+        End date) 2025-02-28
+        Time) 15:00
         """
 
         extracted_details = weather_agent.generate_reply(messages=[{"role": "user", "content": agent_prompt}])
@@ -73,14 +74,16 @@ def obtain_weather_details(prompt):
         print(extracted_details["content"])
 
         for line in extracted_details["content"].splitlines():
-            if "Latitude:" in line:
-                latitude = line.split(": ")[1].strip()
-            elif "Longitude:" in line:
-                longitude = line.split(": ")[1].strip()
-            elif "Start date:" in line:
-                start_date = line.split(": ")[1].strip()
-            elif "End date:" in line:
-                end_date = line.split(": ")[1].strip()
+            if "Latitude)" in line:
+                latitude = line.split(") ")[1].strip()
+            elif "Longitude)" in line:
+                longitude = line.split(") ")[1].strip()
+            elif "Start date)" in line:
+                start_date = line.split(") ")[1].strip()
+            elif "End date)" in line:
+                end_date = line.split(") ")[1].strip()
+            elif "Time)" in line:
+                time = line.split(") ")[1].strip()
 
         print("\n\n\n")
         print("#####################################")
@@ -90,7 +93,10 @@ def obtain_weather_details(prompt):
         print(weather_data)
         print("\n\n\n")
 
-        result = deduce_weather_result(prompt, weather_data)
+        reformated_weather_data = break_down_result(weather_data, time)
+        print(reformated_weather_data)
+
+        result = deduce_weather_result(prompt, reformated_weather_data)
         #print(result)
     except:
         result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"#temporary error catching

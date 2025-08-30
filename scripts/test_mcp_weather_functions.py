@@ -94,18 +94,25 @@ def deduce_weather_result(prompt, weather_data):
     Weather Data: {weather_data}
 
     Based on the prompt you have been asked as well as the weather details provided answer the question the best you can.
-    Remember not all details are needed unless specifically asked for.
-    If no details are provided then just state the temperature and rain chance for 12pm
+    Remember to keep your responses small and consise.
     Do not add any unesisary text make sure to get strait to the point.
     Here is a guide to an example formated output:
     Example:
-    The weather in hawthorne at 12pm will be:
+    The weather in hawthorne at 12pm 12/07/2025 will be:
     Tempreture: 16.1 degrees
     Chance of rain: 65%
     Precipitation amount: 2.5 mm
     Wind Speed: 2km/h
     Max wind gust: 5km/h
     UV index: 1.27
+
+    The weather in hawthorne at 4pm 12/07/2025 will be:
+    Tempreture: 14.1 degrees
+    Chance of rain: 35%
+    Precipitation amount: 1.0 mm
+    Wind Speed: 3km/h
+    Max wind gust: 7km/h
+    UV index: 0.32
 
     """
 
@@ -117,3 +124,17 @@ def deduce_weather_result(prompt, weather_data):
 
     result = extracted_details["content"]
     return result
+
+def break_down_result(weather_data, time):
+
+    for index, row in weather_data.iterrows():
+        #print("###########new_row###############")
+        #print(str(row["date"]))
+        if time in str(row["date"]):
+            data_found = str(row)
+            print(data_found)
+
+    #print(weather_data["date"])
+    return data_found
+
+
