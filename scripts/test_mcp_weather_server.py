@@ -2,28 +2,24 @@
 
 from datetime import datetime
 
-import uvicorn
-
-#####Weather imports#######
 import openmeteo_requests
-
 import pandas as pd
 import requests_cache
-from retry_requests import retry
+import uvicorn
 from autogen import ConversableAgent, GroupChat, GroupChatManager, UserProxyAgent
+from mcp.server import Server
+from mcp.server.fastmcp import FastMCP
+from mcp.server.sse import SseServerTransport
 from pytz import timezone
-from tzlocal import get_localzone
-from datetime import datetime
+from retry_requests import retry
 from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
-from mcp.server import Server
-from mcp.server.fastmcp import FastMCP
-from mcp.server.sse import SseServerTransport
+from tzlocal import get_localzone
 
 # functions file
-from scripts.test_mcp_weather_functions import generate_weather_data, deduce_weather_result, break_down_result
+from scripts.test_mcp_weather_functions import break_down_result, deduce_weather_result, generate_weather_data
 
 #####Callender imports#######
 
@@ -86,7 +82,7 @@ def obtain_weather_details(prompt):
         print("#####################################")
         print(extracted_details["content"])
 
-        #This array will be used to store each/how many readings need to be looped through the function
+        # This array will be used to store each/how many readings need to be looped through the function
         all_locations = []
 
         time = None
@@ -105,7 +101,7 @@ def obtain_weather_details(prompt):
                 end_date = line.split(") ")[1].strip()
             elif "Time)" in line:
                 time = line.split(") ")[1].strip()
-            if time != None:#if time is assigned a value save all data read so far and reset variables
+            if time != None:  # if time is assigned a value save all data read so far and reset variables
                 all_locations.append([reading, location, latitude, longitude, start_date, end_date, time])
                 reading = None
                 location = None
@@ -132,17 +128,19 @@ def obtain_weather_details(prompt):
             ######could potentially remove this part and just use simple response to work it out maybe?#########
             resulting_weather_reading = deduce_weather_result(prompt, reformated_weather_data)
             combined_weather_data.append(resulting_weather_reading)
-            #combined_weather_data.append(reformated_weather_data)#Option 2 just the raw data
-        #print(combined_weather_data)
+            # combined_weather_data.append(reformated_weather_data)#Option 2 just the raw data
+        # print(combined_weather_data)
         result = ""
         for data in combined_weather_data:
             result = result + "\n\n" + data
         print("########Final Result########")
         print(result)
     except:
-        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"#temporary error catching
+        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"  # temporary error catching
 
     return result
+
+
 ########## Weather agent tools ###############
 
 
