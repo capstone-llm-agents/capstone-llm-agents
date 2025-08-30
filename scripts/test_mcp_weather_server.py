@@ -93,8 +93,16 @@ def obtain_weather_details(prompt):
         print("#####################################")
         print(extracted_details["content"])
 
+        #This array will be used to store each/how many readings need to be looped through the function
+        all_locations = []
+
+        time = None
         for line in extracted_details["content"].splitlines():
-            if "Latitude)" in line:
+            if "Reading)" in line:
+                reading = line.split(") ")[1].strip()
+            elif "Location)" in line:
+                location = line.split(") ")[1].strip()
+            elif "Latitude)" in line:
                 latitude = line.split(") ")[1].strip()
             elif "Longitude)" in line:
                 longitude = line.split(") ")[1].strip()
@@ -104,19 +112,32 @@ def obtain_weather_details(prompt):
                 end_date = line.split(") ")[1].strip()
             elif "Time)" in line:
                 time = line.split(") ")[1].strip()
+            if time != None:#if time is assigned a value save all data read so far and reset variables
+                all_locations.append([reading, location, latitude, longitude, start_date, end_date, time])
+                reading = None
+                location = None
+                latitude = None
+                longitude = None
+                start_date = None
+                end_date = None
+                time = None
 
-        print("\n\n\n")
-        print("#####################################")
-        print("Generated weather data")
-        print("#####################################")
-        weather_data = generate_weather_data(latitude, longitude, start_date, end_date)
-        print(weather_data)
-        print("\n\n\n")
+        print(all_locations)
 
-        reformated_weather_data = break_down_result(weather_data, time)
-        print(reformated_weather_data)
+        for locations in all_locations:
+            print("\n\n\n")
+            print("#####################################")
+            print("Generated weather data")
+            print("#####################################")
+            weather_data = generate_weather_data(locations[2], locations[3], locations[4], locations[5])
+            print(weather_data)
+            print("\n\n\n")
 
-        result = deduce_weather_result(prompt, reformated_weather_data)
+            reformated_weather_data = break_down_result(weather_data, locations[6])
+            print(reformated_weather_data)
+
+            combined_weather_data = deduce_weather_result(prompt, reformated_weather_data)
+        result = combined_weather_data
         #print(result)
     except:
         result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"#temporary error catching
