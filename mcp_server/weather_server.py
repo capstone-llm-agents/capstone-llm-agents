@@ -13,7 +13,7 @@ from starlette.responses import Response
 from starlette.routing import Mount, Route
 
 # functions file
-from scripts.test_mcp_weather_functions import break_down_result, deduce_weather_result, generate_weather_data
+from weather_functions import break_down_result, deduce_weather_result, generate_weather_data
 
 ########llm agent setup########
 llm_config = {
@@ -35,7 +35,7 @@ mcp = FastMCP("SSE Example Server")
 
 
 ########## Weather agent tools ###############
-@mcp.tool()
+@mcp.tool(name="ObtainWeatherDetails")
 def obtain_weather_details(prompt):
     try:
         current_date = datetime.now().date()
