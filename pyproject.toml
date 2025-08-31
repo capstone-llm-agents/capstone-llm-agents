@@ -5,6 +5,7 @@ description = "MAS that uses LLM agents to solve complex tasks."
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "ag2[ollama]>=0.9.9",
     "autogen>=0.9.9",
     "icalendar>=6.3.1",
     "ics>=0.7.2",

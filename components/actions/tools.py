@@ -9,6 +9,7 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.model_providers.ollama.call_llm import call_llm
 from llm_mas.tools.tool_action_creator import ToolActionCreator
 from llm_mas.utils.json_parser import extract_json_from_response
