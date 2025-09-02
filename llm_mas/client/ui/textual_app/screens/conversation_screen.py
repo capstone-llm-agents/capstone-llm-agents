@@ -11,6 +11,7 @@ from textual.widgets import Button, Footer, Header, Static
 
 from llm_mas.client.ui.textual_app.screens.agent_chat_screen import AgentChatScreen
 from llm_mas.client.ui.textual_app.screens.user_chat_screen import UserChatScreen
+from llm_mas.utils.random_id import generate_random_id
 
 if TYPE_CHECKING:
     from textual import events
@@ -66,7 +67,7 @@ class ConversationsScreen(Screen):
         """Handle button actions."""
         if event.button.id == "add-btn":
             # random sequence of letters and numbers for conversation name
-            conversation_id = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))  # noqa: S311
+            conversation_id = generate_random_id(6)
             conversation_name = f"Conversation-{conversation_id}"
 
             self.client.mas.conversation_manager.start_conversation(conversation_name)

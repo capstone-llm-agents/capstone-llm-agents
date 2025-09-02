@@ -21,6 +21,7 @@ class Agent(Entity):
     def __init__(  # noqa: PLR0913
         self,
         name: str,
+        description: str,
         action_space: ActionSpace,
         narrower: ActionNarrower,
         selector: ActionSelector,
@@ -28,7 +29,7 @@ class Agent(Entity):
         workspace: Workspace | None = None,
     ) -> None:
         """Initialize the agent with a name, action space, narrowing policy, and action selection strategy."""
-        super().__init__(name, role="assistant")
+        super().__init__(name, role="assistant", description=description)
 
         # full action space for the agent
         self.action_space = action_space
@@ -79,16 +80,18 @@ class Agent(Entity):
         self.add_action(action)
         self.narrower.update_for_new_action(action, self.action_space)
 
-    async def work(self, context: ActionContext) -> None:
+    async def work(self, context: ActionContext) -> tuple[ActionResult, ActionContext]:
         """Perform work by executing actions in the agent's action space."""
         if not self.action_space.has_action(StopAction()):
             msg = "StopAction must be in the action space to stop the agent."
             raise ValueError(msg)
 
+        res = ActionResult()
         while not self.finished_working():
             res = await self.act(context)
             # TODO: Wrap the context properly  # noqa: TD003
             context = ActionContext.from_action_result(res, context)
+        return res, context
 
     def finished_working(self) -> bool:
         """Check if the agent has finished working."""

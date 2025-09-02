@@ -71,7 +71,10 @@ class LLMSelector(ActionSelector):
 
         response = await call_llm_with_examples(
             examples,
-            UserMessage(self.get_select_action_prompt(action_space.get_actions(), context), sender=User("Test User")),
+            UserMessage(
+                self.get_select_action_prompt(action_space.get_actions(), context),
+                sender=User("Test User", "A test user"),
+            ),
         )
 
         # TODO: use the params  # noqa: TD003
@@ -137,7 +140,7 @@ class LLMSelector(ActionSelector):
         """Craft an example from a list of actions."""
         prompt = self.get_select_action_prompt(actions, context)
 
-        user_message = UserMessage(prompt, sender=User("Example User"))
+        user_message = UserMessage(prompt, sender=User("Example User", "An example user"))
 
         assistant_message = AssistantMessage(
             json.dumps(actions[chosen_index].as_json(), indent=4),

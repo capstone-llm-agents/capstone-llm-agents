@@ -106,7 +106,7 @@ class TravelNarrower(ActionNarrower):
                 for action in self.default_actions:
                     # filter actions based on the last message content
                     word_filter = self.word_filters.get(action, [])
-                    if any(word in message for word in word_filter):
+                    if any(word in message for word in word_filter) or not word_filter:
                         narrowed_actions.append(action)
 
             # no actions add GetTripDetails as default

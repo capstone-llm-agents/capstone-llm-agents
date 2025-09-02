@@ -18,7 +18,14 @@ selector = LLMSelector(call_llm)
 tool_narrower = ToolNarrower()
 tool_manager = ToolManager(tool_narrower)
 
-WEBSEARCH_AGENT = Agent("WebSearch Agent", action_space, narrower, selector, tool_manager)
+WEBSEARCH_AGENT = Agent(
+    "WebSearchAgent",
+    "An assistant that can perform web searches and summarize web content.",
+    action_space,
+    narrower,
+    selector,
+    tool_manager,
+)
 
 
 # add some actions
