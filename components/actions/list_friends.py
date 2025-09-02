@@ -9,6 +9,7 @@ from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.mas.agent import Agent
 from llm_mas.utils.embeddings import VectorSelector
+from llm_mas.utils.random_id import generate_random_id
 
 
 class ListFriends(Action):
@@ -76,7 +77,7 @@ class AskFriendForHelp(Action):
         friend_name = friend.get_name()
 
         # create conversation
-        conversation = context.conversation_manager.start_conversation(f"HelpFrom{friend_name}")
+        conversation = context.conversation_manager.start_conversation(f"HelpFrom{friend_name}-{generate_random_id()}")
 
         # send message to friend
         conversation.add_message(entity, "Can you help me with something?")
