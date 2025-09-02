@@ -23,11 +23,46 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
-import docx
-import ollama
-import pypdf
-from bs4 import BeautifulSoup
-from openai import OpenAI
+# Optional dependencies
+try:  # pragma: no cover - optional import
+    import ollama  # type: ignore[import-not-found]
+
+    OLLAMA_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional import
+    OLLAMA_AVAILABLE = False
+
+try:  # pragma: no cover - optional import
+    from openai import OpenAI  # type: ignore[import-not-found]
+
+    OPENAI_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional import
+    OpenAI = None  # type: ignore[assignment]
+    OPENAI_AVAILABLE = False
+
+# Optional parsers for document formats
+try:  # pragma: no cover - optional import
+    import pypdf  # type: ignore[import-not-found]
+
+    PDF_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional import
+    pypdf = None  # type: ignore[assignment]
+    PDF_AVAILABLE = False
+
+try:  # pragma: no cover - optional import
+    import docx  # type: ignore[import-not-found]
+
+    DOCX_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional import
+    docx = None  # type: ignore[assignment]
+    DOCX_AVAILABLE = False
+
+try:  # pragma: no cover - optional import
+    from bs4 import BeautifulSoup  # type: ignore[import-not-found]
+
+    BS4_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional import
+    BeautifulSoup = None  # type: ignore[assignment]
+    BS4_AVAILABLE = False
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -143,15 +178,16 @@ class _EmbeddingProvider:
     """Simple embedding provider abstraction."""
 
     def __init__(self, model: str | None = None) -> None:
-        self.model = model or os.getenv("OLLAMA_EMBED_MODEL", "mxbai-embed-large")
+        self.model = model or os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+        self._use_ollama = OLLAMA_AVAILABLE
 
         # Optional OpenAI fallback if API key is available
         self._openai_client = None
-        if os.getenv("OPENAI_API_KEY") and OpenAI is not None:
+        if not self._use_ollama and OPENAI_AVAILABLE and os.getenv("OPENAI_API_KEY") and OpenAI is not None:
             try:
                 self._openai_client = OpenAI()
                 # Default embedding model for OpenAI
-                if self.model in (None, "mxbai-embed-large"):
+                if self.model in (None, "nomic-embed-text"):
                     self.model = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
             except (ValueError, RuntimeError):
                 self._openai_client = None
