@@ -32,3 +32,8 @@ class Workspace:
         """Initialize the workspace."""
         self.action_history: ActionHistory = ActionHistory()
         self.state = WorkspaceState()
+
+    def reset(self) -> None:
+        """Reset the workspace to its initial state."""
+        self.action_history = ActionHistory()
+        self.state = WorkspaceState()

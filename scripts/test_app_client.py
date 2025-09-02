@@ -29,7 +29,7 @@ tool_manager = ToolManager(
     tool_narrower,
 )
 
-agent = Agent("TestAgent", action_space, narrower, selector, tool_manager)
+agent = Agent("TestAgent", "A test agent for demonstration purposes.", action_space, narrower, selector, tool_manager)
 
 # add some actions
 agent.add_action(SimpleResponse())

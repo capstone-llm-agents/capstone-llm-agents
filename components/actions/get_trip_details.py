@@ -9,7 +9,7 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.model_providers.ollama.call_llm import call_llm, call_llm_with_messages
+from llm_mas.model_providers.ollama.call_llm import call_llm_with_messages
 from llm_mas.utils.json_parser import extract_json_from_response
 
 
@@ -19,7 +19,7 @@ class GetTripDetails(Action):
     def __init__(self) -> None:
         """Initialize the SimpleResponse action."""
         super().__init__(
-            description="Responds to simple requests that can be answered with a simple response.",
+            description="Gets or updates trip details based on user input.",
         )
 
     @override
