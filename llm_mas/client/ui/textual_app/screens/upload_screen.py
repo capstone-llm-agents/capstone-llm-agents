@@ -1,6 +1,7 @@
 from __future__ import annotations  # noqa: D100
 
 import asyncio
+import os
 from pathlib import Path
 from typing import TYPE_CHECKING
 
@@ -45,8 +46,9 @@ class UploadScreen(Screen):
             self.selected_label = Static("Selected: <none>", classes="selected-path")
             yield self.selected_label
 
-            # File browser
-            self.fs_tree = DirectoryTree(str(Path.cwd()), id="fs_tree")
+            # File browser starting at the system root (allows browsing entire disk)
+            start_root = Path(os.sep) if os.sep else Path("/")
+            self.fs_tree = DirectoryTree(str(start_root), id="fs_tree")
             yield self.fs_tree
 
             self.status = Static("", classes="upload-status")
@@ -112,7 +114,8 @@ class UploadScreen(Screen):
                 added = await asyncio.to_thread(self._index_into_kb, self.selected_path)
                 if added == 0:
                     self._set_status(
-                        "No indexable files found (supported: .txt, .md, .py, .json, .csv, .yaml, .yml, .toml).",
+                        "No indexable files found (supported: .txt, .md, .py, .json, .csv, .yaml, .yml, .toml, "
+                        ".pdf, .docx, .html, .htm, .rtf).",
                     )
                 else:
                     self._set_status(f"Indexed {added} chunks from: {self.selected_path}")

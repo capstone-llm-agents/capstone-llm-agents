@@ -18,6 +18,7 @@ import json
 import logging
 import math
 import os
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
@@ -37,6 +38,31 @@ try:  # pragma: no cover - optional import
 except ImportError:  # pragma: no cover - optional import
     OpenAI = None  # type: ignore[assignment]
     OPENAI_AVAILABLE = False
+
+# Optional parsers for document formats
+try:  # pragma: no cover - optional import
+    import pypdf  # type: ignore[import-not-found]
+
+    PDF_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional import
+    pypdf = None  # type: ignore[assignment]
+    PDF_AVAILABLE = False
+
+try:  # pragma: no cover - optional import
+    import docx  # type: ignore[import-not-found]
+
+    DOCX_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional import
+    docx = None  # type: ignore[assignment]
+    DOCX_AVAILABLE = False
+
+try:  # pragma: no cover - optional import
+    from bs4 import BeautifulSoup  # type: ignore[import-not-found]
+
+    BS4_AVAILABLE = True
+except ImportError:  # pragma: no cover - optional import
+    BeautifulSoup = None  # type: ignore[assignment]
+    BS4_AVAILABLE = False
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -72,12 +98,60 @@ def _chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[s
     return chunks
 
 
-def _read_text_file(path: Path) -> str:
-    """Read a text file as UTF-8 with fallback to latin-1."""
+def _read_plain_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
     except UnicodeDecodeError:
         return path.read_text(encoding="latin-1")
+
+
+def _read_pdf(path: Path) -> str:
+    if not PDF_AVAILABLE or pypdf is None:
+        msg = "pypdf is not installed; cannot index PDF files."
+        raise ValueError(msg)
+    reader = pypdf.PdfReader(str(path))
+    texts = [page.extract_text() or "" for page in reader.pages]
+    return "\n".join(texts)
+
+
+def _read_docx(path: Path) -> str:
+    if not DOCX_AVAILABLE or docx is None:
+        msg = "python-docx is not installed; cannot index DOCX files."
+        raise ValueError(msg)
+    document = docx.Document(str(path))
+    return "\n".join(p.text for p in document.paragraphs)
+
+
+def _read_html(path: Path) -> str:
+    if not BS4_AVAILABLE or BeautifulSoup is None:
+        msg = "beautifulsoup4 is not installed; cannot index HTML files."
+        raise ValueError(msg)
+    html = path.read_text(encoding="utf-8", errors="ignore")
+    soup = BeautifulSoup(html, "html.parser")
+    return soup.get_text(separator="\n")
+
+
+def _read_rtf(path: Path) -> str:
+    content = path.read_text(encoding="latin-1", errors="ignore")
+    content = re.sub(r"\\[a-zA-Z]+-?\d* ?", "", content)
+    return content.replace("{", "").replace("}", "")
+
+
+def _read_text_file(path: Path) -> str:
+    """Extract text content from a supported file (plain, PDF, DOCX, HTML, RTF)."""
+    suffix = path.suffix.lower()
+    if suffix in {".txt", ".md", ".py", ".json", ".csv", ".yaml", ".yml", ".toml"}:
+        return _read_plain_text(path)
+    if suffix == ".pdf":
+        return _read_pdf(path)
+    if suffix == ".docx":
+        return _read_docx(path)
+    if suffix in {".html", ".htm"}:
+        return _read_html(path)
+    if suffix == ".rtf":
+        return _read_rtf(path)
+    msg = f"Unsupported file type: {suffix}"
+    raise ValueError(msg)
 
 
 def _is_supported_file(path: Path) -> bool:
@@ -91,6 +165,11 @@ def _is_supported_file(path: Path) -> bool:
         ".yaml",
         ".yml",
         ".toml",
+        ".pdf",
+        ".docx",
+        ".html",
+        ".htm",
+        ".rtf",
     }
     return path.is_file() and path.suffix.lower() in allowed
 
@@ -242,7 +321,7 @@ class KnowledgeBase:
         for p in paths:
             try:
                 text = _read_text_file(p)
-            except (OSError, UnicodeDecodeError) as exc:
+            except (OSError, UnicodeDecodeError, ValueError) as exc:
                 logging.getLogger(__name__).warning("Skipping unreadable file %s: %s", p, exc)
                 continue
             chunks = _chunk_text(text)
