@@ -14,6 +14,7 @@ Notes:
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import math
@@ -21,7 +22,10 @@ import os
 import re
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:  # Imported for type checking only
+    from collections.abc import Callable
 
 # Optional dependencies
 try:  # pragma: no cover - optional import
@@ -178,7 +182,7 @@ class _EmbeddingProvider:
     """Simple embedding provider abstraction."""
 
     def __init__(self, model: str | None = None) -> None:
-        self.model = model or os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+        self.model = model or os.getenv("OLLAMA_EMBED_MODEL", "mxbai-embed-large")
         self._use_ollama = OLLAMA_AVAILABLE
 
         # Optional OpenAI fallback if API key is available
@@ -187,7 +191,7 @@ class _EmbeddingProvider:
             try:
                 self._openai_client = OpenAI()
                 # Default embedding model for OpenAI
-                if self.model in (None, "nomic-embed-text"):
+                if self.model in (None, "mxbai-embed-large"):
                     self.model = os.getenv("OPENAI_EMBED_MODEL", "text-embedding-3-small")
             except (ValueError, RuntimeError):
                 self._openai_client = None
@@ -279,8 +283,31 @@ class KnowledgeBase:
             return
         try:
             data = json.loads(self.storage_path.read_text(encoding="utf-8"))
-            self._records = [_KBRecord.from_json(d) for d in data.get("records", [])]
-            self._next_id = int(data.get("next_id", len(self._records) + 1))
+            # Support both dict-based index { records: [...], next_id: n } and
+            # legacy/simple list-based index [ {...record...}, ... ]
+            if isinstance(data, list):
+                records: list[_KBRecord] = []
+                for item in data:
+                    if isinstance(item, dict):
+                        try:
+                            records.append(_KBRecord.from_json(item))
+                        except (KeyError, TypeError, ValueError) as exc:
+                            logging.getLogger(__name__).warning(
+                                "Skipping invalid KB record in list index: %s", exc,
+                            )
+                    else:
+                        logging.getLogger(__name__).warning(
+                            "Ignoring non-dict item in KB index list: %r", item,
+                        )
+                self._records = records
+                self._next_id = len(self._records) + 1
+            elif isinstance(data, dict):
+                self._records = [_KBRecord.from_json(d) for d in data.get("records", [])]
+                self._next_id = int(data.get("next_id", len(self._records) + 1))
+            else:
+                # Unknown format; reset
+                self._records = []
+                self._next_id = 1
         except (OSError, json.JSONDecodeError):
             # Corrupt or incompatible index; start fresh
             logging.getLogger(__name__).warning("KB index file is corrupt or unreadable. Starting with a fresh index.")
@@ -306,33 +333,74 @@ class KnowledgeBase:
         self._next_id += 1
         return rec
 
-    def index_path(self, path: Path) -> int:
+    def index_path(self, path: Path, progress: Callable[[Path, int, int], None] | None = None) -> int:
         """Index a file or directory.
 
-        Returns the number of chunks added.
-        """
-        paths: list[Path] = []
-        if path.is_dir():
-            paths.extend([p for p in path.rglob("*") if _is_supported_file(p)])
-        elif _is_supported_file(path):
-            paths.append(path)
+        Parameters
+        ----------
+        path : Path
+            Path to a file or directory. Directories are scanned recursively.
+        progress : Callable[[Path, int, int]] | None
+            Optional callback invoked as progress(file_path, index, total) before each file is processed.
 
+        Returns
+        -------
+        int
+            Number of chunks added to the KB.
+
+        """
+        if path.is_dir():
+            # Recursively gather supported files under the directory
+            paths: list[Path] = [p for p in path.rglob("*") if _is_supported_file(p)]
+        else:
+            paths = [path] if _is_supported_file(path) else []
+
+        total = len(paths)
         added = 0
-        for p in paths:
-            try:
-                text = _read_text_file(p)
-            except (OSError, UnicodeDecodeError, ValueError) as exc:
-                logging.getLogger(__name__).warning("Skipping unreadable file %s: %s", p, exc)
-                continue
-            chunks = _chunk_text(text)
-            embeddings = self._embedder.embed_texts(chunks)
-            for i, (chunk, vec) in enumerate(zip(chunks, embeddings, strict=True)):
-                rec = _KBRecord(id=self._next_id, source_path=str(p), chunk_id=i, text=chunk, embedding=vec)
-                self._records.append(rec)
-                self._next_id += 1
-                added += 1
+        for idx, p in enumerate(paths, start=1):
+            if progress is not None:
+                with contextlib.suppress(Exception):
+                    progress(p, idx, total)
+
+            added += self._index_single_file(p)
         if added:
             self._save()
+        return added
+
+    def _index_single_file(self, p: Path) -> int:
+        """Index a single supported file; returns number of chunks added.
+
+        Skips unreadable or empty files and logs at INFO/WARN levels. Any embedding
+        errors for a single file are contained and won't stop the folder ingestion.
+        """
+        try:
+            text = _read_text_file(p)
+        except (OSError, UnicodeDecodeError, ValueError) as exc:
+            logging.getLogger(__name__).warning("Skipping unreadable file %s: %s", p, exc)
+            return 0
+
+        if not text or not text.strip():
+            logging.getLogger(__name__).info("Skipping empty file: %s", p)
+            return 0
+
+        chunks = _chunk_text(text)
+        if not chunks:
+            logging.getLogger(__name__).info("No chunks produced for file: %s", p)
+            return 0
+
+        embeddings: list[list[float]] | None = None
+        with contextlib.suppress(Exception):
+            embeddings = self._embedder.embed_texts(chunks)
+        if embeddings is None:
+            logging.getLogger(__name__).warning("Embedding failed for %s", p)
+            return 0
+
+        added = 0
+        for i, (chunk, vec) in enumerate(zip(chunks, embeddings, strict=True)):
+            rec = _KBRecord(id=self._next_id, source_path=str(p), chunk_id=i, text=chunk, embedding=vec)
+            self._records.append(rec)
+            self._next_id += 1
+            added += 1
         return added
 
     # --------------- Query ---------------
