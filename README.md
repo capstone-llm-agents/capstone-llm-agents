@@ -27,6 +27,10 @@ Run ```uv venv``` to create the virtual environment.
 
 Run ```source .venv/bin/activate``` to run the virtual environment.
 
+On Windows, instead run  ```.venv/Scripts/activate```.
+
+If you get an ExecutionPolicy error run this command first ```Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser```.
+
 Run ```uv sync``` to install the packages.
 
 ## Running the Project
