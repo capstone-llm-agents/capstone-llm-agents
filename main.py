@@ -15,6 +15,8 @@ def main() -> None:
     """Run the main application logic."""
     mas = MAS()
 
+    mas.add_agent(EXAMPLE_AGENT)
+    mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
 
@@ -52,6 +54,7 @@ def main() -> None:
     # friendships
     user.add_friend(agent3)
     agent3.add_friend(agent2)
+    agent3.add_friend(agent1)
 
     app = TextualApp(client)
     app.run()

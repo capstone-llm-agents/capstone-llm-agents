@@ -21,6 +21,7 @@ class Agent(Entity):
     def __init__(  # noqa: PLR0913
         self,
         name: str,
+        description: str,
         action_space: ActionSpace,
         narrower: ActionNarrower,
         selector: ActionSelector,
@@ -28,7 +29,7 @@ class Agent(Entity):
         workspace: Workspace | None = None,
     ) -> None:
         """Initialize the agent with a name, action space, narrowing policy, and action selection strategy."""
-        super().__init__(name, role="assistant")
+        super().__init__(name, role="assistant", description=description)
 
         # full action space for the agent
         self.action_space = action_space

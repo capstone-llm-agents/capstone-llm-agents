@@ -126,7 +126,7 @@ class ConversationManager:
 
     def clear_conversations(self) -> None:
         """Clear all conversations."""
-        self.conversations.clear()
+        self.conversations = {}
 
     def get_conversations_with_participant(self, entity: Entity) -> list[Conversation]:
         """Get all conversations that include a specific participant."""

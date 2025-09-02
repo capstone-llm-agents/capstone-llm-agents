@@ -1,5 +1,6 @@
 """An action to list available friends in the agent system."""
 
+from collections.abc import Awaitable, Callable
 from typing import override
 
 from llm_mas.action_system.core.action import Action
@@ -7,6 +8,7 @@ from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.mas.agent import Agent
+from llm_mas.utils.embeddings import VectorSelector
 
 
 class ListFriends(Action):
@@ -37,9 +39,13 @@ class AskFriendForHelp(Action):
 
     def __init__(
         self,
+        embedding_model: Callable[[str], Awaitable[list[float]]],
+        vector_selector: VectorSelector | None = None,
     ) -> None:
         """Initialize the AskFriendForHelp action."""
         super().__init__(description="Asks a friend for help")
+        self.embedding_model = embedding_model
+        self.vector_selector = vector_selector or VectorSelector()
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
@@ -52,8 +58,16 @@ class AskFriendForHelp(Action):
             res.set_param("response", "No friends available to ask for help.")
             return res
 
-        # TODO: Improve friend selection logic (e.g., based on expertise or past interactions)  # noqa: TD003
-        friend = next((f for f in friends if isinstance(f, Agent)), None)
+        last_message = context.conversation.chat_history.messages[-1].content
+
+        agent_friends = [friend for friend in friends if isinstance(friend, Agent)]
+
+        friend = self.vector_selector.select(
+            query_vector=await self.embedding_model(last_message),
+            items_with_vectors=[
+                (friend, await self.embedding_model(friend.get_description())) for friend in agent_friends
+            ],
+        )[0]
 
         if not friend:
             msg = "No friends available to ask for help."
@@ -92,12 +106,15 @@ class AskFriendForHelp(Action):
             Could you help?
             """
         else:
-            message = f"""The user asked me "{last_message["content"]}". But I'm not sure how to answer their request. Could you help?"""
+            message = f"""The user asked me "{last_message["content"]}". But I'm not sure how to answer their request. Could you help?"""  # noqa: E501
 
         conversation.add_message(entity, message)
 
         # set new agent in context
         context.agent = friend
+
+        # friend makes a new workspace
+        friend.workspace.reset()
 
         action_result, context = await friend.work(context)
 

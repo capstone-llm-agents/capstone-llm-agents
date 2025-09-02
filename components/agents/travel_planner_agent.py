@@ -24,6 +24,7 @@ action_space = ActionSpace()
 narrower = TravelNarrower()
 selector = EmbeddingSelector(get_embedding)
 
+
 # tools
 tool_narrower = DefaultToolNarrower()
 tool_creator = DefaultToolActionCreator()
@@ -31,7 +32,14 @@ tool_manager = ToolManager(
     tool_narrower,
 )
 
-TRAVEL_PLANNER_AGENT = Agent("Travel Agent", action_space, narrower, selector, tool_manager)
+TRAVEL_PLANNER_AGENT = Agent(
+    "TravelAgent",
+    "A travel planning assistant that helps users plan and book their trips.",
+    action_space,
+    narrower,
+    selector,
+    tool_manager,
+)
 
 
 # add some actions
