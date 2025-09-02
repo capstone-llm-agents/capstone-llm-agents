@@ -78,16 +78,18 @@ class EmbeddingSelector(ActionSelector):
 
     def _select_by_similarity(
         self,
-        user_vec: np.ndarray,
+        user_vector: np.ndarray,
         action_embeddings: list[tuple[Action, np.ndarray]],
     ) -> tuple[Action, float]:
         """Select an action given user embedding and action embeddings."""
-        similarities = [(action, self._cosine_similarity(user_vec, emb)) for action, emb in action_embeddings]
+        similarities = [
+            (action, self._cosine_similarity(user_vector, embedding)) for action, embedding in action_embeddings
+        ]
 
         logger = logging.getLogger("textual_app")
         logger.info("Embedding similarities:")
-        for action, sim in similarities:
-            logger.info("Action: %s, Similarity: %.4f", action.name, sim)
+        for action, similarity in similarities:
+            logger.info("Action: %s, Similarity: %.4f", action.name, similarity)
 
         similarities.sort(key=lambda x: x[1], reverse=True)
 
@@ -95,11 +97,11 @@ class EmbeddingSelector(ActionSelector):
             similarities = similarities[: self.top_k]
 
         if self.top_p is not None and 0.0 < self.top_p < 1.0:
-            total_score = sum(sim for _, sim in similarities)
+            total_score = sum(similarity for _, similarity in similarities)
             cumulative, filtered = 0.0, []
-            for action, sim in similarities:
-                cumulative += sim / total_score if total_score > 0 else 0
-                filtered.append((action, sim))
+            for action, similarity in similarities:
+                cumulative += similarity / total_score if total_score > 0 else 0
+                filtered.append((action, similarity))
                 if cumulative >= self.top_p:
                     break
             similarities = filtered
