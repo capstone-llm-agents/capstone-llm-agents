@@ -1,5 +1,7 @@
 """Action class for the multi-agent system."""
 
+from typing import Any
+
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
@@ -8,10 +10,11 @@ from llm_mas.action_system.core.action_result import ActionResult
 class Action:
     """Base class for all actions in the system."""
 
-    def __init__(self, description: str, name: str | None = None) -> None:
+    def __init__(self, description: str, name: str | None = None, params_schema: dict[str, Any] | None = None) -> None:
         """Initialize the action with a name."""
         self.name = name if name is not None else self.__class__.__name__
         self.description = description
+        self.params_schema = params_schema if params_schema is not None else {}
 
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action with the given agent."""
@@ -28,6 +31,6 @@ class Action:
         """Return the hash based on the class name."""
         return hash(self.name)
 
-    def as_json(self) -> dict:
+    def as_json(self) -> dict[str, Any]:
         """Return a JSON representation of the action."""
-        return {"name": self.name, "description": self.description, "params": []}
+        return {"name": self.name, "description": self.description, "params": self.params_schema}

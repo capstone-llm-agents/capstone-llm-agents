@@ -204,3 +204,10 @@ __marimo__/
 
 # Hide logs
 logs
+
+*.ics
+
+# Hide sqlite
+*.sqlite3
+*.db
+*.sqlite

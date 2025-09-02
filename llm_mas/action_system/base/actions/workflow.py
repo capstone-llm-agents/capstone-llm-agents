@@ -27,7 +27,7 @@ class Workflow(Action):
         for action in self.actions:
             res = await action.do(params, context)
             # TODO: wrap the context properly  # noqa: TD003
-            context = ActionContext(context.conversation, res, context.mcp_client)
+            context = ActionContext.from_action_result(res, context)
 
         # TODO: return actual result gg  # noqa: TD003
         return ActionResult()

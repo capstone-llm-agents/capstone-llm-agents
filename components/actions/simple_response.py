@@ -1,5 +1,6 @@
 """The agent responds to a simple prompt using an LLM."""
 
+import logging
 from typing import override
 
 from llm_mas.action_system.core.action import Action
@@ -40,6 +41,10 @@ class SimpleResponse(Action):
             Prompt:
             {last_message["content"]}
             """
+
+        # TODO: Move to a different logger  # noqa: TD003
+        logging.getLogger("textual_app").info("Calling LLM with message: %s", last_message)
+        logging.getLogger("textual_app").info("Context: %s", context.last_result.as_json_pretty())
 
         response = await call_llm(last_message["content"])
 

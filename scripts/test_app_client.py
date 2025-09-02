@@ -14,12 +14,22 @@ from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
 from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.tools.tool_action_creator import DefaultToolActionCreator
+from llm_mas.tools.tool_manager import ToolManager
+from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = GraphBasedNarrower()
 selector = LLMSelector(call_llm)
 
-agent = Agent("TestAgent", action_space, narrower, selector)
+# tools
+tool_narrower = DefaultToolNarrower()
+tool_creator = DefaultToolActionCreator()
+tool_manager = ToolManager(
+    tool_narrower,
+)
+
+agent = Agent("TestAgent", "A test agent for demonstration purposes.", action_space, narrower, selector, tool_manager)
 
 # add some actions
 agent.add_action(SimpleResponse())
