@@ -47,9 +47,7 @@ EXAMPLE_AGENT.add_action(GetRelevantTools(tool_creator))
 EXAMPLE_AGENT.add_action(GetParamsForToolCall(tool_creator))
 EXAMPLE_AGENT.add_action(ListFriends())
 
-
 narrower.add_default_action(AskFriendForHelp(embedding_model=get_embedding))
-narrower.add_default_action(ListFriends())
 
 # add some edges
 narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory(), SimpleResponse()])
