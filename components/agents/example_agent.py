@@ -60,4 +60,4 @@ narrower.add_action_edge(
 )
 narrower.add_action_edge(GetParamsForToolCall(tool_creator), [])
 narrower.add_action_edge(ListFriends(), [SimpleResponse()])
-narrower.add_action_edge(AskFriendForHelp(embedding_model=get_embedding), [SimpleResponse()])
+narrower.add_action_edge(AskFriendForHelp(embedding_model=get_embedding), [StopAction()])
