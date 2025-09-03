@@ -1,6 +1,6 @@
 """The main entry point for the multi-agent system."""
 
 # run the agent
-from components.agents.example_agent import EXAMPLE_AGENT
+from components.agents.example_agent import ASSISTANT_AGENT
 
-EXAMPLE_AGENT.work()
+ASSISTANT_AGENT.work()

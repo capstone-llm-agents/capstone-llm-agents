@@ -26,7 +26,7 @@ tool_manager = ToolManager(
     tool_narrower,
 )
 
-EXAMPLE_AGENT = Agent(
+ASSISTANT_AGENT = Agent(
     "Assistant",
     "An assistant that can interacts with the user to handle their requests.",
     action_space,
