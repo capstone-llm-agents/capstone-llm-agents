@@ -17,21 +17,21 @@ from llm_mas.client.ui.textual_app.components.user_message_bubble import UserMes
 from llm_mas.client.ui.textual_app.screens.base_chat_screen import BaseChatScreen
 from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.agent import Agent
-from llm_mas.mas.conversation import Conversation
+from llm_mas.mas.agentstate import State
+from llm_mas.mas.checkpointer import CheckPointer
+from llm_mas.mas.conversation import Conversation, Message
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
-
-
 class UserChatScreen(BaseChatScreen):
     """Interactive chat screen for user to assistant conversations."""
 
-    def __init__(self, client: Client, conversation: Conversation, *, artificial_delay: float | None = None) -> None:
+    def __init__(self, client: Client, checkpointer: CheckPointer, conversation: Conversation, *, artificial_delay: float | None = None) -> None:
         """Initialize with client and conversation."""
         super().__init__(client, conversation, title="Chat with Assistant")
         self.input: Input
         self.history: list[tuple[str, str]] = []
         self._current_task: asyncio.Task | None = None
         self.artificial_delay = artificial_delay or 0.1
-
+        self.checkpointer = checkpointer
     def compose(self) -> ComposeResult:
         """Compose the chat screen layout with input field."""
         yield from super().compose()
@@ -47,8 +47,15 @@ class UserChatScreen(BaseChatScreen):
             APP_LOGGER.error("No assistant agent found in MAS, cannot proceed with chat")
             self.chat_container.mount(Static("No assistant agent available to respond."))
             return
-
-        if not self.conversation.chat_history.messages:
+        state = self.checkpointer.fetch()
+        if state:
+            for message in state['messages']:
+                message_to_save = Message
+                message_to_save.role = message['role']
+                message_to_save.content = message['content']
+                message_to_save.sender = message['sender']
+                self.conversation.chat_history.add_message(message_to_save)
+        elif not self.conversation.chat_history.messages:
             # add initial message
             message = "Hello! I'm your assistant. How can I help you today?"
             self.conversation.add_message(agent, message)
@@ -191,6 +198,7 @@ class UserChatScreen(BaseChatScreen):
 
     def on_key(self, event: events.Key) -> None:
         """Keyboard shortcuts for back/cancel."""
+
         if event.key == "escape":
             if self._current_task and not self._current_task.done():
                 self._current_task.cancel()
@@ -201,6 +209,10 @@ class UserChatScreen(BaseChatScreen):
 
     async def on_unmount(self) -> None:
         """Cancel any ongoing agent task on screen unmount."""
+        message = self.conversation.chat_history.as_dicts()
+
+        state: State = {"messages": message}
+        self.checkpointer.save(state)
         if self._current_task and not self._current_task.done():
             self._current_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
