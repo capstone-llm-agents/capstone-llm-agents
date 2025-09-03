@@ -10,7 +10,7 @@ from llm_mas.client.ui.textual_app.app import TextualApp
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
-
+from llm_mas.mas.checkpointer import CheckPointer
 
 def main() -> None:
     """Run the main application logic."""
@@ -39,7 +39,9 @@ def main() -> None:
     ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
     ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
 
-    app = TextualApp(client)
+    #checkpointer
+    checkpoint = CheckPointer("test.sqlite")
+    app = TextualApp(client, checkpoint)
     app.run()
 
 
