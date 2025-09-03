@@ -9,6 +9,7 @@ from llm_mas.client.ui.textual_app.app import TextualApp
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
+from llm_mas.utils.config import ConfigManager
 
 
 def main() -> None:
@@ -25,11 +26,17 @@ def main() -> None:
     agent3 = EXAMPLE_AGENT
 
     mcp_client = MCPClient()
-    server = SSEConnectedServer("http://localhost:8080/sse")
-    mcp_client.add_connected_server(server)
-    server = SSEConnectedServer("http://localhost:8081/sse")
-    mcp_client.add_connected_server(server)
-    client = Client("Test User", mas, mcp_client)
+    mcp_client.add_connected_server(SSEConnectedServer("http://localhost:8080/sse"))
+    mcp_client.add_connected_server(SSEConnectedServer("http://localhost:8081/sse"))
+
+    config = None
+    try:
+        config = ConfigManager("./data/config.yaml")
+    except Exception as e:
+        msg = f"Failed to initialize configuration manager. {e} \n\n Please update or create a valid `config.yaml` file. You can run `python setup.py` to create the config via a CLI."  # noqa: E501
+        raise RuntimeError(msg) from e
+
+    client = Client("Test User", mas, mcp_client, config)
 
     # user
     user = client.user

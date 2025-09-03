@@ -1,0 +1,11 @@
+default_embedding_model: 0
+default_model: 0
+default_model_with_native_tools: 0
+default_powerful_model: 0
+default_quick_model: 0
+default_local_model: 0
+embedding_models: []
+models:
+  - model: gemma3
+    provider: ollama
+version: "1.0"
