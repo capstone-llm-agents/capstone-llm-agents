@@ -10,7 +10,7 @@ from textual.app import App
 from llm_mas.client.ui.textual_app.screens.main_menu import MainMenu
 from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
-
+from llm_mas.mas.checkpointer import CheckPointer
 if TYPE_CHECKING:
     from collections.abc import Coroutine
 
@@ -25,15 +25,15 @@ def run_async_in_thread(coroutine: Coroutine) -> Any:  # noqa: ANN401
 class TextualApp(App):
     """Main application class with optimized async handling."""
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: Client, checkpoint: CheckPointer) -> None:
         """Initialize the application with an optional client."""
         super().__init__()
         self.client = client
         self.title = f"Welcome Back - {self.client.get_username()}"
-
+        self.checkpointer = checkpoint
     def on_mount(self) -> None:
         """Mount the main menu screen on application start."""
-        self.push_screen(MainMenu(self.client))
+        self.push_screen(MainMenu(self.client, self.checkpointer))
 
     # TODO: Doesn't actually get called yet, need to find a way to hook into shutdown properly  # noqa: TD003
     async def on_shutdown(self) -> None:
