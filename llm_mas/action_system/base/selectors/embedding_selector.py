@@ -1,5 +1,6 @@
 """The embedding selector module provides a class for selecting actions based on semantic similarity of embeddings."""
 
+import logging
 from collections.abc import Awaitable, Callable
 from typing import override
 
@@ -40,9 +41,15 @@ class EmbeddingSelector(ActionSelector):
             raise ValueError(msg)
         user_input = messages[-1].content
 
-        user_embedding = np.array(await self.embedding_model(user_input))
+        prompt = f"{user_input} - {context.last_result.as_json_pretty()}"
+
+        # log
+        logging.getLogger("textual_app").info("Selecting action using prompt: %s", prompt)
+
+        user_embedding = np.array(await self.embedding_model(prompt))
         action_embeddings: list[tuple[Action, np.ndarray]] = [
-            (action, np.array(await self.embedding_model(action.description))) for action in actions
+            (action, np.array(await self.embedding_model(f"{action.name} - {action.description}")))
+            for action in actions
         ]
 
         action, _ = self.vector_selector.select(user_embedding, action_embeddings)

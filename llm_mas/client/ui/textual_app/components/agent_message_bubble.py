@@ -17,7 +17,14 @@ from llm_mas.mas.agent import Agent
 class AgentMessage(MessageBubble):
     """A message bubble widget for agent messages with integrated work steps."""
 
-    def __init__(self, agent: Agent, message: str = "", *, show_thinking: bool = False) -> None:
+    def __init__(
+        self,
+        agent: Agent,
+        message: str = "",
+        *,
+        show_thinking: bool = False,
+        artificial_delay: float | None = None,
+    ) -> None:
         """Initialize the agent message bubble."""
         super().__init__(message)
         self.agent = agent
@@ -29,6 +36,7 @@ class AgentMessage(MessageBubble):
         self.message_bubble: Vertical | None = None
         self.is_thinking_expanded: bool = True
         self._is_processing: bool = True
+        self.artificial_delay = artificial_delay or 0.1
 
     def compose(self) -> ComposeResult:
         """Compose the agent message bubble."""
@@ -56,7 +64,8 @@ class AgentMessage(MessageBubble):
     async def add_work_step(self, work_step: WorkStep) -> WorkStepIndicator:
         """Add a work step to the thinking section."""
         # small delay to simulate processing time
-        await asyncio.sleep(0.5)
+        if self.artificial_delay:
+            await asyncio.sleep(self.artificial_delay)
 
         if not self.thinking_content:
             msg = "Thinking section is not initialized."

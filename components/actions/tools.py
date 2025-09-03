@@ -1,17 +1,20 @@
 """Actions that related to tools."""
 
 import json
+import logging
+from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, override
 
+import numpy as np
 from mcp import Tool
 
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.model_providers.ollama.call_llm import call_llm
 from llm_mas.tools.tool_action_creator import ToolActionCreator
+from llm_mas.utils.embeddings import VectorSelector
 from llm_mas.utils.json_parser import extract_json_from_response
 
 if TYPE_CHECKING:
@@ -89,10 +92,17 @@ class GetTools(Action):
 class GetRelevantTools(Action):
     """An action that retrieves tools relevant to the current context."""
 
-    def __init__(self, tool_creator: ToolActionCreator) -> None:
+    def __init__(
+        self,
+        tool_creator: ToolActionCreator,
+        embedding_model: Callable[[str], Awaitable[list[float]]],
+        vector_selector: VectorSelector | None = None,
+    ) -> None:
         """Initialize the GetRelevantTools action."""
         super().__init__(description="Retrieves tools relevant to the current context")
         self.tool_creator = tool_creator
+        self.embedding_model = embedding_model
+        self.vector_selector = vector_selector or VectorSelector()
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
@@ -100,11 +110,9 @@ class GetRelevantTools(Action):
         # assumes that the context has a method to get relevant tools
         tools = context.last_result.get_param("tools")
 
-        json_str = json.dumps(tools, indent=4)
-
         chat_history = context.conversation.get_chat_history()
 
-        messages = chat_history.as_dicts()
+        messages = chat_history.messages
 
         last_message = messages[-1] if messages else None
 
@@ -112,57 +120,20 @@ class GetRelevantTools(Action):
             msg = "No chat history available to respond to."
             raise ValueError(msg)
 
-        prompt = f"""List tools that are relevant to the following prompt:
-        {last_message["content"]}
+        embedding_target = f"{last_message.content}"
 
-        The tools are:
-        {json_str}
+        logging.getLogger("textual_app").info("Finding relevant tools for: %s", embedding_target)
 
-        Respond ONLY with the tools in JSON format, like this:
-        ```json
-        {{
-            "relevant_tools": [
-                {{
-                    "name": "RelevantTool1",
-                }},
-                {{
-                    "name": "RelevantTool2",
-                }}
-            ]
-        }}
-        ```
-
-        If no tools are relevant, respond with an empty list:
-        ```json
-        {{
-            "relevant_tools": []
-        }}
-        ```
-
-        For example, if the query was about the weather, and the tool was adding two numbers, your response should look like this:
-        ```json
-        {{
-            "relevant_tools": []
-        }}
-        ```
-        because the tool is not relevant to the query.
-        """
-
-        response = await call_llm(prompt)
-
-        content = extract_json_from_response(response)
-
-        try:
-            loaded_json = json.loads(content)
-            relevant_tools = loaded_json.get("relevant_tools", [])
-
-        except json.JSONDecodeError as e:
-            msg = f"Failed to parse JSON from response: {content}"
-            raise ValueError(msg) from e
+        user_embedding = np.array(await self.embedding_model(embedding_target))
 
         tools = context.agent.tool_manager.get_all_tools()
 
-        actual_tools: list[Tool] = [tool for tool in tools if tool.name in [tool["name"] for tool in relevant_tools]]
+        tool_embeddings: list[tuple[Tool, np.ndarray]] = [
+            (tool, np.array(await self.embedding_model(f"{tool.name} {tool.description or ''}"))) for tool in tools
+        ]
+
+        # select best tool
+        actual_tool, _ = self.vector_selector.select(user_embedding, tool_embeddings)
 
         def convert_tool_to_dict(tool: Tool) -> dict:
             """Convert a Tool object to a dictionary."""
@@ -172,24 +143,17 @@ class GetRelevantTools(Action):
                 "inputSchema": tool.inputSchema,
             }
 
-        tool_dicts = [convert_tool_to_dict(tool) for tool in actual_tools]
+        tool_dict = convert_tool_to_dict(actual_tool)
 
         res = ActionResult()
-        res.set_param("query", last_message["content"])
-        res.set_param("relevant_tools", tool_dicts)
+        res.set_param("query", last_message.content)
+        res.set_param("relevant_tools", [tool_dict])
 
-        if not tool_dicts:
+        if not tool_dict:
             res.set_param("tool_name", None)
             return res
 
-        # TODO: temp
-        tool_name = tool_dicts[0]["name"]
-
-        if not tool_name:
-            msg = "No relevant tools found."
-            raise ValueError(msg)
-
-        res.set_param("tool_name", tool_name)
+        res.set_param("tool_name", tool_dict["name"])
 
         return res
 
