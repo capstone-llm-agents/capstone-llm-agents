@@ -26,7 +26,7 @@ tool_manager = ToolManager(
     tool_narrower,
 )
 
-EXAMPLE_AGENT = Agent(
+ASSISTANT_AGENT = Agent(
     "Assistant",
     "An assistant that can interacts with the user to handle their requests.",
     action_space,
@@ -37,15 +37,15 @@ EXAMPLE_AGENT = Agent(
 
 
 # add some actions
-EXAMPLE_AGENT.add_action(SimpleResponse())
-EXAMPLE_AGENT.add_action(RespondWithChatHistory())
-EXAMPLE_AGENT.add_action(StopAction())
-EXAMPLE_AGENT.add_action(RetrieveKnowledge())
-EXAMPLE_AGENT.add_action(UpdateTools(tool_creator))
-EXAMPLE_AGENT.add_action(GetTools(tool_creator))
-EXAMPLE_AGENT.add_action(GetRelevantTools(tool_creator))
-EXAMPLE_AGENT.add_action(GetParamsForToolCall(tool_creator))
-EXAMPLE_AGENT.add_action(ListFriends())
+ASSISTANT_AGENT.add_action(SimpleResponse())
+ASSISTANT_AGENT.add_action(RespondWithChatHistory())
+ASSISTANT_AGENT.add_action(StopAction())
+ASSISTANT_AGENT.add_action(RetrieveKnowledge())
+ASSISTANT_AGENT.add_action(UpdateTools(tool_creator))
+ASSISTANT_AGENT.add_action(GetTools(tool_creator))
+ASSISTANT_AGENT.add_action(GetRelevantTools(tool_creator, embedding_model=get_embedding))
+ASSISTANT_AGENT.add_action(GetParamsForToolCall(tool_creator))
+ASSISTANT_AGENT.add_action(ListFriends())
 
 narrower.add_default_action(AskFriendForHelp(embedding_model=get_embedding))
 
@@ -54,8 +54,10 @@ narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory(), SimpleR
 narrower.add_action_edge(RespondWithChatHistory(), [StopAction()])
 narrower.add_action_edge(SimpleResponse(), [StopAction()])
 narrower.add_action_edge(UpdateTools(tool_creator), [GetTools(tool_creator)])
-narrower.add_action_edge(GetTools(tool_creator), [GetRelevantTools(tool_creator)])
-narrower.add_action_edge(GetRelevantTools(tool_creator), [GetParamsForToolCall(tool_creator)])
+narrower.add_action_edge(GetTools(tool_creator), [GetRelevantTools(tool_creator, embedding_model=get_embedding)])
+narrower.add_action_edge(
+    GetRelevantTools(tool_creator, embedding_model=get_embedding), [GetParamsForToolCall(tool_creator)]
+)
 narrower.add_action_edge(GetParamsForToolCall(tool_creator), [])
 narrower.add_action_edge(ListFriends(), [SimpleResponse()])
-narrower.add_action_edge(AskFriendForHelp(embedding_model=get_embedding), [SimpleResponse()])
+narrower.add_action_edge(AskFriendForHelp(embedding_model=get_embedding), [StopAction()])
