@@ -20,6 +20,7 @@ from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.conversation import AssistantMessage, UserAssistantExample, UserMessage
+from llm_mas.mas.user import User
 from llm_mas.model_providers.ollama.call_llm import (
     call_llm_with_examples,
 )
@@ -70,7 +71,10 @@ class LLMSelector(ActionSelector):
 
         response = await call_llm_with_examples(
             examples,
-            UserMessage(self.get_select_action_prompt(action_space.get_actions(), context)),
+            UserMessage(
+                self.get_select_action_prompt(action_space.get_actions(), context),
+                sender=User("Test User", "A test user"),
+            ),
         )
 
         # TODO: use the params  # noqa: TD003
@@ -136,9 +140,12 @@ class LLMSelector(ActionSelector):
         """Craft an example from a list of actions."""
         prompt = self.get_select_action_prompt(actions, context)
 
-        user_message = UserMessage(prompt)
+        user_message = UserMessage(prompt, sender=User("Example User", "An example user"))
 
-        assistant_message = AssistantMessage(json.dumps(actions[chosen_index].as_json(), indent=4))
+        assistant_message = AssistantMessage(
+            json.dumps(actions[chosen_index].as_json(), indent=4),
+            sender=context.agent,
+        )  # type: ignore
 
         return UserAssistantExample(user_message, assistant_message)
 

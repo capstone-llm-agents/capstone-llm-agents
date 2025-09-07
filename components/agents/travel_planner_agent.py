@@ -14,10 +14,11 @@ from components.actions.websearch import WebSearch
 from components.actions.memory import MemorySearchlong, MemorySavelong
 from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.base.actions.stop import StopAction
-from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
+from llm_mas.action_system.base.selectors.embedding_selector import EmbeddingSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.mas.agent import Agent
+from llm_mas.model_providers.ollama.call_llm import get_embedding
 from llm_mas.model_providers.ollama.call_llm import call_llm as ollamaAI
 from llm_mas.model_providers.openai.call_llm import call_llm as gptAI
 from llm_mas.tools.tool_action_creator import DefaultToolActionCreator
@@ -26,7 +27,7 @@ from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = TravelNarrower()
-selector = LLMSelector(ollamaAI)
+selector = EmbeddingSelector(get_embedding)
 
 # tools
 tool_narrower = DefaultToolNarrower()
@@ -35,7 +36,14 @@ tool_manager = ToolManager(
     tool_narrower,
 )
 
-TRAVEL_PLANNER_AGENT = Agent("Travel Agent", action_space, narrower, selector, tool_manager)
+TRAVEL_PLANNER_AGENT = Agent(
+    "TravelAgent",
+    "A travel planning assistant that helps users plan and book their trips.",
+    action_space,
+    narrower,
+    selector,
+    tool_manager,
+)
 
 
 # add some actions
@@ -76,100 +84,3 @@ narrower.add_default_action(SearchActivities())
 narrower.add_default_action(TravelResponse())
 narrower.add_default_action(CreateItinerary())
 narrower.add_default_action(WebSearch())
-narrower.add_default_action(SimpleResponse())
-narrower.add_default_action(MemorySearchlong())
-narrower.add_default_action(MemorySavelong())
-# word filters
-narrower.add_default_filter(
-    SearchFlights(),
-    ["flight", "flights", "airline", "airlines", "book flight", "book flights", "search flight", "search flights"],
-)
-narrower.add_default_filter(
-    SearchAccommodations(),
-    [
-        "accommodation",
-        "accommodations",
-        "hotel",
-        "hotels",
-        "book accommodation",
-        "book accommodations",
-        "search accommodation",
-        "search accommodations",
-    ],
-)
-narrower.add_default_filter(
-    SearchActivities(),
-    [
-        "activity",
-        "activities",
-        "tour",
-        "tours",
-        "book activity",
-        "book activities",
-        "search activity",
-        "search activities",
-    ],
-)
-narrower.add_default_filter(
-    EstimateBudget(),
-    [
-        "budget",
-        "cost",
-        "price",
-        "estimate budget",
-        "estimate cost",
-        "estimate price",
-        "calculate budget",
-        "calculate cost",
-        "calculate price",
-    ],
-)
-narrower.add_default_filter(
-    CreateItinerary(),
-    [
-        "itinerary",
-        "plan",
-        "planning",
-        "create itinerary",
-        "create plan",
-        "create planning",
-        "make itinerary",
-        "make plan",
-        "make planning",
-    ],
-)
-narrower.add_default_filter(
-    GetTripDetails(),
-    [
-        "trip details",
-        "get trip details",
-        "trip information",
-        "get trip information",
-        "trip data",
-        "get trip data",
-    ],
-)
-
-narrower.add_default_filter(
-    WebSearch(),
-    [
-        "web search",
-        "search the web",
-        "search online",
-        "find information",
-        "look up",
-        "search for",
-        "find",
-        "search",
-        "look for",
-    ],
-)
-narrower.add_default_filter(
-    MemorySearchlong(),
-    [
-        "name",
-        "destination",
-        "past",
-        "hello"
-    ],
-)

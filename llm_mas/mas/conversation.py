@@ -1,15 +1,18 @@
 """The conversation module defines messages, chat history and conversation management for the multi-agent system."""
 
+from llm_mas.mas.agent import Agent
 from llm_mas.mas.entity import Entity
+from llm_mas.mas.user import User
 
 
 class Message:
     """Message class for LLM interactions."""
 
-    def __init__(self, role: str, content: str) -> None:
+    def __init__(self, role: str, content: str, sender: Entity) -> None:
         """Initialize the message with a role and content."""
         self.role = role
         self.content = content
+        self.sender = sender
 
     def as_dict(self) -> dict:
         """Return the message as a dictionary."""
@@ -19,17 +22,17 @@ class Message:
 class UserMessage(Message):
     """User message class for LLM interactions."""
 
-    def __init__(self, content: str) -> None:
+    def __init__(self, content: str, sender: User) -> None:
         """Initialize the user message with content."""
-        super().__init__(role="user", content=content)
+        super().__init__(role="user", content=content, sender=sender)
 
 
 class AssistantMessage(Message):
     """Assistant message class for LLM interactions."""
 
-    def __init__(self, content: str) -> None:
+    def __init__(self, content: str, sender: Agent) -> None:
         """Initialize the assistant message with content."""
-        super().__init__(role="assistant", content=content)
+        super().__init__(role="assistant", content=content, sender=sender)
 
 
 class ChatHistory:
@@ -60,20 +63,31 @@ class UserAssistantExample:
 class Conversation:
     """Conversation class to manage entity interactions."""
 
-    def __init__(self) -> None:
+    def __init__(self, name: str) -> None:
         """Initialize an empty conversation."""
+        self.name = name
         self.chat_history = ChatHistory()
         self.participants: set[Entity] = set()
 
     def add_message(self, entity: Entity, content: str) -> None:
         """Add a message to the conversation."""
-        message = Message(role=entity.role, content=content)
+        message = Message(role=entity.role, content=content, sender=entity)
         self.chat_history.add_message(message)
         self.participants.add(entity)
 
     def get_chat_history(self) -> ChatHistory:
         """Return the chat history of the conversation."""
         return self.chat_history
+
+    def is_user_conversation(self) -> bool:
+        """Determine if the conversation is a user conversation."""
+        default_message = "Hello! I'm your assistant. How can I help you today?"
+
+        return (
+            any(isinstance(participant, User) for participant in self.participants)
+            or len(self.participants) == 0
+            or (len(self.chat_history.messages) == 1 and self.chat_history.messages[0].content == default_message)
+        )
 
 
 class ConversationManager:
@@ -88,7 +102,7 @@ class ConversationManager:
         if conversation_name in self.conversations:
             msg = f"Conversation '{conversation_name}' already exists."
             raise ValueError(msg)
-        conversation = Conversation()
+        conversation = Conversation(conversation_name)
         self.conversations[conversation_name] = conversation
         return conversation
 
@@ -112,7 +126,7 @@ class ConversationManager:
 
     def clear_conversations(self) -> None:
         """Clear all conversations."""
-        self.conversations.clear()
+        self.conversations = {}
 
     def get_conversations_with_participant(self, entity: Entity) -> list[Conversation]:
         """Get all conversations that include a specific participant."""

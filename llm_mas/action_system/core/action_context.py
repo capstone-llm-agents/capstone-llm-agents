@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from llm_mas.action_system.core.action_result import ActionResult
     from llm_mas.mas.agent import Agent
-    from llm_mas.mas.conversation import Conversation
+    from llm_mas.mas.conversation import Conversation, ConversationManager
     from llm_mas.mas.user import User
     from llm_mas.mcp_client.client import MCPClient
 
@@ -15,13 +15,14 @@ if TYPE_CHECKING:
 class ActionContext:
     """Context for executing actions in the multi-agent system."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
         conversation: Conversation,
         last_result: ActionResult,
         mcp_client: MCPClient,
         agent: Agent,
         user: User,
+        conversation_manager: ConversationManager,
     ) -> None:
         """Initialize the action context with a conversation and an optional last result."""
         self.conversation = conversation
@@ -29,6 +30,7 @@ class ActionContext:
         self.mcp_client = mcp_client
         self.agent = agent
         self.user = user
+        self.conversation_manager = conversation_manager
 
     @classmethod
     def from_action_result(
@@ -43,4 +45,5 @@ class ActionContext:
             mcp_client=context.mcp_client,
             agent=context.agent,
             user=context.user,
+            conversation_manager=context.conversation_manager,
         )

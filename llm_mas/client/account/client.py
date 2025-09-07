@@ -13,7 +13,7 @@ class Client:
         """Initialize the client with a username."""
         self.mas = mas
         self.mcp_client = mcp_client
-        self.user = User(name=username)
+        self.user = User(name=username, description="A user of the multi-agent system.")
 
     def get_username(self) -> str:
         """Return the username of the client."""
