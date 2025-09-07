@@ -6,7 +6,7 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-
+from mem0 import Memory as Mem
 
 class StopAction(Action):
     """An action that stops the agent's execution."""
@@ -18,4 +18,22 @@ class StopAction(Action):
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by stopping the agent."""
+        config = {
+            "vector_store": {
+                "provider": "qdrant",
+                "config": {
+                    "host": "localhost",
+                    "port": 6333,
+                }
+            }
+        }
+        m = Mem.from_config(config)
+        chat_history = context.conversation.get_chat_history()
+        messages = chat_history.as_dicts()
+        last_message = messages[-1]
+        memory_to_save_user = f'User said {last_message['content']}'
+        secondlast_message = messages[-2]
+        memory_to_save_agent = f'Agent said {secondlast_message['content']}'
+        m.add(messages=memory_to_save_user, agent_id='Travel', metadata={'Speaker': 'User'})
+        m.add(messages=memory_to_save_agent, agent_id='Travel', metadata={'speaker': 'Agent'})
         return ActionResult()
