@@ -49,3 +49,19 @@ async def call_llm_with_examples(
         raise ValueError(msg)
     return content
 
+async def get_embedding(text: str) -> list[float]:
+    """Get the embedding for the given text using OpenAI."""
+    model = "text-embedding-3-small"
+    client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    response = client.embeddings.create(
+        model=model,
+        input=text,
+    )
+
+    # as vector
+    embeddings = response.data[0].embedding
+    if not embeddings or len(embeddings) == 0:
+        msg = "No embeddings returned from OpenAI."
+        raise ValueError(msg)
+
+    return list(embeddings)
