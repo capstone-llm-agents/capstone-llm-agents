@@ -1,5 +1,7 @@
 # Capstone Project ID 33 - Multi-Agent systems with LLM-based agents
 
+# GUI Branch
+
 ## Team members:
 - Anton Chuchuva - 104584362@student.swin.edu.au
 - Adrien Krebet - 104546906@student.swin.edu.au
