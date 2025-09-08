@@ -211,3 +211,6 @@ logs
 *.sqlite3
 *.db
 *.sqlite
+
+# Hide db
+db
