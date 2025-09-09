@@ -166,26 +166,6 @@ def create_ics_calendar_with_context(
     return result["content"]
 
 
-@mcp.tool(name="Greet")
-@safe_tool
-def greet(name: str) -> str:
-    """Greet a user by name."""
-    return f"Hello, {name}! Welcome to the SSE server."
-
-
-@mcp.tool(name="Add")
-@safe_tool
-def add(a: int, b: int) -> str:
-    """Add two numbers and return the result."""
-    return f"The sum of {a} and {b} is {a + b}."
-
-
-@mcp.resource(uri="resource://hello")
-def hello_resource() -> str:
-    """Return a greeting resource."""
-    return "Hello from the resource!"
-
-
 def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:
     """Create a Starlette application that serves the MCP server with SSE."""
     sse = SseServerTransport("/messages/")
