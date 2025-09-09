@@ -1,7 +1,9 @@
 """The assistant agent module defines the main assistant that talks to the user and handles their requests."""
 
+from components.actions.assess_response import AssessResponse
 from components.actions.list_friends import AskFriendForHelp
 from components.actions.retrieve_knowledge import RetrieveKnowledge
+from components.actions.simple_reflect import SimpleReflect
 from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
@@ -37,11 +39,15 @@ ASSISTANT_AGENT = Agent(
 # add some actions
 ASSISTANT_AGENT.add_action(SimpleResponse())
 ASSISTANT_AGENT.add_action(StopAction())
+ASSISTANT_AGENT.add_action(AssessResponse())
+ASSISTANT_AGENT.add_action(SimpleReflect())
 
 narrower.add_default_action(RetrieveKnowledge())
 narrower.add_default_action(AskFriendForHelp(embedding_model=get_embedding))
 
 # add some edges
+narrower.add_action_edge(AssessResponse(), [SimpleReflect()])
+narrower.add_action_edge(SimpleReflect(), [StopAction()])
 narrower.add_action_edge(RetrieveKnowledge(), [SimpleResponse()])
-narrower.add_action_edge(SimpleResponse(), [StopAction()])
-narrower.add_action_edge(AskFriendForHelp(embedding_model=get_embedding), [StopAction()])
+narrower.add_action_edge(SimpleResponse(), [AssessResponse()])
+narrower.add_action_edge(AskFriendForHelp(embedding_model=get_embedding), [AssessResponse()])

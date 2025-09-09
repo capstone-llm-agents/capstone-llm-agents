@@ -3,6 +3,7 @@
 import logging
 from typing import override
 
+from components.actions.action_switcher import ActionSwitcher
 from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
@@ -85,6 +86,17 @@ class GraphBasedNarrower(ActionNarrower):
 
         else:
             last_action, _, _ = last_action_tup
+
+            # if last action is an ActionSwitcher then we need to narrow it
+            if isinstance(last_action, ActionSwitcher) and not last_action.hit_max_retries():
+                last_action.add_retry()
+                return last_action.narrow(
+                    workspace,
+                    action_space,
+                    context,
+                    narrower_context,
+                )
+
             # find the action edge corresponding to the last action
             for edge in self.action_edges:
                 if edge.action == last_action:
