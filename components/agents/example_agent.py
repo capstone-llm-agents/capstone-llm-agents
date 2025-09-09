@@ -37,15 +37,15 @@ ASSISTANT_AGENT = Agent(
 
 
 # add some actions
-EXAMPLE_AGENT.add_action(SimpleResponse())
-# EXAMPLE_AGENT.add_action(RespondWithChatHistory())
-EXAMPLE_AGENT.add_action(StopAction())
-EXAMPLE_AGENT.add_action(RetrieveKnowledge())
-# EXAMPLE_AGENT.add_action(UpdateTools(tool_creator))
-# EXAMPLE_AGENT.add_action(GetTools(tool_creator))
-# EXAMPLE_AGENT.add_action(GetRelevantTools(tool_creator))
-# EXAMPLE_AGENT.add_action(GetParamsForToolCall(tool_creator))
-# EXAMPLE_AGENT.add_action(ListFriends())
+ASSISTANT_AGENT.add_action(SimpleResponse())
+# ASSISTANT_AGENT.add_action(RespondWithChatHistory())
+ASSISTANT_AGENT.add_action(StopAction())
+ASSISTANT_AGENT.add_action(RetrieveKnowledge())
+# ASSISTANT_AGENT.add_action(UpdateTools(tool_creator))
+# ASSISTANT_AGENT.add_action(GetTools(tool_creator))
+# ASSISTANT_AGENT.add_action(GetRelevantTools(tool_creator))
+# ASSISTANT_AGENT.add_action(GetParamsForToolCall(tool_creator))
+# ASSISTANT_AGENT.add_action(ListFriends())
 
 # narrower.add_default_action(AskFriendForHelp(embedding_model=get_embedding))
 narrower.add_default_action(RetrieveKnowledge())

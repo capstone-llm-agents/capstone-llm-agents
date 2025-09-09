@@ -20,11 +20,16 @@ import logging
 import math
 import os
 import re
+import time
+from concurrent.futures import ThreadPoolExecutor
+from concurrent.futures import TimeoutError as FuturesTimeoutError
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
-if TYPE_CHECKING:  # Imported for type checking only
+from llm_mas.logging.loggers import APP_LOGGER
+
+if TYPE_CHECKING:
     from collections.abc import Callable
 
 # Optional dependencies
@@ -178,6 +183,21 @@ def _is_supported_file(path: Path) -> bool:
     return path.is_file() and path.suffix.lower() in allowed
 
 
+def _run_with_timeout(fn: Callable[[], Any], seconds: float | None) -> Any:
+    """Run a blocking function with a timeout, raising TimeoutError on expiry."""
+    if seconds is None or seconds <= 0:
+        return fn()
+    with ThreadPoolExecutor(max_workers=1) as ex:
+        fut = ex.submit(fn)
+        try:
+            return fut.result(timeout=seconds)
+        except FuturesTimeoutError as exc:
+            # Best-effort cancel (thread may keep running, but we can move on)
+            fut.cancel()
+            msg = f"Embedding request timed out after {seconds} seconds"
+            raise TimeoutError(msg) from exc
+
+
 class _EmbeddingProvider:
     """Simple embedding provider abstraction."""
 
@@ -196,7 +216,7 @@ class _EmbeddingProvider:
             except (ValueError, RuntimeError):
                 self._openai_client = None
 
-    def embed_texts(self, texts: list[str]) -> list[list[float]]:
+    def embed_texts(self, texts: list[str], timeout: float | None = None) -> list[list[float]]:
         """Return embeddings for a list of texts.
 
         Prefers Ollama local embeddings; falls back to OpenAI if configured; otherwise raises.
@@ -208,7 +228,7 @@ class _EmbeddingProvider:
             # Ollama API accepts one prompt at a time; batch sequentially
             embeddings: list[list[float]] = []
             for t in texts:
-                resp = ollama.embeddings(model=self.model, prompt=t)
+                resp = _run_with_timeout(lambda t=t: ollama.embeddings(model=self.model, prompt=t), timeout)
                 vec = resp.get("embedding")
                 if not isinstance(vec, list):
                     msg = "Invalid embedding response from Ollama."
@@ -218,7 +238,10 @@ class _EmbeddingProvider:
 
         if self._openai_client is not None:
             # OpenAI new API: client.embeddings.create
-            resp = self._openai_client.embeddings.create(model=str(self.model), input=texts)
+            resp = _run_with_timeout(
+                lambda: self._openai_client.embeddings.create(model=str(self.model), input=texts),
+                timeout,
+            )
             return [[float(v) for v in item.embedding] for item in resp.data]
 
         msg = (
@@ -292,11 +315,11 @@ class KnowledgeBase:
                         try:
                             records.append(_KBRecord.from_json(item))
                         except (KeyError, TypeError, ValueError) as exc:
-                            logging.getLogger(__name__).warning(
+                            APP_LOGGER.warning(
                                 "Skipping invalid KB record in list index: %s", exc,
                             )
                     else:
-                        logging.getLogger(__name__).warning(
+                        APP_LOGGER.warning(
                             "Ignoring non-dict item in KB index list: %r", item,
                         )
                 self._records = records
@@ -310,7 +333,7 @@ class KnowledgeBase:
                 self._next_id = 1
         except (OSError, json.JSONDecodeError):
             # Corrupt or incompatible index; start fresh
-            logging.getLogger(__name__).warning("KB index file is corrupt or unreadable. Starting with a fresh index.")
+            APP_LOGGER.warning("KB index file is corrupt or unreadable. Starting with a fresh index.")
             self._records = []
             self._next_id = 1
 
@@ -328,12 +351,24 @@ class KnowledgeBase:
         Returns the created record.
         """
         vec = self._embedder.embed_texts([text])[0]
-        rec = _KBRecord(id=self._next_id, source_path=source_path, chunk_id=chunk_id, text=text, embedding=vec)
+        rec = _KBRecord(
+            id=self._next_id,
+            source_path=source_path,
+            chunk_id=chunk_id,
+            text=text,
+            embedding=vec,
+        )
         self._records.append(rec)
         self._next_id += 1
         return rec
 
-    def index_path(self, path: Path, progress: Callable[[Path, int, int], None] | None = None) -> int:
+    def index_path(
+        self,
+        path: Path,
+        progress: Callable[[Path, int, int]] | None = None,
+        on_error: Callable[[Path, str], None] | None = None,
+        embed_timeout: float | None = None,
+    ) -> int:
         """Index a file or directory.
 
         Parameters
@@ -342,6 +377,10 @@ class KnowledgeBase:
             Path to a file or directory. Directories are scanned recursively.
         progress : Callable[[Path, int, int]] | None
             Optional callback invoked as progress(file_path, index, total) before each file is processed.
+        on_error : Callable[[Path, str], None] | None
+            Optional callback invoked when a file fails to read or embed. Receives the file path and error message.
+        embed_timeout : float | None
+            Optional timeout in seconds applied to each embedding request for a file's chunks.
 
         Returns
         -------
@@ -349,25 +388,164 @@ class KnowledgeBase:
             Number of chunks added to the KB.
 
         """
-        if path.is_dir():
-            # Recursively gather supported files under the directory
-            paths: list[Path] = [p for p in path.rglob("*") if _is_supported_file(p)]
-        else:
-            paths = [path] if _is_supported_file(path) else []
+        logger = APP_LOGGER
 
-        total = len(paths)
-        added = 0
-        for idx, p in enumerate(paths, start=1):
-            if progress is not None:
+        def _gather_files(root_path: Path) -> list[Path]:
+            """Collect supported files respecting caps and skip rules."""
+            max_scan_files = int(os.getenv("KB_MAX_SCAN_FILES", "10000"))
+            max_file_bytes = int(os.getenv("KB_MAX_FILE_BYTES", "2097152"))
+            collected: list[Path] = []
+            if root_path.is_dir():
+                for r, dirnames, filenames in os.walk(root_path):  # pragma: no branch - linear scan
+                    dirnames[:] = list(dirnames)
+                    for fname in filenames:
+                        fp = Path(r) / fname
+                        if not _is_supported_file(fp):
+                            continue
+                        with contextlib.suppress(OSError):
+                            if fp.stat().st_size > max_file_bytes:
+                                logger.info("Skipping large file (>%d bytes): %s", max_file_bytes, fp)
+                                continue
+                        collected.append(fp)
+                        if len(collected) >= max_scan_files:
+                            logger.warning(
+                                "Reached KB_MAX_SCAN_FILES cap (%d). Further supported files will be ignored.",
+                                max_scan_files,
+                            )
+                            return collected
+            elif _is_supported_file(root_path):
+                try:
+                    if root_path.stat().st_size <= int(os.getenv("KB_MAX_FILE_BYTES", "2097152")):
+                        collected.append(root_path)
+                    else:
+                        logger.info(
+                            "Skipping large file (>%s bytes): %s",
+                            os.getenv("KB_MAX_FILE_BYTES", "2097152"),
+                            root_path,
+                        )
+                except OSError as exc:  # pragma: no cover
+                    logger.warning("Unable to stat file %s: %s", root_path, exc)
+            return collected
+
+        logger.info("KB indexing started: path=%s embed_timeout=%s", path, embed_timeout)
+        if progress is not None:
+            with contextlib.suppress(Exception):
+                progress(path, 0, 0)
+        paths, scan_time = self._gather_files_for_index(path, logger)
+        ctx = self._ProcCtx(
+            root_path=path,
+            enum_duration=scan_time,
+            progress=progress,
+            on_error=on_error,
+            embed_timeout=embed_timeout,
+            logger=logger,
+        )
+        return self._process_files_for_index(paths, ctx)
+
+    # --- helpers extracted to reduce complexity of public API method ---
+    def _gather_files_for_index(self, root_path: Path, logger: logging.Logger) -> tuple[list[Path], float]:
+        """Gather supported files with size & count limits; returns (paths, scan_seconds)."""
+        scan_start = time.monotonic()
+        max_scan_files = int(os.getenv("KB_MAX_SCAN_FILES", "10000"))
+        max_file_bytes = int(os.getenv("KB_MAX_FILE_BYTES", "2097152"))
+        paths: list[Path] = []
+
+        def want(fp: Path) -> bool:
+            if not _is_supported_file(fp):
+                return False
+            try:
+                return fp.stat().st_size <= max_file_bytes
+            except OSError:  # pragma: no cover
+                return False
+
+        if not root_path.is_dir():  # Simple file case
+            if want(root_path):  # Only append if supported & under size
+                paths.append(root_path)
+            duration = time.monotonic() - scan_start
+            logger.info("KB scan complete: supported_files=%d (%.2fs) path=%s", len(paths), duration, root_path)
+            return paths, duration
+
+        for r, dirnames, filenames in os.walk(root_path):
+            dirnames[:] = list(dirnames)
+            for fname in filenames:
+                fp = Path(r) / fname
+                if want(fp):
+                    paths.append(fp)
+                    if len(paths) >= max_scan_files:
+                        logger.warning(
+                            "Reached KB_MAX_SCAN_FILES cap (%d). Stopping scan.", max_scan_files,
+                        )
+                        break
+            if len(paths) >= max_scan_files:
+                break
+        enum_duration = time.monotonic() - scan_start
+        logger.info("KB scan complete: supported_files=%d (%.2fs) path=%s", len(paths), enum_duration, root_path)
+        return paths, enum_duration
+
+    @dataclass
+    class _ProcCtx:
+        root_path: Path
+        enum_duration: float
+        progress: Callable[[Path, int, int]] | None
+        on_error: Callable[[Path, str], None] | None
+        embed_timeout: float | None
+        logger: logging.Logger
+
+    def _process_files_for_index(self, paths: list[Path], ctx: _ProcCtx) -> int:
+        total_local = len(paths)
+        added_local = 0
+        ingest_start_local = time.monotonic()
+        for idx, file_path in enumerate(paths, start=1):
+            file_start = time.monotonic()
+            if ctx.progress is not None:
                 with contextlib.suppress(Exception):
-                    progress(p, idx, total)
-
-            added += self._index_single_file(p)
-        if added:
+                    ctx.progress(file_path, idx, total_local)
+            file_chunks_added = self._index_single_file(
+                file_path, on_error=ctx.on_error, embed_timeout=ctx.embed_timeout,
+            )
+            added_local += file_chunks_added
+            file_duration = time.monotonic() - file_start
+            ctx.logger.info(
+                "KB file indexed: file=%s chunks=%d duration=%.2fs total_chunks_after=%d",
+                file_path,
+                file_chunks_added,
+                file_duration,
+                self._next_id - 1,
+            )
+            # Provide an additional progress callback AFTER a file finishes indexing so UIs
+            # can reflect completion (some large files may take a while and only had a pre-file update).
+            if ctx.progress is not None:
+                with contextlib.suppress(Exception):
+                    ctx.progress(file_path, idx, total_local)
+            if ctx.logger.isEnabledFor(logging.DEBUG):
+                ctx.logger.debug(
+                    "KB progress: %d/%d files (%.1f%%) cumulative_chunks=%d",
+                    idx,
+                    total_local,
+                    (idx / total_local) * 100 if total_local else 0.0,
+                    self._next_id - 1,
+                )
+        if added_local:
             self._save()
-        return added
+        ingest_duration_local = time.monotonic() - ingest_start_local
+        ctx.logger.info(
+            "KB indexing finished: root=%s files_processed=%d chunks_added=%d scan_time=%.2fs ingest_time=%.2fs",
+            ctx.root_path,
+            total_local,
+            added_local,
+            ctx.enum_duration,
+            ingest_duration_local,
+        )
+        if added_local == 0:
+            ctx.logger.warning("KB indexing produced no new chunks for path=%s", ctx.root_path)
+        return added_local
 
-    def _index_single_file(self, p: Path) -> int:
+    def _index_single_file(
+        self,
+        p: Path,
+        on_error: Callable[[Path, str], None] | None = None,
+        embed_timeout: float | None = None,
+    ) -> int:
         """Index a single supported file; returns number of chunks added.
 
         Skips unreadable or empty files and logs at INFO/WARN levels. Any embedding
@@ -376,23 +554,28 @@ class KnowledgeBase:
         try:
             text = _read_text_file(p)
         except (OSError, UnicodeDecodeError, ValueError) as exc:
-            logging.getLogger(__name__).warning("Skipping unreadable file %s: %s", p, exc)
+            APP_LOGGER.warning("Skipping unreadable file %s: %s", p, exc)
+            if on_error is not None:
+                with contextlib.suppress(Exception):
+                    on_error(p, f"Read failed: {exc}")
             return 0
 
         if not text or not text.strip():
-            logging.getLogger(__name__).info("Skipping empty file: %s", p)
+            APP_LOGGER.info("Skipping empty file: %s", p)
             return 0
 
         chunks = _chunk_text(text)
         if not chunks:
-            logging.getLogger(__name__).info("No chunks produced for file: %s", p)
+            APP_LOGGER.info("No chunks produced for file: %s", p)
             return 0
 
-        embeddings: list[list[float]] | None = None
-        with contextlib.suppress(Exception):
-            embeddings = self._embedder.embed_texts(chunks)
-        if embeddings is None:
-            logging.getLogger(__name__).warning("Embedding failed for %s", p)
+        try:
+            embeddings = self._embedder.embed_texts(chunks, timeout=embed_timeout)
+        except Exception as exc:  # noqa: BLE001
+            APP_LOGGER.warning("Embedding failed for %s: %s", p, exc)
+            if on_error is not None:
+                with contextlib.suppress(Exception):
+                    on_error(p, f"Embedding failed: {exc}")
             return 0
 
         added = 0

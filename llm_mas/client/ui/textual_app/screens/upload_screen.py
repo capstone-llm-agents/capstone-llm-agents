@@ -1,6 +1,7 @@
 from __future__ import annotations  # noqa: D100
 
 import asyncio
+import contextlib
 import json
 import logging
 import os
@@ -12,6 +13,7 @@ from textual.screen import Screen
 from textual.widgets import Button, DirectoryTree, Footer, Header, ListItem, ListView, Static
 
 from llm_mas.knowledge_base.knowledge_base import GLOBAL_KB
+from llm_mas.logging.loggers import APP_LOGGER
 
 if TYPE_CHECKING:
     from textual.app import ComposeResult
@@ -100,21 +102,25 @@ class UploadScreen(Screen):
         """Index a file or directory into the Knowledge Base. Returns chunks added."""
         # Progress callback runs in a worker thread; marshal UI updates safely to the main thread
         def progress_cb(file_path: Path, idx: int, total: int) -> None:
-            def update_ui() -> None:
-                # Update status with current file
-                self._set_status(f"Ingesting ({idx}/{total}): {file_path}")
-                # Also reflect progress on the button label for visibility
-                btn = self._get_upload_button()
-                if btn is not None:
-                    self._set_button_text(btn, f"Ingesting {idx}/{total}…")
+            # Light debug log so we can confirm callback execution even if UI doesn't reflect it
+            if APP_LOGGER.isEnabledFor(logging.DEBUG):
+                APP_LOGGER.debug("KB progress callback: %s (%d/%d)", file_path, idx, total)
 
-            try:
-                self.app.call_from_thread(update_ui)
-            except Exception:  # noqa: BLE001
-                # Fallback for Textual versions where Screen exposes call_from_thread
-                self.call_from_thread(update_ui)
+            # Update status with current file (or done if idx == total and called post-file)
+            label = f"Ingesting ({idx}/{total}): {file_path}" if total else f"Scanning: {file_path}"
+            self._set_status(label)
+            btn = self._get_upload_button()
+            if btn is not None:
+                phase_suffix = "✓" if idx == total else "…"
+                self._set_button_text(btn, f"Ingesting {idx}/{total}{phase_suffix}")
+                with contextlib.suppress(Exception):
+                    btn.refresh()
+            # Also refresh status widget explicitly (older Textual versions sometimes need it)
+            if self.status is not None:
+                with contextlib.suppress(Exception):
+                    self.status.refresh()
 
-        return GLOBAL_KB.index_path(source, progress=progress_cb)
+        return GLOBAL_KB.index_path(source, progress=progress_cb, embed_timeout=30)
 
     # ---- UI helpers ----
     def _get_upload_button(self) -> Button | None:
