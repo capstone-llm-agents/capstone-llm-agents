@@ -34,3 +34,6 @@ class Action:
     def as_json(self) -> dict[str, Any]:
         """Return a JSON representation of the action."""
         return {"name": self.name, "description": self.description, "params": self.params_schema}
+
+    def reset(self) -> None:
+        """Reset any internal state of the action."""

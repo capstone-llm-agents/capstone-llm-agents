@@ -1,5 +1,7 @@
 """A base class for actions that decide what to do next based on the last action."""
 
+from typing import override
+
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
@@ -39,3 +41,8 @@ class ActionSwitcher(Action):
         """Narrow the action space based on the last action."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
+
+    @override
+    def reset(self) -> None:
+        """Reset any internal state of the action."""
+        self.reset_retries()
