@@ -42,7 +42,6 @@ ASSISTANT_AGENT.add_action(StopAction())
 ASSISTANT_AGENT.add_action(AssessResponse())
 ASSISTANT_AGENT.add_action(SimpleReflect())
 
-narrower.add_default_action(SimpleResponse())
 narrower.add_default_action(RetrieveKnowledge())
 narrower.add_default_action(AskFriendForHelp(embedding_model=get_embedding))
 
