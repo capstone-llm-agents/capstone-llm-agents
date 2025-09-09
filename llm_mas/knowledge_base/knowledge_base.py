@@ -7,71 +7,34 @@ This module provides a lightweight vector store with:
 - Cosine similarity search
 
 Notes:
-- We avoid external heavy deps (faiss, chroma, etc.).
 - Default storage path: ``kb_index.json`` in the current working directory.
 
 """
 
 from __future__ import annotations
 
-import contextlib
+import asyncio
 import json
 import logging
 import math
 import os
 import re
 import time
-from concurrent.futures import ThreadPoolExecutor
-from concurrent.futures import TimeoutError as FuturesTimeoutError
+from collections import deque
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
+import docx
+import ollama
+import pypdf
+from bs4 import BeautifulSoup
+from openai import OpenAI
+
 from llm_mas.logging.loggers import APP_LOGGER
 
 if TYPE_CHECKING:
-    from collections.abc import Callable
-
-# Optional dependencies
-try:  # pragma: no cover - optional import
-    import ollama  # type: ignore[import-not-found]
-
-    OLLAMA_AVAILABLE = True
-except ImportError:  # pragma: no cover - optional import
-    OLLAMA_AVAILABLE = False
-
-try:  # pragma: no cover - optional import
-    from openai import OpenAI  # type: ignore[import-not-found]
-
-    OPENAI_AVAILABLE = True
-except ImportError:  # pragma: no cover - optional import
-    OpenAI = None  # type: ignore[assignment]
-    OPENAI_AVAILABLE = False
-
-# Optional parsers for document formats
-try:  # pragma: no cover - optional import
-    import pypdf  # type: ignore[import-not-found]
-
-    PDF_AVAILABLE = True
-except ImportError:  # pragma: no cover - optional import
-    pypdf = None  # type: ignore[assignment]
-    PDF_AVAILABLE = False
-
-try:  # pragma: no cover - optional import
-    import docx  # type: ignore[import-not-found]
-
-    DOCX_AVAILABLE = True
-except ImportError:  # pragma: no cover - optional import
-    docx = None  # type: ignore[assignment]
-    DOCX_AVAILABLE = False
-
-try:  # pragma: no cover - optional import
-    from bs4 import BeautifulSoup  # type: ignore[import-not-found]
-
-    BS4_AVAILABLE = True
-except ImportError:  # pragma: no cover - optional import
-    BeautifulSoup = None  # type: ignore[assignment]
-    BS4_AVAILABLE = False
+    import logging
 
 
 def _cosine_similarity(a: list[float], b: list[float]) -> float:
@@ -88,8 +51,7 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
         return 0.0
     return dot / (na * nb)
 
-
-def _chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
+def _fixed_size_chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
     """Chunk text into overlapping windows of characters.
 
     This is a simple heuristic that works fine for many text files.
@@ -107,6 +69,142 @@ def _chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[s
     return chunks
 
 
+def _recursive_chunk_text(
+    text: str,
+    max_chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+    separators: list[str] | None = None,
+) -> list[str]:
+    r"""Recursively split ``text`` into overlapping chunks.
+
+    See helper functions: ``_rc_split_leaves`` and ``_rc_pack`` for the two phases.
+    """
+    if not text:
+        return []
+    if max_chunk_size <= 0:
+        return [text]
+    if separators is None:
+        separators = ["\n\n", "\n", ". ", " ", ""]
+    if chunk_overlap >= max_chunk_size:
+        chunk_overlap = max(0, max_chunk_size // 5)
+    leaves = _rc_split_leaves(text, max_chunk_size, separators)
+    if not leaves:
+        return []
+    return _rc_pack(leaves, max_chunk_size, chunk_overlap)
+
+
+def _rc_split_leaves(text: str, max_chunk_size: int, separators: list[str]) -> list[str]:
+    """Return list of fragments <= max_chunk_size by hierarchical splitting."""
+    result: list[str] = []
+    stack: list[tuple[str, int]] = [(text, 0)]
+    last_sep_idx = len(separators)
+    while stack:
+        frag, idx = stack.pop()
+        if len(frag) <= max_chunk_size:
+            result.append(frag)
+            continue
+        if idx >= last_sep_idx:
+            result.extend(
+                frag[i : i + max_chunk_size] for i in range(0, len(frag), max_chunk_size)
+            )
+            continue
+        sep = separators[idx]
+        if sep and sep in frag:
+            parts = [p for p in frag.split(sep) if p]
+            if len(parts) == 1:
+                stack.append((frag, idx + 1))
+            else:
+                # Reverse push to preserve order
+                stack.extend((p, idx + 1) for p in reversed(parts))
+        else:
+            stack.append((frag, idx + 1))
+    result.reverse()
+    return result
+
+
+def _rc_pack(fragments: list[str], max_chunk_size: int, chunk_overlap: int) -> list[str]:
+    """Greedily pack leaf fragments with overlap and final normalization."""
+    if not fragments:
+        return []
+    chunks: list[str] = []
+    current = fragments[0]
+    for frag in fragments[1:]:
+        tentative = current + "\n" + frag
+        if len(tentative) <= max_chunk_size:
+            current = tentative
+            continue
+        chunks.append(current)
+        if chunk_overlap > 0 and len(current) > chunk_overlap:
+            tail = current[-chunk_overlap:].lstrip("\n")
+            prefix = tail + ("\n" if tail and not tail.endswith("\n") else "")
+            current = prefix + frag
+            if len(current) > max_chunk_size:
+                chunks.append(current[:max_chunk_size])
+                current = current[max_chunk_size:]
+        else:
+            current = frag
+    if current:
+        chunks.append(current)
+    normalized: list[str] = []
+    for c in chunks:
+        if len(c) <= max_chunk_size:
+            normalized.append(c)
+        else:
+            normalized.extend(c[i : i + max_chunk_size] for i in range(0, len(c), max_chunk_size))
+    return normalized
+
+
+# --- Semantic chunking (preferred) ---
+def _semantic_chunk_text(
+    text: str,
+    max_chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+) -> list[str]:
+    """Lightweight semantic-style chunking (paragraph + sentence aware)."""
+    text = text.strip()
+    if not text:
+        return []
+    if max_chunk_size <= 0:
+        return [text]
+    if chunk_overlap >= max_chunk_size:
+        chunk_overlap = max_chunk_size // 5
+
+    sent_pattern = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    sentences = [s.strip() for para in paragraphs for s in sent_pattern.split(para) if s.strip()]
+    if not sentences:
+        return []
+
+    def slice_long(s: str) -> list[str]:
+        return [s[i : i + max_chunk_size] for i in range(0, len(s), max_chunk_size)]
+
+    chunks: list[str] = []
+    current = ""
+    for s in sentences:
+        if len(s) > max_chunk_size:
+            if current:
+                chunks.append(current)
+                current = ""
+            chunks.extend(slice_long(s))
+            continue
+        if not current:
+            current = s
+            continue
+        if len(current) + 1 + len(s) <= max_chunk_size:
+            current += "\n" + s
+            continue
+        chunks.append(current)
+        if chunk_overlap > 0 and len(current) > chunk_overlap:
+            tail = current[-chunk_overlap:]
+            candidate = tail + "\n" + s
+            current = candidate if len(candidate) <= max_chunk_size else s
+        else:
+            current = s
+    if current:
+        chunks.append(current)
+    return chunks
+
+
 def _read_plain_text(path: Path) -> str:
     try:
         return path.read_text(encoding="utf-8")
@@ -115,26 +213,17 @@ def _read_plain_text(path: Path) -> str:
 
 
 def _read_pdf(path: Path) -> str:
-    if not PDF_AVAILABLE or pypdf is None:
-        msg = "pypdf is not installed; cannot index PDF files."
-        raise ValueError(msg)
     reader = pypdf.PdfReader(str(path))
     texts = [page.extract_text() or "" for page in reader.pages]
     return "\n".join(texts)
 
 
 def _read_docx(path: Path) -> str:
-    if not DOCX_AVAILABLE or docx is None:
-        msg = "python-docx is not installed; cannot index DOCX files."
-        raise ValueError(msg)
     document = docx.Document(str(path))
     return "\n".join(p.text for p in document.paragraphs)
 
 
 def _read_html(path: Path) -> str:
-    if not BS4_AVAILABLE or BeautifulSoup is None:
-        msg = "beautifulsoup4 is not installed; cannot index HTML files."
-        raise ValueError(msg)
     html = path.read_text(encoding="utf-8", errors="ignore")
     soup = BeautifulSoup(html, "html.parser")
     return soup.get_text(separator="\n")
@@ -183,31 +272,20 @@ def _is_supported_file(path: Path) -> bool:
     return path.is_file() and path.suffix.lower() in allowed
 
 
-def _run_with_timeout(fn: Callable[[], Any], seconds: float | None) -> Any:
-    """Run a blocking function with a timeout, raising TimeoutError on expiry."""
-    if seconds is None or seconds <= 0:
-        return fn()
-    with ThreadPoolExecutor(max_workers=1) as ex:
-        fut = ex.submit(fn)
-        try:
-            return fut.result(timeout=seconds)
-        except FuturesTimeoutError as exc:
-            # Best-effort cancel (thread may keep running, but we can move on)
-            fut.cancel()
-            msg = f"Embedding request timed out after {seconds} seconds"
-            raise TimeoutError(msg) from exc
-
-
 class _EmbeddingProvider:
     """Simple embedding provider abstraction."""
 
     def __init__(self, model: str | None = None) -> None:
-        self.model = model or os.getenv("OLLAMA_EMBED_MODEL", "mxbai-embed-large")
-        self._use_ollama = OLLAMA_AVAILABLE
+        self._use_ollama = None
+
+        if not model:
+            model = os.getenv("OLLAMA_EMBED_MODEL", "mxbai-embed-large")
+            self._use_ollama = True
+        self.model = model
 
         # Optional OpenAI fallback if API key is available
         self._openai_client = None
-        if not self._use_ollama and OPENAI_AVAILABLE and os.getenv("OPENAI_API_KEY") and OpenAI is not None:
+        if not self._use_ollama and os.getenv("OPENAI_API_KEY"):
             try:
                 self._openai_client = OpenAI()
                 # Default embedding model for OpenAI
@@ -216,7 +294,7 @@ class _EmbeddingProvider:
             except (ValueError, RuntimeError):
                 self._openai_client = None
 
-    def embed_texts(self, texts: list[str], timeout: float | None = None) -> list[list[float]]:
+    def embed_texts(self, texts: list[str]) -> list[list[float]]:
         """Return embeddings for a list of texts.
 
         Prefers Ollama local embeddings; falls back to OpenAI if configured; otherwise raises.
@@ -228,7 +306,7 @@ class _EmbeddingProvider:
             # Ollama API accepts one prompt at a time; batch sequentially
             embeddings: list[list[float]] = []
             for t in texts:
-                resp = _run_with_timeout(lambda t=t: ollama.embeddings(model=self.model, prompt=t), timeout)
+                resp = ollama.embeddings(model=self.model, prompt=t)
                 vec = resp.get("embedding")
                 if not isinstance(vec, list):
                     msg = "Invalid embedding response from Ollama."
@@ -238,10 +316,7 @@ class _EmbeddingProvider:
 
         if self._openai_client is not None:
             # OpenAI new API: client.embeddings.create
-            resp = _run_with_timeout(
-                lambda: self._openai_client.embeddings.create(model=str(self.model), input=texts),
-                timeout,
-            )
+            resp = self._openai_client.embeddings.create(model=str(self.model), input=texts)
             return [[float(v) for v in item.embedding] for item in resp.data]
 
         msg = (
@@ -298,6 +373,8 @@ class KnowledgeBase:
         self._embedder = _EmbeddingProvider(embed_model)
         self._records: list[_KBRecord] = []
         self._next_id = 1
+        # Simple in-memory rolling progress log (mirrors APP_LOGGER messages) - no callbacks
+        self._progress_log: deque[str] = deque(maxlen=1000)
         self._load()
 
     # --------------- Persistence ---------------
@@ -345,105 +422,88 @@ class KnowledgeBase:
         self.storage_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
 
     # --------------- Indexing ---------------
-    def add_text(self, text: str, source_path: str = "unknown", chunk_id: int = 0) -> _KBRecord:
-        """Embed and add a single text chunk to the KB.
+    async def index_path(self, path: Path) -> int:
+        """Asynchronously index a path without blocking the main event loop.
 
-        Returns the created record.
+        Strategy:
+        - Run file enumeration and each file's indexing in the default thread pool.
+        - Yield control to the event loop between files so TUI remains responsive.
+        - Save once at the end (in executor) to minimize contention.
         """
-        vec = self._embedder.embed_texts([text])[0]
-        rec = _KBRecord(
-            id=self._next_id,
-            source_path=source_path,
-            chunk_id=chunk_id,
-            text=text,
-            embedding=vec,
-        )
-        self._records.append(rec)
-        self._next_id += 1
-        return rec
-
-    def index_path(
-        self,
-        path: Path,
-        progress: Callable[[Path, int, int]] | None = None,
-        on_error: Callable[[Path, str], None] | None = None,
-        embed_timeout: float | None = None,
-    ) -> int:
-        """Index a file or directory.
-
-        Parameters
-        ----------
-        path : Path
-            Path to a file or directory. Directories are scanned recursively.
-        progress : Callable[[Path, int, int]] | None
-            Optional callback invoked as progress(file_path, index, total) before each file is processed.
-        on_error : Callable[[Path, str], None] | None
-            Optional callback invoked when a file fails to read or embed. Receives the file path and error message.
-        embed_timeout : float | None
-            Optional timeout in seconds applied to each embedding request for a file's chunks.
-
-        Returns
-        -------
-        int
-            Number of chunks added to the KB.
-
-        """
+        loop = asyncio.get_running_loop()
         logger = APP_LOGGER
+        start_msg = "KB indexing started: path=%s"
 
-        def _gather_files(root_path: Path) -> list[Path]:
-            """Collect supported files respecting caps and skip rules."""
-            max_scan_files = int(os.getenv("KB_MAX_SCAN_FILES", "10000"))
-            max_file_bytes = int(os.getenv("KB_MAX_FILE_BYTES", "2097152"))
-            collected: list[Path] = []
-            if root_path.is_dir():
-                for r, dirnames, filenames in os.walk(root_path):  # pragma: no branch - linear scan
-                    dirnames[:] = list(dirnames)
-                    for fname in filenames:
-                        fp = Path(r) / fname
-                        if not _is_supported_file(fp):
-                            continue
-                        with contextlib.suppress(OSError):
-                            if fp.stat().st_size > max_file_bytes:
-                                logger.info("Skipping large file (>%d bytes): %s", max_file_bytes, fp)
-                                continue
-                        collected.append(fp)
-                        if len(collected) >= max_scan_files:
-                            logger.warning(
-                                "Reached KB_MAX_SCAN_FILES cap (%d). Further supported files will be ignored.",
-                                max_scan_files,
-                            )
-                            return collected
-            elif _is_supported_file(root_path):
-                try:
-                    if root_path.stat().st_size <= int(os.getenv("KB_MAX_FILE_BYTES", "2097152")):
-                        collected.append(root_path)
-                    else:
-                        logger.info(
-                            "Skipping large file (>%s bytes): %s",
-                            os.getenv("KB_MAX_FILE_BYTES", "2097152"),
-                            root_path,
-                        )
-                except OSError as exc:  # pragma: no cover
-                    logger.warning("Unable to stat file %s: %s", root_path, exc)
-            return collected
-
-        logger.info("KB indexing started: path=%s embed_timeout=%s", path, embed_timeout)
-        if progress is not None:
-            with contextlib.suppress(Exception):
-                progress(path, 0, 0)
-        paths, scan_time = self._gather_files_for_index(path, logger)
-        ctx = self._ProcCtx(
+        logger.info(start_msg, path)
+        self._progress_log.append(start_msg % (path,))
+        # Enumerate files off-thread
+        paths, scan_time = await loop.run_in_executor(
+            None, self._gather_files_for_index, path, logger,
+        )
+        ctx = self._ProcessContext(
             root_path=path,
             enum_duration=scan_time,
-            progress=progress,
-            on_error=on_error,
-            embed_timeout=embed_timeout,
             logger=logger,
         )
-        return self._process_files_for_index(paths, ctx)
+        total_local = len(paths)
+        added_local = 0
+        ingest_start_local = time.monotonic()
+        for idx, file_path in enumerate(paths, start=1):
+            start_file = time.monotonic()
+
+            # Index each file in executor
+            file_chunks_added = await loop.run_in_executor(None, self._index_single_file, file_path)
+            added_local += file_chunks_added
+            duration = time.monotonic() - start_file
+
+            # Progress variables
+            info_tpl = "KB file indexed: file=%s chunks=%d duration=%.2fs total_chunks_after=%d"
+            debug_tpl = "KB progress: %d/%d files (%.1f%%) cumulative_chunks=%d"
+
+            # Log progress
+            pct = (idx / total_local) * 100 if total_local else 0.0
+            logger.info(info_tpl, file_path, file_chunks_added, duration, self._next_id - 1)
+            logger.debug(debug_tpl, idx, total_local, pct, self._next_id - 1)
+
+            # Append the combined string as a single entry to the progress log
+            self._progress_log.append(debug_tpl % (idx, total_local, pct, self._next_id - 1))
+            self._progress_log.append(info_tpl % (file_path, file_chunks_added, duration, self._next_id - 1))
+
+            # Let the event loop process UI events
+            await asyncio.sleep(0)
+        if added_local:
+            await loop.run_in_executor(None, self._save)
+        ingest_duration_local = time.monotonic() - ingest_start_local
+        finish_tpl = (
+            "KB async indexing finished: root=%s files_processed=%d chunks_added=%d "
+            "scan_time=%.2fs ingest_time=%.2fs"
+        )
+        logger.info(
+            finish_tpl,
+            ctx.root_path,
+            total_local,
+            added_local,
+            ctx.enum_duration,
+            ingest_duration_local,
+        )
+        self._progress_log.append(
+            finish_tpl % (ctx.root_path, total_local, added_local, ctx.enum_duration, ingest_duration_local),
+        )
+        if added_local == 0:
+            warn_tpl = "KB async indexing produced no new chunks for path=%s"
+            logger.warning(warn_tpl, ctx.root_path)
+            self._progress_log.append(warn_tpl % (ctx.root_path,))
+        return added_local
+
+    # --------------- Progress Access ---------------
+    def recent_progress(self, limit: int = 100) -> list[str]:
+        """Return up to the latest 'limit' progress log lines."""
+        if limit <= 0:
+            return []
+        return list(self._progress_log)[-limit:]
 
     # --- helpers extracted to reduce complexity of public API method ---
-    def _gather_files_for_index(self, root_path: Path, logger: logging.Logger) -> tuple[list[Path], float]:
+    def _gather_files_for_index(self, root_path: Path, logger: logging.Logger) -> tuple[list[Path], float]:  # noqa: C901
         """Gather supported files with size & count limits; returns (paths, scan_seconds)."""
         scan_start = time.monotonic()
         max_scan_files = int(os.getenv("KB_MAX_SCAN_FILES", "10000"))
@@ -483,26 +543,18 @@ class KnowledgeBase:
         return paths, enum_duration
 
     @dataclass
-    class _ProcCtx:
+    class _ProcessContext:
         root_path: Path
         enum_duration: float
-        progress: Callable[[Path, int, int]] | None
-        on_error: Callable[[Path, str], None] | None
-        embed_timeout: float | None
         logger: logging.Logger
 
-    def _process_files_for_index(self, paths: list[Path], ctx: _ProcCtx) -> int:
+    def _process_files_for_index(self, paths: list[Path], ctx: _ProcessContext) -> int:
         total_local = len(paths)
         added_local = 0
         ingest_start_local = time.monotonic()
         for idx, file_path in enumerate(paths, start=1):
             file_start = time.monotonic()
-            if ctx.progress is not None:
-                with contextlib.suppress(Exception):
-                    ctx.progress(file_path, idx, total_local)
-            file_chunks_added = self._index_single_file(
-                file_path, on_error=ctx.on_error, embed_timeout=ctx.embed_timeout,
-            )
+            file_chunks_added = self._index_single_file(file_path)
             added_local += file_chunks_added
             file_duration = time.monotonic() - file_start
             ctx.logger.info(
@@ -512,19 +564,13 @@ class KnowledgeBase:
                 file_duration,
                 self._next_id - 1,
             )
-            # Provide an additional progress callback AFTER a file finishes indexing so UIs
-            # can reflect completion (some large files may take a while and only had a pre-file update).
-            if ctx.progress is not None:
-                with contextlib.suppress(Exception):
-                    ctx.progress(file_path, idx, total_local)
-            if ctx.logger.isEnabledFor(logging.DEBUG):
-                ctx.logger.debug(
-                    "KB progress: %d/%d files (%.1f%%) cumulative_chunks=%d",
-                    idx,
-                    total_local,
-                    (idx / total_local) * 100 if total_local else 0.0,
-                    self._next_id - 1,
-                )
+            ctx.logger.debug(
+                "KB progress: %d/%d files (%.1f%%) cumulative_chunks=%d",
+                idx,
+                total_local,
+                (idx / total_local) * 100 if total_local else 0.0,
+                self._next_id - 1,
+            )
         if added_local:
             self._save()
         ingest_duration_local = time.monotonic() - ingest_start_local
@@ -543,8 +589,6 @@ class KnowledgeBase:
     def _index_single_file(
         self,
         p: Path,
-        on_error: Callable[[Path, str], None] | None = None,
-        embed_timeout: float | None = None,
     ) -> int:
         """Index a single supported file; returns number of chunks added.
 
@@ -555,27 +599,30 @@ class KnowledgeBase:
             text = _read_text_file(p)
         except (OSError, UnicodeDecodeError, ValueError) as exc:
             APP_LOGGER.warning("Skipping unreadable file %s: %s", p, exc)
-            if on_error is not None:
-                with contextlib.suppress(Exception):
-                    on_error(p, f"Read failed: {exc}")
             return 0
 
         if not text or not text.strip():
             APP_LOGGER.info("Skipping empty file: %s", p)
             return 0
+        # Semantic chunking (preferred over recursive / fixed-size)
+        try:
+            max_chunk_size = int(os.getenv("KB_CHUNK_SIZE", "1000"))
+        except ValueError:
+            max_chunk_size = 1000
+        try:
+            chunk_overlap = int(os.getenv("KB_CHUNK_OVERLAP", "200"))
+        except ValueError:
+            chunk_overlap = 200
 
-        chunks = _chunk_text(text)
+        chunks = _semantic_chunk_text(text, max_chunk_size=max_chunk_size, chunk_overlap=chunk_overlap)
         if not chunks:
             APP_LOGGER.info("No chunks produced for file: %s", p)
             return 0
 
         try:
-            embeddings = self._embedder.embed_texts(chunks, timeout=embed_timeout)
+            embeddings = self._embedder.embed_texts(chunks)
         except Exception as exc:  # noqa: BLE001
             APP_LOGGER.warning("Embedding failed for %s: %s", p, exc)
-            if on_error is not None:
-                with contextlib.suppress(Exception):
-                    on_error(p, f"Embedding failed: {exc}")
             return 0
 
         added = 0
