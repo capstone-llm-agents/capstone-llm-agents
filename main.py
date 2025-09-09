@@ -1,7 +1,9 @@
 """Main entry point for the capstone-llm-agents project."""
 
+import asyncio
+
+from components.agents.assistant_agent import ASSISTANT_AGENT
 from components.agents.calendar_agent import CALENDAR_AGENT
-from components.agents.example_agent import ASSISTANT_AGENT
 from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
@@ -17,9 +19,9 @@ def main() -> None:
     mas = MAS()
 
     mas.add_agent(ASSISTANT_AGENT)
+    mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(WEATHER_AGENT)
-    mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
 
     mcp_client = MCPClient()
@@ -41,6 +43,9 @@ def main() -> None:
 
     app = TextualApp(client)
     app.run()
+
+    # shutdown
+    asyncio.run(app.on_shutdown())
 
 
 if __name__ == "__main__":
