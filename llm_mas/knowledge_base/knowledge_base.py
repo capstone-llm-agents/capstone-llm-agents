@@ -51,9 +51,7 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
         return 0.0
     return dot / (na * nb)
 
-
-# TODO: Implement better chunking  # noqa: TD003
-def _chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
+def _fixed_size_chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
     """Chunk text into overlapping windows of characters.
 
     This is a simple heuristic that works fine for many text files.
@@ -68,6 +66,142 @@ def _chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[s
         if chunk:
             chunks.append(chunk)
         i += max(1, chunk_size - overlap)
+    return chunks
+
+
+def _recursive_chunk_text(
+    text: str,
+    max_chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+    separators: list[str] | None = None,
+) -> list[str]:
+    r"""Recursively split ``text`` into overlapping chunks.
+
+    See helper functions: ``_rc_split_leaves`` and ``_rc_pack`` for the two phases.
+    """
+    if not text:
+        return []
+    if max_chunk_size <= 0:
+        return [text]
+    if separators is None:
+        separators = ["\n\n", "\n", ". ", " ", ""]
+    if chunk_overlap >= max_chunk_size:
+        chunk_overlap = max(0, max_chunk_size // 5)
+    leaves = _rc_split_leaves(text, max_chunk_size, separators)
+    if not leaves:
+        return []
+    return _rc_pack(leaves, max_chunk_size, chunk_overlap)
+
+
+def _rc_split_leaves(text: str, max_chunk_size: int, separators: list[str]) -> list[str]:
+    """Return list of fragments <= max_chunk_size by hierarchical splitting."""
+    result: list[str] = []
+    stack: list[tuple[str, int]] = [(text, 0)]
+    last_sep_idx = len(separators)
+    while stack:
+        frag, idx = stack.pop()
+        if len(frag) <= max_chunk_size:
+            result.append(frag)
+            continue
+        if idx >= last_sep_idx:
+            result.extend(
+                frag[i : i + max_chunk_size] for i in range(0, len(frag), max_chunk_size)
+            )
+            continue
+        sep = separators[idx]
+        if sep and sep in frag:
+            parts = [p for p in frag.split(sep) if p]
+            if len(parts) == 1:
+                stack.append((frag, idx + 1))
+            else:
+                # Reverse push to preserve order
+                stack.extend((p, idx + 1) for p in reversed(parts))
+        else:
+            stack.append((frag, idx + 1))
+    result.reverse()
+    return result
+
+
+def _rc_pack(fragments: list[str], max_chunk_size: int, chunk_overlap: int) -> list[str]:
+    """Greedily pack leaf fragments with overlap and final normalization."""
+    if not fragments:
+        return []
+    chunks: list[str] = []
+    current = fragments[0]
+    for frag in fragments[1:]:
+        tentative = current + "\n" + frag
+        if len(tentative) <= max_chunk_size:
+            current = tentative
+            continue
+        chunks.append(current)
+        if chunk_overlap > 0 and len(current) > chunk_overlap:
+            tail = current[-chunk_overlap:].lstrip("\n")
+            prefix = tail + ("\n" if tail and not tail.endswith("\n") else "")
+            current = prefix + frag
+            if len(current) > max_chunk_size:
+                chunks.append(current[:max_chunk_size])
+                current = current[max_chunk_size:]
+        else:
+            current = frag
+    if current:
+        chunks.append(current)
+    normalized: list[str] = []
+    for c in chunks:
+        if len(c) <= max_chunk_size:
+            normalized.append(c)
+        else:
+            normalized.extend(c[i : i + max_chunk_size] for i in range(0, len(c), max_chunk_size))
+    return normalized
+
+
+# --- Semantic chunking (preferred) ---
+def _semantic_chunk_text(
+    text: str,
+    max_chunk_size: int = 1000,
+    chunk_overlap: int = 200,
+) -> list[str]:
+    """Lightweight semantic-style chunking (paragraph + sentence aware)."""
+    text = text.strip()
+    if not text:
+        return []
+    if max_chunk_size <= 0:
+        return [text]
+    if chunk_overlap >= max_chunk_size:
+        chunk_overlap = max_chunk_size // 5
+
+    sent_pattern = re.compile(r"(?<=[.!?])\s+(?=[A-Z0-9])")
+    paragraphs = [p.strip() for p in re.split(r"\n\s*\n", text) if p.strip()]
+    sentences = [s.strip() for para in paragraphs for s in sent_pattern.split(para) if s.strip()]
+    if not sentences:
+        return []
+
+    def slice_long(s: str) -> list[str]:
+        return [s[i : i + max_chunk_size] for i in range(0, len(s), max_chunk_size)]
+
+    chunks: list[str] = []
+    current = ""
+    for s in sentences:
+        if len(s) > max_chunk_size:
+            if current:
+                chunks.append(current)
+                current = ""
+            chunks.extend(slice_long(s))
+            continue
+        if not current:
+            current = s
+            continue
+        if len(current) + 1 + len(s) <= max_chunk_size:
+            current += "\n" + s
+            continue
+        chunks.append(current)
+        if chunk_overlap > 0 and len(current) > chunk_overlap:
+            tail = current[-chunk_overlap:]
+            candidate = tail + "\n" + s
+            current = candidate if len(candidate) <= max_chunk_size else s
+        else:
+            current = s
+    if current:
+        chunks.append(current)
     return chunks
 
 
@@ -369,7 +503,7 @@ class KnowledgeBase:
         return list(self._progress_log)[-limit:]
 
     # --- helpers extracted to reduce complexity of public API method ---
-    def _gather_files_for_index(self, root_path: Path, logger: logging.Logger) -> tuple[list[Path], float]:
+    def _gather_files_for_index(self, root_path: Path, logger: logging.Logger) -> tuple[list[Path], float]:  # noqa: C901
         """Gather supported files with size & count limits; returns (paths, scan_seconds)."""
         scan_start = time.monotonic()
         max_scan_files = int(os.getenv("KB_MAX_SCAN_FILES", "10000"))
@@ -470,8 +604,17 @@ class KnowledgeBase:
         if not text or not text.strip():
             APP_LOGGER.info("Skipping empty file: %s", p)
             return 0
+        # Semantic chunking (preferred over recursive / fixed-size)
+        try:
+            max_chunk_size = int(os.getenv("KB_CHUNK_SIZE", "1000"))
+        except ValueError:
+            max_chunk_size = 1000
+        try:
+            chunk_overlap = int(os.getenv("KB_CHUNK_OVERLAP", "200"))
+        except ValueError:
+            chunk_overlap = 200
 
-        chunks = _chunk_text(text)
+        chunks = _semantic_chunk_text(text, max_chunk_size=max_chunk_size, chunk_overlap=chunk_overlap)
         if not chunks:
             APP_LOGGER.info("No chunks produced for file: %s", p)
             return 0
