@@ -18,10 +18,11 @@ def main() -> None:
     """Run the main application logic."""
     mas = MAS()
 
+    mas.add_agent(TRAVEL_PLANNER_AGENT)
+
     mas.add_agent(ASSISTANT_AGENT)
     mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(WEATHER_AGENT)
-    mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
 
     mcp_client = MCPClient()

@@ -15,14 +15,14 @@ class MemorySaveLong(Action):
     def __init__(self) -> None:
         """Initialize the memory save action."""
         super().__init__(description="Access memory")
-        self.config = config = {
+        self.config = {
             "vector_store": {
                 "provider": "chroma",
                 "config": {
                     "collection_name": "test",
                     "path": "db",
                 },
-            }
+            },
         }
 
         """
@@ -73,12 +73,12 @@ class MemorySearchLong(Action):
         super().__init__(description="Access memory")
         self.config = {
             "vector_store": {
-                "provider": "qdrant",
+                "provider": "chroma",
                 "config": {
-                    "host": "localhost",
-                    "port": 6333,
+                    "collection_name": "test",
+                    "path": "db",
                 },
-            }
+            },
         }
 
     @override
