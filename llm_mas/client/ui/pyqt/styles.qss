@@ -1,0 +1,108 @@
+/* styles.qss */
+
+/* General window background */
+QWidget {
+    background-color: #1e1e1e;
+    color: #ffffff;
+    font-family: "Roboto", sans-serif;
+}
+
+/* Chat input line */
+QLineEdit#chat_input {
+    background-color: #2e2e2e;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px;
+    color: #ffffff;
+}
+
+/* Buttons */
+QPushButton {
+    background-color: #3a3a3a;
+    border: 1px solid #555;
+    border-radius: 5px;
+    padding: 5px 10px;
+}
+
+QPushButton:hover {
+    background-color: #505050;
+}
+
+QPushButton:pressed {
+    background-color: #606060;
+}
+
+/* Scroll areas */
+QScrollArea {
+    background-color: #1e1e1e;
+    border: none;
+}
+
+/* Agent message bubble */
+AgentMessage QLabel{
+    background-color: #3b3b6b;
+    color: #FFFFFF;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+/* User message bubble */
+UserMessage QLabel{
+    background-color: #4b4b4b;
+    color: #FFFFFF;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+UserChatScreen QLineEdit {
+    background-color: #3b3b3b;
+    color: #FFFFFF;
+    border-radius: 10px;
+    padding: 8px;
+}
+
+QScrollBar:vertical {
+    background: #2e2e2e;      
+    width: 12px;               
+    margin: 0px 0px 0px 0px;  
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical {
+    background: #5c5c5c;      
+    min-height: 20px;          
+    border-radius: 6px;
+}
+
+QScrollBar::handle:vertical:hover {
+    background: #888888;     
+}
+
+QScrollBar::add-line:vertical,
+QScrollBar::sub-line:vertical {
+    height: 0px;              
+}
+
+QScrollBar::add-page:vertical,
+QScrollBar::sub-page:vertical {
+    background: none;          
+}
+
+
+UserChatScreen QPushButton {
+    background-color: #1b1b1b;
+    color: #FFFFFF;
+    border-radius: 10px;
+    padding: 8px;
+    border: 1px solid #555;
+}
+
+MainMenu QPushButton {
+    background-color: #1b1b1b;
+    color: #FFFFFF;
+    border-radius: 10px;
+    padding: 8px;
+    border: 1px solid #555;
+}
+
+

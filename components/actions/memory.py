@@ -36,6 +36,7 @@ class MemorySaveLong(Action):
                         }
                     }
         """
+        }
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         m = Mem.from_config(self.config)
