@@ -1,7 +1,7 @@
 """Main entry point for the capstone-llm-agents project."""
 
+from components.agents.assistant_agent import ASSISTANT_AGENT
 from components.agents.calendar_agent import CALENDAR_AGENT
-from components.agents.example_agent import ASSISTANT_AGENT
 from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT

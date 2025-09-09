@@ -26,7 +26,7 @@ tool_manager = ToolManager(
     tool_narrower,
 )
 
-ASSISTANT_AGENT = Agent(
+EXAMPLE_AGENT = Agent(
     "Assistant",
     "An assistant that can interacts with the user to handle their requests.",
     action_space,
@@ -37,10 +37,10 @@ ASSISTANT_AGENT = Agent(
 
 
 # add some actions
-ASSISTANT_AGENT.add_action(SimpleResponse())
+EXAMPLE_AGENT.add_action(SimpleResponse())
 # ASSISTANT_AGENT.add_action(RespondWithChatHistory())
-ASSISTANT_AGENT.add_action(StopAction())
-ASSISTANT_AGENT.add_action(RetrieveKnowledge())
+EXAMPLE_AGENT.add_action(StopAction())
+EXAMPLE_AGENT.add_action(RetrieveKnowledge())
 # ASSISTANT_AGENT.add_action(UpdateTools(tool_creator))
 # ASSISTANT_AGENT.add_action(GetTools(tool_creator))
 # ASSISTANT_AGENT.add_action(GetRelevantTools(tool_creator))
