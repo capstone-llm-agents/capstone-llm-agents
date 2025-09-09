@@ -13,7 +13,6 @@ from textual.screen import Screen
 from textual.widgets import Button, DirectoryTree, Footer, Header, ListItem, ListView, Static
 
 from llm_mas.knowledge_base.knowledge_base import GLOBAL_KB
-from llm_mas.logging.loggers import APP_LOGGER
 
 if TYPE_CHECKING:
     from textual.app import ComposeResult
@@ -27,13 +26,12 @@ class UploadScreen(Screen):
     def __init__(self) -> None:
         """Initialize the upload screen."""
         super().__init__()
-        # We no longer duplicate files. Keep `uploads` for backward-compat display only.
-        self.upload_dir = Path.cwd() / "uploads"
         self.selected_path: Path | None = None
-        # Use a non-conflicting name; `tree` is a property on Textual DOM nodes.
         self.fs_tree: DirectoryTree | None = None
         self.selected_label: Static | None = None
         self.status: Static | None = None
+        self._ingest_task: asyncio.Task | None = None
+        self._progress_task: asyncio.Task | None = None
 
     def compose(self) -> ComposeResult:
         """Compose the upload UI."""
@@ -67,9 +65,7 @@ class UploadScreen(Screen):
         yield Footer()
 
     def on_mount(self) -> None:
-        """Ensure legacy upload directory exists (for display only)."""
-        self.upload_dir.mkdir(parents=True, exist_ok=True)
-        # Load ingested items list from a separate file (not the KB records)
+        """Load ingested items list from a separate file (not the KB records)."""
         self._roots_file = GLOBAL_KB.storage_path.with_name("kb_ingested_roots.json")
         self._ingested_roots: set[str] = set()
         self._load_ingested_roots()
@@ -98,30 +94,6 @@ class UploadScreen(Screen):
                 return candidate
             i += 1
 
-    def _index_into_kb(self, source: Path) -> int:
-        """Index a file or directory into the Knowledge Base. Returns chunks added."""
-        # Progress callback runs in a worker thread; marshal UI updates safely to the main thread
-        def progress_cb(file_path: Path, idx: int, total: int) -> None:
-            # Light debug log so we can confirm callback execution even if UI doesn't reflect it
-            if APP_LOGGER.isEnabledFor(logging.DEBUG):
-                APP_LOGGER.debug("KB progress callback: %s (%d/%d)", file_path, idx, total)
-
-            # Update status with current file (or done if idx == total and called post-file)
-            label = f"Ingesting ({idx}/{total}): {file_path}" if total else f"Scanning: {file_path}"
-            self._set_status(label)
-            btn = self._get_upload_button()
-            if btn is not None:
-                phase_suffix = "✓" if idx == total else "…"
-                self._set_button_text(btn, f"Ingesting {idx}/{total}{phase_suffix}")
-                with contextlib.suppress(Exception):
-                    btn.refresh()
-            # Also refresh status widget explicitly (older Textual versions sometimes need it)
-            if self.status is not None:
-                with contextlib.suppress(Exception):
-                    self.status.refresh()
-
-        return GLOBAL_KB.index_path(source, progress=progress_cb, embed_timeout=30)
-
     # ---- UI helpers ----
     def _get_upload_button(self) -> Button | None:
         try:
@@ -139,16 +111,17 @@ class UploadScreen(Screen):
             logging.getLogger(__name__).debug("Failed to set button text: %s", exc)
 
     async def _handle_upload(self) -> None:
-        """Run ingestion with a simple loading indicator and update UI state."""
+        """Kick off ingestion as a background task without blocking UI."""
+        if self._ingest_task and not self._ingest_task.done():
+            self._set_status("Ingestion already running in background…")
+            return
         if not self.selected_path:
             self._set_status("No selection. Select a file or folder first.")
             return
 
-        self._set_status("Ingesting… Please wait…")
-
         upload_btn = self._get_upload_button()
         old_label: str | None = None
-        if upload_btn is not None:
+        if upload_btn:
             try:
                 old_label = str(getattr(upload_btn, "label", "Upload Selected"))
             except Exception:  # noqa: BLE001
@@ -156,29 +129,61 @@ class UploadScreen(Screen):
             self._set_button_text(upload_btn, "Ingesting…")
             upload_btn.disabled = True
 
+        async def run_ingest(path: Path, previous_label: str | None) -> None:
+            try:
+                self._set_status("Ingesting in background… You can continue using the app.")
+                added = await GLOBAL_KB.index_path(path)
+                if added == 0:
+                    self._set_status(
+                        "No indexable files found (supported: .txt, .md, .py, .json, .csv, .yaml, .yml, .toml, "
+                        ".pdf, .docx, .html, .htm, .rtf).",
+                    )
+                else:
+                    self._set_status(f"Indexed {added} chunks from: {path}")
+                    self._ingested_roots.add(str(path))
+                    self._save_ingested_roots()
+                    self._refresh_ingested_list()
+            except Exception as exc:  # noqa: BLE001
+                self._set_status(f"Indexing failed: {exc!s}")
+            finally:
+                btn = self._get_upload_button()
+                if btn:
+                    btn.disabled = False
+                    if previous_label is not None:
+                        self._set_button_text(btn, previous_label)
+                # Stop progress watcher
+                if self._progress_task and not self._progress_task.done():
+                    self._progress_task.cancel()
+                    with contextlib.suppress(asyncio.CancelledError):
+                        await self._progress_task
+
+        self._ingest_task = asyncio.create_task(run_ingest(self.selected_path, old_label))
+        # Launch progress watcher that polls recent_progress for latest line
+        if self._progress_task is None or self._progress_task.done():
+            self._progress_task = asyncio.create_task(self._watch_progress())
+
+    async def _watch_progress(self) -> None:
+        """Periodically pull latest KB progress line and show it while ingesting."""
         try:
-            added = await asyncio.to_thread(self._index_into_kb, self.selected_path)
-            if added == 0:
-                self._set_status(
-                    "No indexable files found (supported: .txt, .md, .py, .json, .csv, .yaml, .yml, .toml, "
-                    ".pdf, .docx, .html, .htm, .rtf).",
-                )
-            else:
-                self._set_status(f"Indexed {added} chunks from: {self.selected_path}")
-                # Track ingested root, whether file or folder
-                self._ingested_roots.add(str(self.selected_path))
-                self._save_ingested_roots()
-                self._refresh_ingested_list()
-        except Exception as exc:  # noqa: BLE001
-            self._set_status(f"Indexing failed: {exc!s}")
-        finally:
-            if upload_btn is not None:
-                upload_btn.disabled = False
-                try:
-                    if old_label is not None:
-                        self._set_button_text(upload_btn, old_label)
-                except Exception as e:  # noqa: BLE001
-                    logging.getLogger(__name__).warning("Failed to restore upload button label: %s", e)
+            while self._ingest_task and not self._ingest_task.done():
+                lines = GLOBAL_KB.recent_progress(1)
+                if lines:
+                    # Only overwrite if we're still in ingestion phase
+                    self._set_status(lines[-1])
+                await asyncio.sleep(0.5)
+        except asyncio.CancelledError:
+            pass
+
+    async def on_unmount(self) -> None:  # type: ignore[override]
+        """Ensure background ingestion is cancelled when leaving the screen."""
+        if self._ingest_task and not self._ingest_task.done():
+            self._ingest_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._ingest_task
+        if self._progress_task and not self._progress_task.done():
+            self._progress_task.cancel()
+            with contextlib.suppress(asyncio.CancelledError):
+                await self._progress_task
 
     # ---- Ingested roots persistence ----
     def _load_ingested_roots(self) -> None:
