@@ -58,3 +58,12 @@ Run them with ```python ./mcp_server/<server_file_name>```
 For example, ```python ./mcp_server/calendar_server.py``` to run the server with the calendar tools.
 
 The application also supports external servers you can add them through the GUI. Currently it doesn't support headers, so most servers don't work. This will be fixed later on.
+
+## Storing API Keys as Environment Variables
+#Windows
+
+
+#Mac
+
+
+#Linux
