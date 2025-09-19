@@ -3,6 +3,7 @@
 import asyncio
 import contextlib
 
+from pandas.core.indexers import check_key_length
 from textual import events
 from textual.app import ComposeResult
 from textual.widgets import Input, Static
@@ -48,14 +49,17 @@ class UserChatScreen(BaseChatScreen):
             self.chat_container.mount(Static("No assistant agent available to respond."))
             return
         state = self.checkpointer.fetch()
+
         if state:
-            for message in state['messages']:
-                message_to_save = Message
-                message_to_save.role = message['role']
-                message_to_save.content = message['content']
-                message_to_save.sender = message['sender']
+            for message in state:
+                message_to_save = Message(
+                    role=message['role'],
+                    content=message['content'],
+                    sender=agent
+                )
+                APP_LOGGER.info(message_to_save.sender)
                 self.conversation.chat_history.add_message(message_to_save)
-        elif not self.conversation.chat_history.messages:
+        else:
             # add initial message
             message = "Hello! I'm your assistant. How can I help you today?"
             self.conversation.add_message(agent, message)
@@ -200,19 +204,23 @@ class UserChatScreen(BaseChatScreen):
         """Keyboard shortcuts for back/cancel."""
 
         if event.key == "escape":
+            message = self.conversation.get_chat_history()
+            state: State = {"messages": message.as_dicts()}
+            self.checkpointer.save(state)
             if self._current_task and not self._current_task.done():
                 self._current_task.cancel()
             self.app.pop_screen()
         elif event.key == "ctrl+c":
+            message = self.conversation.chat_history.as_dicts()
+
+            state: State = {"messages": message}
+            self.checkpointer.save(state)
             if self._current_task and not self._current_task.done():
                 self._current_task.cancel()
 
     async def on_unmount(self) -> None:
         """Cancel any ongoing agent task on screen unmount."""
-        message = self.conversation.chat_history.as_dicts()
 
-        state: State = {"messages": message}
-        self.checkpointer.save(state)
         if self._current_task and not self._current_task.done():
             self._current_task.cancel()
             with contextlib.suppress(asyncio.CancelledError):
