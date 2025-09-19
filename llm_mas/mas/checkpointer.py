@@ -1,6 +1,5 @@
-import json
 import sqlite3
-
+import pickle
 from llm_mas.mas.agentstate import State
 
 
@@ -17,21 +16,29 @@ class CheckPointer:
                 """
                 CREATE TABLE IF NOT EXISTS agent_state (
                     id INTEGER PRIMARY KEY,
-                    state_json TEXT NOT NULL,
+                    state BLOB,
                     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
                 """
             )
 
     def save(self, state: State):
+
+        """
         json_string = json.dumps(state, indent=4)
+        """
+
+        messages_to_pickle = state.get("messages", [])[-20:]
+
+        pickled_history=pickle.dumps(messages_to_pickle)
+
         with sqlite3.connect('test.sqlite') as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                INSERT INTO agent_state (state_json) VALUES (?)
+                INSERT INTO agent_state (state) VALUES (?)
                 """,
-                (json_string,)  # The comma is crucial to make it a tuple!
+                (pickled_history,)
             )
             conn.commit()
 
@@ -41,13 +48,13 @@ class CheckPointer:
             cursor = conn.cursor()
             cursor.execute(
                 """
-                SELECT state_json FROM agent_state ORDER BY id DESC LIMIT 1
+                SELECT state FROM agent_state ORDER BY id DESC LIMIT 1
                 """
             )
             row = cursor.fetchone()
             if row:
-                json_string = row[0]
-                data: State = json.loads(json_string)
+                pickle_data = row[0]
+                data: State = pickle.loads(pickle_data)
                 return data
             else:
                 return None
