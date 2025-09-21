@@ -23,6 +23,7 @@ class ActionContext:
         agent: Agent,
         user: User,
         conversation_manager: ConversationManager,
+        plan: str,
     ) -> None:
         """Initialize the action context with a conversation and an optional last result."""
         self.conversation = conversation
@@ -31,6 +32,7 @@ class ActionContext:
         self.agent = agent
         self.user = user
         self.conversation_manager = conversation_manager
+        self.plan = plan
 
     @classmethod
     def from_action_result(
@@ -46,4 +48,5 @@ class ActionContext:
             agent=context.agent,
             user=context.user,
             conversation_manager=context.conversation_manager,
+            plan=context.plan
         )

@@ -44,7 +44,7 @@ class AskFriendForHelp(Action):
         vector_selector: VectorSelector | None = None,
     ) -> None:
         """Initialize the AskFriendForHelp action."""
-        super().__init__(description="Asks a friend for help")
+        super().__init__(description="Ask other agents for help who may be able to answer the users question")
         self.embedding_model = embedding_model
         self.vector_selector = vector_selector or VectorSelector()
 

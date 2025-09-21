@@ -68,6 +68,7 @@ class UserChatScreen(BaseChatScreen):
                 agent,
                 self.client.user,
                 self.client.get_mas().conversation_manager,
+                ""
             )
             step_count = 0
 

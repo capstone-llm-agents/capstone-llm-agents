@@ -19,9 +19,10 @@ from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.conversation import AssistantMessage, UserAssistantExample, UserMessage
 from llm_mas.mas.user import User
-from llm_mas.model_providers.ollama.call_llm import (
+from llm_mas.model_providers.openai.call_llm import (
     call_llm_with_examples,
 )
 from llm_mas.utils.json_parser import extract_json_from_response
@@ -105,6 +106,7 @@ class LLMSelector(ActionSelector):
         prompt = ""
 
         prompt += f"""
+        Follow this plan {context.plan}
         Choose an action from the following list of actions:
         {actions_str}
         """
@@ -133,7 +135,7 @@ class LLMSelector(ActionSelector):
         }
         ```
         """
-
+        APP_LOGGER.debug(prompt)
         return prompt.strip()
 
     def craft_example(self, actions: list[Action], context: ActionContext, chosen_index: int) -> UserAssistantExample:

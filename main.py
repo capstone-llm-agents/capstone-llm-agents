@@ -12,10 +12,11 @@ from llm_mas.client.ui.textual_app.app import TextualApp
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
-
+from components.actions.planing import Plan
 
 def main() -> None:
     """Run the main application logic."""
+
     mas = MAS()
 
     mas.add_agent(ASSISTANT_AGENT)
@@ -46,6 +47,8 @@ def main() -> None:
 
     # shutdown
     asyncio.run(app.on_shutdown())
+
+
 
 
 if __name__ == "__main__":
