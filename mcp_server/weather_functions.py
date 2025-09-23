@@ -61,14 +61,30 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
             "wind_gusts_10m",
         ],
         # "forecast_days": 16,#i think it will be best to query results based off the date instead of searching up the dates just because of how the api doesn't always get the right range(actually giving the full dataframe could also be useful for multi questions)
-        "timezone": time_zone,
+        "timezone": "auto",
         "start_date": start_date,
         "end_date": end_date,
     }
     responses = openmeteo.weather_api(url, params=params)
 
+
     # Process first location. Add a for-loop for multiple locations or weather models
     response = responses[0]
+    if time_zone == response.Timezone().decode('utf-8'):
+        print("no changes needed")
+    else:
+        print("new time is.....")
+
+
+
+
+
+
+
+
+
+
+
     print(f"Coordinates: {response.Latitude()}°N {response.Longitude()}°E")
     print(f"Elevation: {response.Elevation()} m asl")
     print(f"Timezone: {response.Timezone()}{response.TimezoneAbbreviation()}")
