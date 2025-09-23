@@ -11,15 +11,30 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
+import os
 
 # functions file
 from weather_functions import break_down_result, deduce_weather_result, generate_weather_data
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 ########llm agent setup########
-llm_config = {
-    "api_type": "ollama",
-    "model": "gemma3",
-}
+Model_type = 2 #use 1 for gemma3 or 2 for openai
+
+if Model_type == 1:
+    llm_config = {
+        "api_type": "ollama",
+        "model": "gemma3",
+    }
+elif Model_type == 2:
+    llm_config = {
+        "api_type": "openai",
+        "model": "gpt-4o-mini",
+        "api_key": os.environ.get("OPENAI_API_KEY"),
+    }
+else:
+    print("No model has been selected in weather_server.py")
 
 weather_agent = ConversableAgent(
     name="weather_agent",
@@ -72,13 +87,20 @@ def obtain_weather_details(prompt):
         print("#####################################")
         print("Extracted location and date")
         print("#####################################")
-        print(extracted_details["content"])
+        if Model_type == 1:
+            LLM_details = extracted_details["content"]
+            print(LLM_details)
+        elif Model_type == 2:
+            LLM_details = extracted_details
+            print(LLM_details)
+        else:
+            print("Error within weather_server.py response collection")
 
         # This array will be used to store each/how many readings need to be looped through the function
         all_locations = []
 
         time = None
-        for line in extracted_details["content"].splitlines():
+        for line in LLM_details.splitlines():
             if "Reading)" in line:
                 reading = line.split(") ")[1].strip()
             elif "Location)" in line:
