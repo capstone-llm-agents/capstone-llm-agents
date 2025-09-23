@@ -36,8 +36,9 @@ weather_agent = ConversableAgent(
 ########llm agent setup########
 
 
-def generate_weather_data(latitude, longitude, start_date, end_date):
+def generate_weather_data(latitude, longitude, start_date, end_date, time_zone):
     # Setup the Open-Meteo API client with cache and retry on error
+    #print(time_zone)
     cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
@@ -57,7 +58,7 @@ def generate_weather_data(latitude, longitude, start_date, end_date):
             "wind_gusts_10m",
         ],
         # "forecast_days": 16,#i think it will be best to query results based off the date instead of searching up the dates just because of how the api doesn't always get the right range(actually giving the full dataframe could also be useful for multi questions)
-        "timezone": "auto",
+        "timezone": time_zone,
         "start_date": start_date,
         "end_date": end_date,
     }

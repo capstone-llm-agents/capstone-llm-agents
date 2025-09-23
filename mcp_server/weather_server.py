@@ -136,7 +136,7 @@ def obtain_weather_details(prompt):
             print("#####################################")
             print("Generated weather data")
             print("#####################################")
-            weather_data = generate_weather_data(locations[2], locations[3], locations[4], locations[5])
+            weather_data = generate_weather_data(locations[2], locations[3], locations[4], locations[5], locations[7])
             print(weather_data)
             print("\n\n\n")
 
