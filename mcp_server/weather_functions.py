@@ -36,9 +36,12 @@ weather_agent = ConversableAgent(
 ########llm agent setup########
 
 
-def generate_weather_data(latitude, longitude, start_date, end_date, time_zone):
+def generate_weather_data(latitude, longitude, start_date, end_date, time, time_zone):
+
     # Setup the Open-Meteo API client with cache and retry on error
-    #print(time_zone)
+    print("###Time zone and time inputed###")
+    print(time_zone)
+    print(time)
     cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
     retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
     openmeteo = openmeteo_requests.Client(session=retry_session)
