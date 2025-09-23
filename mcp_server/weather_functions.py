@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 ########llm agent setup########
-Model_type = 1 #use 1 for gemma3 or 2 for openai
+Model_type = 2 #use 1 for gemma3 or 2 for openai
 
 if Model_type == 1:
     llm_config = {
