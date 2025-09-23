@@ -20,7 +20,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 ########llm agent setup########
-Model_type = 2 #use 1 for gemma3 or 2 for openai
+Model_type = 1 #use 1 for gemma3 or 2 for openai
 
 if Model_type == 1:
     llm_config = {
@@ -61,25 +61,22 @@ def obtain_weather_details(prompt):
         Tasks: {prompt}
         Current Date: {current_date}
 
-        If the date requested is not clear assume they are talking about today for both the beginning and the end dates.
-        Remember if the user requests for tomorrows weather add a day to the current date. Likewise if they specify a date use that for the start and end dates.
-        Always keep the start date and end date the same for each task.
+        If the date requested is not clear assume they are talking about today.
+        Remember if the user requests for tomorrows weather add a day to the current date. Likewise if they specify a date use that in your response instead.
         If no time is provided use 12:00
         Directly and only answer with the follow format:
         Reading) 1
         Location) Ottawa
         Latitude) -10.6531
         Longitude) 14.2315
-        Start date) yyyy-mm-dd
-        End date) yyyy-mm-dd
+        Date) yyyy-mm-dd
         Time) 15:00
 
         Reading) 2
         Location) Rosedale
         Latitude) -20.2187
         Longitude) 27.9102
-        Start date) yyyy-mm-dd
-        End date) yyyy-mm-dd
+        Date) yyyy-mm-dd
         Time) 21:00
         """
 
@@ -109,10 +106,9 @@ def obtain_weather_details(prompt):
                 latitude = line.split(") ")[1].strip()
             elif "Longitude)" in line:
                 longitude = line.split(") ")[1].strip()
-            elif "Start date)" in line:
+            elif "Date)" in line:
                 start_date = line.split(") ")[1].strip()
-            elif "End date)" in line:
-                end_date = line.split(") ")[1].strip()
+                end_date = start_date
             elif "Time)" in line:
                 time = line.split(") ")[1].strip()
             if time != None:  # if time is assigned a value save all data read so far and reset variables
