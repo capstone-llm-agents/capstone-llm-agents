@@ -76,6 +76,7 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
 
     if time_zone == response.Timezone().decode('utf-8'):
         print("no changes needed")
+        new_date = start_date
     else:
         cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
         retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
@@ -125,7 +126,7 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
         print(second_hours)
 
         print("final time adjustment in hours")
-        time_difference = (hours - second_hours)
+        time_difference = (second_hours - hours)#needs to be this way so the target is subtracted from the locations timezone
         print(time_difference)
 
         if time_difference < 0:
@@ -147,17 +148,18 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
                     adjusted_time = (adjusted_time - 1)
                 else:
                     adjusted_time = 23
-                    change_date = + 1
+                    change_date = - 1
             else:
                 if adjusted_time != 23:
                     adjusted_time = (adjusted_time + 1)
                 else:
                     adjusted_time = 0
-                    change_date = - 1
+                    change_date = + 1
             i = (i + 1)
         adjusted_time = str(adjusted_time) + ":00"
+        new_time = adjusted_time
         print("###the new time is###")
-        print(adjusted_time)
+        print(new_time)
         if change_date == 0:
             print("The date doesn't need to be changed")
             new_date = start_date
@@ -178,20 +180,35 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
 
 
 
+    #this will create the results needed for the actual date
+    cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
+    retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+    openmeteo = openmeteo_requests.Client(session=retry_session)
 
-        #this will create the results needed for the actual date
+    # Make sure all required weather variables are listed here
+    # The order of variables in hourly or daily is important to assign them correctly below
+    url = "https://api.open-meteo.com/v1/forecast"
+    params = {
+        "latitude": latitude,
+        "longitude": longitude,
+        "hourly": [
+            "temperature_2m",
+            "uv_index",
+            "precipitation_probability",
+            "precipitation",
+            "wind_speed_10m",
+            "wind_gusts_10m",
+        ],
+        # "forecast_days": 16,#i think it will be best to query results based off the date instead of searching up the dates just because of how the api doesn't always get the right range(actually giving the full dataframe could also be useful for multi questions)
+        "timezone": "auto",
+        "start_date": new_date,
+        "end_date": new_date,
+    }
+    responses = openmeteo.weather_api(url, params=params)
 
 
-
-
-
-
-
-
-
-
-
-
+    # Process first location. Add a for-loop for multiple locations or weather models
+    response = responses[0]
 
     print(f"Coordinates: {response.Latitude()}°N {response.Longitude()}°E")
     print(f"Elevation: {response.Elevation()} m asl")
