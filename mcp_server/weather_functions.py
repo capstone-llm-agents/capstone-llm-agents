@@ -70,10 +70,64 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
 
     # Process first location. Add a for-loop for multiple locations or weather models
     response = responses[0]
+
+
+
     if time_zone == response.Timezone().decode('utf-8'):
         print("no changes needed")
     else:
-        print("new time is.....")
+        cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
+        retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+        openmeteo = openmeteo_requests.Client(session=retry_session)
+
+        # Make sure all required weather variables are listed here
+        # The order of variables in hourly or daily is important to assign them correctly below
+        url = "https://api.open-meteo.com/v1/forecast"
+        params = {
+            "latitude": latitude,
+            "longitude": longitude,
+            "hourly": [
+                "temperature_2m",
+                "uv_index",
+                "precipitation_probability",
+                "precipitation",
+                "wind_speed_10m",
+                "wind_gusts_10m",
+            ],
+            # "forecast_days": 16,#i think it will be best to query results based off the date instead of searching up the dates just because of how the api doesn't always get the right range(actually giving the full dataframe could also be useful for multi questions)
+            "timezone": time_zone,
+            "start_date": start_date,
+            "end_date": end_date,
+        }
+        second_responses = openmeteo.weather_api(url, params=params)
+
+        second_responses = second_responses[0]
+
+        print("Auto timezone responses")
+        print("new time in seconds is")
+        print(response.UtcOffsetSeconds())
+        print("the new time in minutes is")
+        minutes = (response.UtcOffsetSeconds() / 60)
+        print(minutes)
+        print("the new time in hours is")
+        hours = (minutes / 60)
+        print(hours)
+
+        print("chosen timezone responses")
+        print("new time in seconds is")
+        print(second_responses.UtcOffsetSeconds())
+        print("the new time in minutes is")
+        second_minutes = (second_responses.UtcOffsetSeconds() / 60)
+        print(second_minutes)
+        print("the new time in hours is")
+        second_hours = (second_minutes / 60)
+        print(second_hours)
+
+        print("final time adjustment in hours")
+        time_difference = (hours - second_hours)
+        print(time_difference)
+
+
 
 
 
