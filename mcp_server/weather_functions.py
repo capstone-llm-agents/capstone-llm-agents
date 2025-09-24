@@ -77,6 +77,7 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
     if time_zone == response.Timezone().decode('utf-8'):
         print("no changes needed")
         new_date = start_date
+        new_time = time
     else:
         cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
         retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
