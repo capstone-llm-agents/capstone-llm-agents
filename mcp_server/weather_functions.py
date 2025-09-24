@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import openmeteo_requests
 import pandas as pd
@@ -7,6 +7,7 @@ from autogen import ConversableAgent
 from retry_requests import retry
 import os
 from dotenv import load_dotenv
+import re
 
 load_dotenv()
 ########llm agent setup########
@@ -146,23 +147,34 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
                     adjusted_time = (adjusted_time - 1)
                 else:
                     adjusted_time = 23
-                    change_date = - 1
+                    change_date = + 1
             else:
                 if adjusted_time != 23:
                     adjusted_time = (adjusted_time + 1)
                 else:
                     adjusted_time = 0
-                    change_date = + 1
+                    change_date = - 1
             i = (i + 1)
         adjusted_time = str(adjusted_time) + ":00"
         print("###the new time is###")
         print(adjusted_time)
         if change_date == 0:
             print("The date doesn't need to be changed")
+            new_date = start_date
         elif change_date == 1:
             print("the date needs to be moved one date forward")
+            print("initial date -> " + start_date)
+            date_1 = datetime.strptime(start_date, "%Y-%m-%d")
+            new_date = date_1 + timedelta(days=1)
+            new_date = new_date.strftime("%Y-%m-%d")
+            print("new date -> " + new_date)
         else:
             print("the date needs to be moved one day back")
+            print("initial date -> " + start_date)
+            date_1 = datetime.strptime(start_date, "%Y-%m-%d")
+            new_date = date_1 + timedelta(days=-1)
+            new_date = new_date.strftime("%Y-%m-%d")
+            print("new date -> " + new_date)
 
 
 
