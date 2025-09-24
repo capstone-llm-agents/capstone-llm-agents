@@ -127,6 +127,48 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
         time_difference = (hours - second_hours)
         print(time_difference)
 
+        if time_difference < 0:
+            is_negative = True
+        else:
+            is_negative = False
+        new_date = None
+        new_time = None
+        change_date = 0#if this changes to 1 then date needs to go a day forward. If -1 then back a day. if 0 keep current date
+
+        adjusted_time = time.split(":")[0].strip()
+        adjusted_time = int(adjusted_time)
+        print("###Original time###")
+        print(adjusted_time)
+        i = 0
+        while i < abs(time_difference):#has to temp make positive
+            if is_negative == True:
+                if adjusted_time != 0:
+                    adjusted_time = (adjusted_time - 1)
+                else:
+                    adjusted_time = 23
+                    change_date = - 1
+            else:
+                if adjusted_time != 23:
+                    adjusted_time = (adjusted_time + 1)
+                else:
+                    adjusted_time = 0
+                    change_date = + 1
+            i = (i + 1)
+        adjusted_time = str(adjusted_time) + ":00"
+        print("###the new time is###")
+        print(adjusted_time)
+        if change_date == 0:
+            print("The date doesn't need to be changed")
+        elif change_date == 1:
+            print("the date needs to be moved one date forward")
+        else:
+            print("the date needs to be moved one day back")
+
+
+
+
+        #this will create the results needed for the actual date
+
 
 
 
