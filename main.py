@@ -33,7 +33,7 @@ def main() -> None:
     try:
         config = GeneralConfig("./config/models.yaml", "./config/vector.yaml")
     except Exception as e:
-        msg = f"Failed to initialize configuration manager. {e} \n\n Please update or create the valid configuration files. It is recommended to run `python setup.py` to create the config via a CLI."  # noqa: E501
+        msg = f"Failed to initialize configuration manager. {e} \n\n Please update or create the valid configuration files. It is recommended to run `python init_config.py` to create the config via a CLI."  # noqa: E501
         raise RuntimeError(msg) from e
 
     client = Client("Test User", mas, mcp_client, config)

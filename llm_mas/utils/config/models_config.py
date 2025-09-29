@@ -26,6 +26,7 @@ class ModelsConfig(ConfigBaseModel):
     default_quick_model: int
     default_powerful_model: int
     default_embedding_model: int
+    default_super_quick_model: int
 
 
 class ModelType(Enum):
@@ -37,6 +38,7 @@ class ModelType(Enum):
     LOCAL = auto()
     EMBEDDING = auto()
     NATIVE_TOOLS = auto()
+    SUPER_QUICK = auto()
 
 
 class ModelsConfigManager(BaseConfigManager[ModelsConfig]):
@@ -78,6 +80,10 @@ class ModelsConfigManager(BaseConfigManager[ModelsConfig]):
         """Return the default local model configuration."""
         return self.config.models[self.config.default_local_model]
 
+    def get_default_super_quick_model(self) -> ModelConfig:
+        """Return the default super quick model configuration."""
+        return self.config.models[self.config.default_super_quick_model]
+
     def get_model(self, model_name: str) -> ModelConfig:
         """Return a model configuration by name."""
         for model in self.config.models:
@@ -94,7 +100,7 @@ class ModelsConfigManager(BaseConfigManager[ModelsConfig]):
         msg = f"Embedding model '{model_name}' not found."
         raise ValueError(msg)
 
-    def get_model_by_type(self, model_type: ModelType = ModelType.DEFAULT) -> ModelConfig:
+    def get_model_by_type(self, model_type: ModelType = ModelType.DEFAULT) -> ModelConfig:  # noqa: PLR0911
         """Return a model configuration based on the specified type."""
         if model_type == ModelType.DEFAULT:
             return self.get_default_model()
@@ -108,5 +114,7 @@ class ModelsConfigManager(BaseConfigManager[ModelsConfig]):
             return self.get_default_embedding_model()
         if model_type == ModelType.NATIVE_TOOLS:
             return self.get_default_model_with_native_tools()
+        if model_type == ModelType.SUPER_QUICK:
+            return self.get_default_super_quick_model()
         msg = f"Model type '{model_type}' is not recognized."
         raise ValueError(msg)
