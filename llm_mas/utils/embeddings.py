@@ -1,10 +1,13 @@
 """Utility functions for vector embeddings and selection."""
 
 import logging
+from collections.abc import Awaitable, Callable
 from enum import Enum, auto
 from typing import TypeVar
 
 import numpy as np
+
+from llm_mas.utils.config.models_config import ModelType
 
 T = TypeVar("T")
 
@@ -16,6 +19,9 @@ class SelectionStrategy(Enum):
     """Select the item with the highest score."""
     RANDOM = auto()
     """Select an item randomly from the filtered items (top-k and/or top-p)."""
+
+
+type EmbeddingFunction = Callable[[str, str | ModelType], Awaitable[list[float]]]
 
 
 class VectorSelector:

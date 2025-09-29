@@ -6,7 +6,8 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.model_providers.ollama.call_llm import call_llm_with_messages
+from llm_mas.model_providers.api import ModelsAPI
+from llm_mas.utils.config.models_config import ModelType
 
 
 class RespondWithChatHistory(Action):
@@ -42,7 +43,7 @@ class RespondWithChatHistory(Action):
         # cap it to last 10 messages
         messages = messages[-10:]
 
-        response = await call_llm_with_messages(messages)
+        response = await ModelsAPI.call_llm_with_chat_history(messages, model=ModelType.DEFAULT)
 
         res = ActionResult()
         res.set_param("response", response)

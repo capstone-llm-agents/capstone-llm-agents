@@ -2,7 +2,6 @@
 
 import json
 import logging
-from collections.abc import Awaitable, Callable
 from typing import TYPE_CHECKING, override
 
 import numpy as np
@@ -12,9 +11,10 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.tools.tool_action_creator import ToolActionCreator
-from llm_mas.utils.embeddings import VectorSelector
+from llm_mas.utils.config.models_config import ModelType
+from llm_mas.utils.embeddings import EmbeddingFunction, VectorSelector
 from llm_mas.utils.json_parser import extract_json_from_response
 
 if TYPE_CHECKING:
@@ -95,7 +95,7 @@ class GetRelevantTools(Action):
     def __init__(
         self,
         tool_creator: ToolActionCreator,
-        embedding_model: Callable[[str], Awaitable[list[float]]],
+        embedding_model: EmbeddingFunction,
         vector_selector: VectorSelector | None = None,
     ) -> None:
         """Initialize the GetRelevantTools action."""
@@ -124,12 +124,13 @@ class GetRelevantTools(Action):
 
         logging.getLogger("textual_app").info("Finding relevant tools for: %s", embedding_target)
 
-        user_embedding = np.array(await self.embedding_model(embedding_target))
+        user_embedding = np.array(await self.embedding_model(embedding_target, ModelType.EMBEDDING))
 
         tools = context.agent.tool_manager.get_all_tools()
 
         tool_embeddings: list[tuple[Tool, np.ndarray]] = [
-            (tool, np.array(await self.embedding_model(f"{tool.name} {tool.description or ''}"))) for tool in tools
+            (tool, np.array(await self.embedding_model(f"{tool.name} {tool.description or ''}", ModelType.EMBEDDING)))
+            for tool in tools
         ]
 
         # select best tool
@@ -209,7 +210,7 @@ class GetParamsForToolCall(Action):
         ```
         """
 
-        response = await call_llm(prompt)
+        response = await ModelsAPI.call_llm(prompt, ModelType.DEFAULT)
 
         content = extract_json_from_response(response)
 

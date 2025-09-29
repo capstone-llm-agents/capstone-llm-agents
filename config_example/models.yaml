@@ -1,0 +1,22 @@
+default_embedding_model: 0
+default_model: 0
+default_model_with_native_tools: 1
+default_powerful_model: 2
+default_quick_model: 3
+default_local_model: 0
+default_super_quick_model: 3
+embedding_models:
+  - model: mxbai-embed-large
+    provider: ollama
+  - model: nomic-embed-text
+    provider: ollama
+models:
+  - model: gemma3
+    provider: ollama
+  - model: llama3.2
+    provider: ollama
+  - model: gpt-4o-mini
+    provider: openai
+  - model: gemma3:1b
+    provider: ollama
+version: "1.0"
