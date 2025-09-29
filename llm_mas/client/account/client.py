@@ -4,13 +4,13 @@ from llm_mas.mas.agent import Agent
 from llm_mas.mas.mas import MAS
 from llm_mas.mas.user import User
 from llm_mas.mcp_client.client import MCPClient
-from llm_mas.utils.config import ConfigManager
+from llm_mas.utils.config.general_config import GeneralConfig
 
 
 class Client:
     """The Client class represents a user account in the MAS."""
 
-    def __init__(self, username: str, mas: MAS, mcp_client: MCPClient, config: ConfigManager) -> None:
+    def __init__(self, username: str, mas: MAS, mcp_client: MCPClient, config: GeneralConfig) -> None:
         """Initialize the client with a username."""
         self.mas = mas
         self.mcp_client = mcp_client

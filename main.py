@@ -12,7 +12,7 @@ from llm_mas.client.ui.textual_app.app import TextualApp
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
-from llm_mas.utils.config import ConfigManager
+from llm_mas.utils.config.general_config import GeneralConfig
 
 
 def main() -> None:
@@ -31,9 +31,9 @@ def main() -> None:
 
     config = None
     try:
-        config = ConfigManager("./data/config.yaml")
+        config = GeneralConfig("./config/models.yaml", "./config/vector.yaml")
     except Exception as e:
-        msg = f"Failed to initialize configuration manager. {e} \n\n Please update or create a valid `config.yaml` file. You can run `python setup.py` to create the config via a CLI."  # noqa: E501
+        msg = f"Failed to initialize configuration manager. {e} \n\n Please update or create the valid configuration files. It is recommended to run `python setup.py` to create the config via a CLI."  # noqa: E501
         raise RuntimeError(msg) from e
 
     client = Client("Test User", mas, mcp_client, config)
