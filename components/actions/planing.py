@@ -24,7 +24,7 @@ async def plan_router(prompt: str, actions: List[Any], Agents: List[Any]):
                     Agents:{Agents}
                     User Request: {prompt}
                         ''')
-    llm_prompt_update = prompt = [{"role": "system", "content": f"{llm_prompt}"}]
+    llm_prompt_update = [{"role": "system", "content": f"{llm_prompt}"}]
     plan =  await llm(llm_prompt_update)
     APP_LOGGER.debug(f"plan as json{plan}")
     plan_dict = json.loads(plan)
@@ -110,9 +110,3 @@ class Plan(Action):
 
 
 
-
-        """
-        action_name = []
-        prompt = [{"role": "system", "content": f"Is it necessary to create a plan for the following query? {messages[-1]}, respond with a simple yes or no"}]
-        plan_check = await self.llm(prompt)
-        """
