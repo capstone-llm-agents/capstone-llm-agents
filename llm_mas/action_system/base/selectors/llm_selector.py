@@ -104,12 +104,18 @@ class LLMSelector(ActionSelector):
         logging.getLogger("textual_app").debug("Actions: %s", actions_str)
 
         prompt = ""
-
-        prompt += f"""
-        Follow this plan {context.plan}
-        Choose an action from the following list of actions:
-        {actions_str}
-        """
+        if context.plan == "No":
+            prompt += f"""
+            Choose an action from the following list of actions:
+            {actions_str}
+            """
+        else:
+            prompt += f"""
+            YOU MUST Follow this plan {context.plan}
+            Choose an action from the following list of actions:
+            {actions_str}
+            """
+        "What is the weather in tokyo tomarrow and what does my calander look like if i way to go out?"
 
         prompt += "\n\n"
         if not context.last_result.is_empty():
