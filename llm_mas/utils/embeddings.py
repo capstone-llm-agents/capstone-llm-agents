@@ -52,6 +52,10 @@ class VectorSelector:
         items_with_vectors: list[tuple[T, np.ndarray]] | list[tuple[T, list[float]]],
     ) -> tuple[T, float]:
         """Select an item given a query vector and a list of (item, vector) pairs."""
+        if not items_with_vectors:
+            msg = "The vector selector had no items to select from. (This might be because no MCP servers are running.)"
+            raise ValueError(msg)
+
         # convert lists to np arrays
         query_vector = self._convert(query_vector)
         vector_items = [(item, self._convert(vec)) for item, vec in items_with_vectors]

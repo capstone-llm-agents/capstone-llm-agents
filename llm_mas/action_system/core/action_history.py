@@ -38,4 +38,7 @@ class ActionHistory:
 
     def clear(self) -> None:
         """Clear the action history."""
+        for action, _, _ in self.history:
+            action.reset()
+
         self.history.clear()

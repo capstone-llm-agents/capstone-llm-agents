@@ -24,12 +24,13 @@ from llm_mas.utils.background_tasks import BACKGROUND_TASKS
 class UserChatScreen(BaseChatScreen):
     """Interactive chat screen for user to assistant conversations."""
 
-    def __init__(self, client: Client, conversation: Conversation) -> None:
+    def __init__(self, client: Client, conversation: Conversation, *, artificial_delay: float | None = None) -> None:
         """Initialize with client and conversation."""
         super().__init__(client, conversation, title="Chat with Assistant")
         self.input: Input
         self.history: list[tuple[str, str]] = []
         self._current_task: asyncio.Task | None = None
+        self.artificial_delay = artificial_delay or 0.1
 
     def compose(self) -> ComposeResult:
         """Compose the chat screen layout with input field."""
@@ -111,7 +112,8 @@ class UserChatScreen(BaseChatScreen):
                 await agent_bubble.finalize_all_steps()
                 self.chat_container.scroll_end(animate=False)
 
-            await asyncio.sleep(0.5)
+            if self.artificial_delay:
+                await asyncio.sleep(self.artificial_delay)
 
             response = await self._extract_response_safe(agent)
             self.conversation.add_message(agent, response)

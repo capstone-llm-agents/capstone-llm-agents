@@ -33,7 +33,7 @@ class ChatScreen(Screen):
 
     CSS_PATH = "../styles/screen.tcss"
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: Client, *, artificial_delay: float | None = None) -> None:
         """Initialize the chat screen."""
         super().__init__()
         self.client = client
@@ -41,6 +41,7 @@ class ChatScreen(Screen):
         self.input: Input
         self.history: list[tuple[str, str]] = []
         self._current_task: asyncio.Task | None = None
+        self.artificial_delay = artificial_delay or 0.1
 
         conversation = self.client.get_mas().conversation_manager.get_conversation("General")
 
@@ -171,7 +172,8 @@ class ChatScreen(Screen):
                 APP_LOGGER.info(msg)
 
             # small delay to simulate processing time
-            await asyncio.sleep(0.5)
+            if self.artificial_delay:
+                await asyncio.sleep(self.artificial_delay)
 
             # extract and display response
             response = await self._extract_response_safe(agent)

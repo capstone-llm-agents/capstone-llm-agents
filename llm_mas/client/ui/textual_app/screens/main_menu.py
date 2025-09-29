@@ -9,6 +9,7 @@ from llm_mas.client.account.client import Client
 from llm_mas.client.ui.textual_app.screens.agent_list import AgentListScreen
 from llm_mas.client.ui.textual_app.screens.conversation_screen import ConversationsScreen
 from llm_mas.client.ui.textual_app.screens.mcp_client import MCPClientScreen
+from llm_mas.client.ui.textual_app.screens.upload_screen import UploadScreen
 from llm_mas.client.ui.textual_app.screens.user_chat_screen import UserChatScreen
 from llm_mas.mas.conversation import Conversation
 
@@ -29,6 +30,7 @@ class MainMenu(Screen):
             yield Button("MCP Client Info", id="mcp_client_info")
             yield Button("List Agents", id="list_agents")
             yield Button("View Conversations", id="view_conversations")
+            yield Button("Upload Files/Folders", id="upload_files")
         yield Footer()
 
     def on_button_pressed(self, event: Button.Pressed) -> None:
@@ -48,3 +50,5 @@ class MainMenu(Screen):
                     conversations=self.client.mas.conversation_manager.get_all_conversations(),
                 ),
             )
+        elif event.button.id == "upload_files":
+            self.app.push_screen(UploadScreen())

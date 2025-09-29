@@ -1,4 +1,9 @@
 # Byte-compiled / optimized / DLL files
+# Generated local KB index
+kb_index.json
+kb_ingested_roots.json
+
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]
 *$py.class
@@ -211,3 +216,6 @@ logs
 *.sqlite3
 *.db
 *.sqlite
+
+# Hide db
+db
