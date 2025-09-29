@@ -7,7 +7,8 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.model_providers.api import ModelsAPI
+from llm_mas.utils.config.models_config import ModelType
 from llm_mas.utils.json_parser import extract_json_from_response
 
 
@@ -58,7 +59,7 @@ class AssessResponse(Action):
         - quality: A rating from 1 to 10 of the quality of the response.
         - issues: A list of any issues found in the response, or an empty list if none.
         - suggestions: A list of suggestions for improvement, or an empty list if none."""
-        response = await call_llm(prompt)
+        response = await ModelsAPI.call_llm(prompt, model=ModelType.DEFAULT)
 
         content = extract_json_from_response(response)
 

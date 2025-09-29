@@ -1,23 +1,20 @@
 """The example agent module demonstrates how to create a simple agent with actions and workflows."""
 
-from components.actions.chat_history import RespondWithChatHistory
-from components.actions.list_friends import AskFriendForHelp, ListFriends
 from components.actions.retrieve_knowledge import RetrieveKnowledge
 from components.actions.simple_response import SimpleResponse
-from components.actions.tools import GetParamsForToolCall, GetRelevantTools, GetTools, UpdateTools
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
 from llm_mas.action_system.base.selectors.embedding_selector import EmbeddingSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.agent import Agent
-from llm_mas.model_providers.ollama.call_llm import get_embedding
+from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.tools.tool_action_creator import DefaultToolActionCreator
 from llm_mas.tools.tool_manager import ToolManager
 from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = GraphBasedNarrower()
-selector = EmbeddingSelector(get_embedding)
+selector = EmbeddingSelector(ModelsAPI.get_embedding)
 
 # tools
 tool_narrower = DefaultToolNarrower()

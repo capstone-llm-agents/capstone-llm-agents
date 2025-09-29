@@ -7,7 +7,8 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.model_providers.api import ModelsAPI
+from llm_mas.utils.config.models_config import ModelType
 
 
 class SimpleResponse(Action):
@@ -46,7 +47,7 @@ class SimpleResponse(Action):
         logging.getLogger("textual_app").info("Calling LLM with message: %s", last_message)
         logging.getLogger("textual_app").info("Context: %s", context.last_result.as_json_pretty())
 
-        response = await call_llm(last_message["content"])
+        response = await ModelsAPI.call_llm(last_message["content"], ModelType.DEFAULT)
 
         res = ActionResult()
         res.set_param("response", response)
