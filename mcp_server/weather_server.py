@@ -65,11 +65,12 @@ def obtain_weather_details(prompt):
 
         Tasks: {prompt}
         Current Date: {current_date}
+        User Time Zone: {curent_time_zone}
 
         If the date requested is not clear assume they are talking about today.
         Remember if the user requests for tomorrows weather add a day to the current date. Likewise if they specify a date use that in your response instead.
         If no time is provided use 12:00
-        With the time zones if the user requests a specific location is used for the timezone enter it down in IANA format otherwise if it has not been specified use the timezone of the location they have stated.
+        With the time zones if the user requests a specific location or the use of their own enter it down in IANA format otherwise if it has not been specified use the timezone of the location they have stated.
         An example of when to write down the timezone of the location if not specified would be if the user requests "what is the weather in Ottawa". An example of when to write an IANA timezone of a user stated location would be "what is the weather in Ottawa using London's timezone".
         Sometimes the user may request multiple locations to use the same timezone with key words such as both. Sometimes they may only want one of the readings to have a unique timezone. It is up to you to determine what the best timezone will be for each reading.
         Directly and only answer with the follow format:
