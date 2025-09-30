@@ -157,7 +157,10 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
                     adjusted_time = 0
                     change_date = + 1
             i = (i + 1)
-        adjusted_time = str(adjusted_time) + ":00"
+        if len(str(adjusted_time)) == 1:
+            adjusted_time = "0" + str(adjusted_time) + ":00"
+        else:
+            adjusted_time = str(adjusted_time) + ":00"
         new_time = adjusted_time
         print("###the new time is###")
         print(new_time)
