@@ -59,6 +59,7 @@ def safe_tool[F: Callable[..., Any]](func: F) -> F:
 @safe_tool
 def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.ics") -> str:
     """Generate a calendar schedule from a task prompt and write it to an ICS file."""
+    print("###Using CreateCalendar###")
     current_date = datetime.now().date()
 
     prompt = f"""
@@ -95,6 +96,7 @@ def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.
 @safe_tool
 def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
     """Read an ICS file and return a human-readable task list."""
+    print("###Using ReadCalendar###")
     calendar_content = convert_ics_to_text(file_name)
 
     prompt = f"""
@@ -130,6 +132,7 @@ def create_ics_calendar_with_context(
     file_name_write: str = "./calendars/test_calendar.ics",
 ) -> str:
     """Create a new calendar schedule considering existing events."""
+    print("###Using ReadCalendar###")
     current_date = datetime.now().date()
     existing_events = convert_ics_to_text(file_name_read)
 
