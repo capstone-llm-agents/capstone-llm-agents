@@ -18,7 +18,7 @@ from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = GraphBasedNarrower()
-selector = EmbeddingSelector(get_embedding)
+selector = LLMSelector(call_llm)
 
 # tools
 tool_narrower = DefaultToolNarrower()
@@ -46,11 +46,11 @@ WEATHER_AGENT.add_action(GetTools(tool_creator))
 WEATHER_AGENT.add_action(GetRelevantTools(tool_creator, embedding_model=get_embedding))
 WEATHER_AGENT.add_action(GetParamsForToolCall(tool_creator))
 
-#narrower.add_default_action(Plan())
-narrower.add_default_action(UpdateTools(tool_creator))
+narrower.add_default_action(Plan())
+#narrower.add_default_action(UpdateTools(tool_creator))
 
 # add some edges
-#narrower.add_action_edge(Plan(), [UpdateTools(tool_creator)])
+narrower.add_action_edge(Plan(), [UpdateTools(tool_creator)])
 narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory(), SimpleResponse()])
 narrower.add_action_edge(RespondWithChatHistory(), [StopAction()])
 narrower.add_action_edge(SimpleResponse(), [StopAction()])

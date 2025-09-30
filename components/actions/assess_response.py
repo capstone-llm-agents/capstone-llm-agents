@@ -53,6 +53,9 @@ class AssessResponse(Action):
 
         Here is the response to review:
         {agent_res}
+        
+        Here is the plan:
+        {context.plan}
 
         Please provide a JSON object with the following fields:
         - quality: A rating from 1 to 10 of the quality of the response.

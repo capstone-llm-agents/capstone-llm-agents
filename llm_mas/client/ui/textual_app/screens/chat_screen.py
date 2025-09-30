@@ -109,6 +109,7 @@ class ChatScreen(Screen):
                 agent,
                 self.client.user,
                 self.client.get_mas().conversation_manager,
+                plan={}
             )
             step_count = 0
 

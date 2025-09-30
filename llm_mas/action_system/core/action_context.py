@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 class ActionContext:
     """Context for executing actions in the multi-agent system."""
 
+
     def __init__(  # noqa: PLR0913
         self,
         conversation: Conversation,
@@ -23,7 +24,7 @@ class ActionContext:
         agent: Agent,
         user: User,
         conversation_manager: ConversationManager,
-        plan: str,
+        plan: dict,
     ) -> None:
         """Initialize the action context with a conversation and an optional last result."""
         self.conversation = conversation
