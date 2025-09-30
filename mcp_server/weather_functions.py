@@ -248,7 +248,7 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
     # print("\nHourly data\n", hourly_dataframe)
 
     result = hourly_dataframe
-    return result
+    return [result, new_date, adjusted_time]
 
 
 def deduce_weather_result(prompt, weather_data):

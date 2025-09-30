@@ -137,10 +137,13 @@ def obtain_weather_details(prompt):
             print("Generated weather data")
             print("#####################################")
             weather_data = generate_weather_data(locations[2], locations[3], locations[4], locations[5], locations[6], locations[7])
+            new_date = weather_data[1]
+            new_time = weather_data[2]
+            weather_data = weather_data[0]
             print(weather_data)
             print("\n\n\n")
 
-            reformated_weather_data = break_down_result(weather_data, locations[6], locations[1])
+            reformated_weather_data = break_down_result(weather_data, new_time, locations[1])
             print(reformated_weather_data)
 
             ######could potentially remove this part and just use simple response to work it out maybe?#########
