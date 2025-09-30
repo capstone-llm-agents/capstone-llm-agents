@@ -251,22 +251,26 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
     return [result, new_date, adjusted_time]
 
 
-def deduce_weather_result(prompt, weather_data):
-    current_date = datetime.now().date()
+def deduce_weather_result(time_zone, time, weather_data):
+    #current_date = datetime.now().date()
 
     agent_prompt = f"""
     Break down the following prompt and deduce what kind of weather matches with the Location and Time.
 
-    Current Date: {current_date}
+    Time zone: {time_zone}
+    Time used: {time}
     Weather Data: {weather_data}
 
     Based on the weather details provided Reformat the data to the provided example.
-    Remember to keep your responses small and consise.
+    Remember to keep your responses small and concise.
     Do not add any unesisary text.
-    Here is a guide to an example formated output:
+    Always use the timezone provided in your answer.
+    Only ever use the time from (Time used:)
+    Be careful when reading the time as you will likely see an output such as xx:xx:00+xx:00. do not add the additional time only use the first part within the weather data i.e. the "xx:xx" part
+    Here is a guide to an example formatted output:
     Example:
-    The weather in Rosedale at 4pm 12/07/2025 will be:
-    Tempreture: 14.1 degrees
+    Using Australia/Melbourne as the timezone reference point, The weather in Rosedale at 4pm 12/07/2025 will be:
+    Temperature: 14.1 degrees
     Chance of rain: 35%
     Precipitation amount: 1.0 mm
     Wind Speed: 3km/h
@@ -279,7 +283,7 @@ def deduce_weather_result(prompt, weather_data):
     print("#####################################")
     print("Resulting weather based off request")
     print("#####################################")
-    if Model_type == 1:
+    if Model_type == 1:#used to acount for different LLM ways of extracting data
         LLM_details = extracted_details["content"]
         print(LLM_details)
     elif Model_type == 2:
