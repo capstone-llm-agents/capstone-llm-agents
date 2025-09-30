@@ -104,9 +104,9 @@ class ImageFragmentKind(FileFragmentKind):
 class JSONFragmentKind(FragmentKind):
     """A raw data type for JSON fragments."""
 
-    def __init__(self, raw: JSONRaw) -> None:
+    def __init__(self, name: str, description: str, raw: JSONRaw) -> None:
         """Initialize a JSON raw data type with a dictionary."""
-        super().__init__("json", "A JSON fragment", raw)
+        super().__init__(name or "json", description or "A JSON fragment", raw)
         self.raw = raw  # hack to get proper typing  # noqa: FIX004
 
     def agent_view(self) -> AgentView:
@@ -148,7 +148,7 @@ class CodeFragmentKind(FragmentKind):
         return view
 
 
-class LocationFragmentKind(FragmentKind):
+class LocationFragmentKind(JSONFragmentKind):
     """A raw data type for location fragments."""
 
     def __init__(self, raw: LocationRaw) -> None:
@@ -157,7 +157,7 @@ class LocationFragmentKind(FragmentKind):
         self.raw = raw  # hack to get proper typing  # noqa: FIX004
 
 
-class DatetimeFragmentKind(FragmentKind):
+class DatetimeFragmentKind(JSONFragmentKind):
     """A raw data type for datetime fragments."""
 
     def __init__(self, raw: DatetimeRaw) -> None:
