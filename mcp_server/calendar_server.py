@@ -132,7 +132,7 @@ def create_ics_calendar_with_context(
     file_name_write: str = "./calendars/test_calendar.ics",
 ) -> str:
     """Create a new calendar schedule considering existing events."""
-    print("###Using ReadCalendar###")
+    print("###Using UpdateCalendar###")
     current_date = datetime.now().date()
     existing_events = convert_ics_to_text(file_name_read)
 
