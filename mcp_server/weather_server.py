@@ -1,6 +1,7 @@
 """The test server to connect to the LLM MAS client."""
 
 from datetime import datetime
+#from zoneinfo import ZoneInfo
 
 import uvicorn
 from autogen import ConversableAgent
@@ -54,6 +55,9 @@ mcp = FastMCP("SSE Example Server")
 def obtain_weather_details(prompt):
     try:
         current_date = datetime.now().date()
+        #curent_time_zone = datetime.now().astimezone()
+        #print("####Users timezone####")
+        #print(curent_time_zone)
 
         agent_prompt = f"""
         Break down the following tasks into the latitude and longitude of the given location as well as the date you would expect to find the weather information.
