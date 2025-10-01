@@ -12,7 +12,7 @@ from llm_mas.client.ui.textual_app.app import TextualApp
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
-from llm_mas.utils.config.general_config import GENERAL_CONFIG, GeneralConfig
+from llm_mas.utils.config.general_config import GENERAL_CONFIG
 
 
 def main() -> None:
