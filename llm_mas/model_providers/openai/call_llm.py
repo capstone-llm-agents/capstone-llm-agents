@@ -4,7 +4,6 @@ import os
 
 from openai import AsyncOpenAI
 
-from llm_mas.mas.conversation import UserAssistantExample, UserMessage
 from llm_mas.model_providers.provider import ModelProvider
 
 
@@ -51,26 +50,6 @@ class OpenAIProvider(ModelProvider):
         content = response.choices[0].message.content
         if not content:
             msg = f"No content returned from {model}."
-            raise ValueError(msg)
-        return content
-
-    @staticmethod
-    async def call_llm_with_examples(
-        examples: list[UserAssistantExample],
-        model: str,
-        user_message: UserMessage,
-    ) -> str:
-        """Call the LLM with the given examples and user message."""
-        messages = [example.user_message.as_dict() for example in examples]
-        messages.append(user_message.as_dict())
-        client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
-        response = await client.chat.completions.create(
-            model=model,
-            messages=messages,  # pyright: ignore[reportArgumentType]
-        )
-        content = response.choices[0].message.content
-        if not content:
-            msg = f"No content returned from {model} with examples."
             raise ValueError(msg)
         return content
 

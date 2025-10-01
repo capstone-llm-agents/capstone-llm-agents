@@ -1,5 +1,6 @@
 """Models API layer."""
 
+from llm_mas.model_providers.gemini.call_llm import GeminiProvider
 from llm_mas.model_providers.ollama.call_llm import OllamaProvider
 from llm_mas.model_providers.openai.call_llm import OpenAIProvider
 from llm_mas.model_providers.provider import ModelProvider
@@ -29,6 +30,7 @@ class ModelsAPI:
         providers: dict[str, ModelProvider] = {
             "ollama": OllamaProvider(),
             "openai": OpenAIProvider(),
+            "google": GeminiProvider(),
         }
         return config, providers
 
