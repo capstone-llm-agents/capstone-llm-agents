@@ -1,7 +1,10 @@
-import os
 import asyncio
+import os
+
 from openai import AsyncOpenAI
+
 from llm_mas.mas.conversation import UserAssistantExample, UserMessage
+
 
 async def call_llm(prompt: str) -> str:
     client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
@@ -10,7 +13,7 @@ async def call_llm(prompt: str) -> str:
         model=model,
         messages=[{"role": "user", "content": prompt}],
     )
-    content =  response.choices[0].message.content
+    content = response.choices[0].message.content
     if not content:
         msg = f"No content returned from {model}."
         raise ValueError(msg)
@@ -37,7 +40,7 @@ async def call_llm_with_examples(
 ) -> str:
     messages = [example.user_message.as_dict() for example in examples]
     messages.append(user_message.as_dict())
-    client =  AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     model = "gpt-4o-mini"
     response = await client.chat.completions.create(
         model=model,
@@ -49,10 +52,11 @@ async def call_llm_with_examples(
         raise ValueError(msg)
     return content
 
+
 async def get_embedding(text: str) -> list[float]:
     """Get the embedding for the given text using openai."""
     model = "text-embedding-3-small"
-    client =  AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+    client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
     response = await client.embeddings.create(
         model=model,
         input=text,

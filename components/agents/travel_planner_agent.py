@@ -17,16 +17,14 @@ from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.selectors.embedding_selector import EmbeddingSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.agent import Agent
-from llm_mas.model_providers.ollama.call_llm import call_llm as ollamaAI
-from llm_mas.model_providers.ollama.call_llm import get_embedding
-from llm_mas.model_providers.openai.call_llm import call_llm as gptAI
+from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.tools.tool_action_creator import DefaultToolActionCreator
 from llm_mas.tools.tool_manager import ToolManager
 from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = TravelNarrower()
-selector = EmbeddingSelector(get_embedding)
+selector = EmbeddingSelector(ModelsAPI.call_llm)
 
 # tools
 tool_narrower = DefaultToolNarrower()

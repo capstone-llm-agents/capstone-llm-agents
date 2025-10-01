@@ -12,6 +12,7 @@ from llm_mas.client.ui.textual_app.app import TextualApp
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
+from llm_mas.utils.config.general_config import GeneralConfig
 
 
 def main() -> None:
@@ -25,11 +26,17 @@ def main() -> None:
     mas.add_agent(WEBSEARCH_AGENT)
 
     mcp_client = MCPClient()
-    server = SSEConnectedServer("http://localhost:8080/sse")
-    mcp_client.add_connected_server(server)
-    server = SSEConnectedServer("http://localhost:8081/sse")
-    mcp_client.add_connected_server(server)
-    client = Client("Test User", mas, mcp_client)
+    mcp_client.add_connected_server(SSEConnectedServer("http://localhost:8080/sse"))
+    mcp_client.add_connected_server(SSEConnectedServer("http://localhost:8081/sse"))
+
+    config = None
+    try:
+        config = GeneralConfig("./config/models.yaml", "./config/vector.yaml")
+    except Exception as e:
+        msg = f"Failed to initialize configuration manager. {e} \n\n Please update or create the valid configuration files. It is recommended to run `python init_config.py` to create the config via a CLI."  # noqa: E501
+        raise RuntimeError(msg) from e
+
+    client = Client("Test User", mas, mcp_client, config)
 
     # user
     user = client.user
