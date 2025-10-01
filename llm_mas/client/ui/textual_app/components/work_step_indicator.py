@@ -29,13 +29,23 @@ class WorkStepIndicator(Static):
             self.text_widget = Static(self.work_step.name, classes="step-text")
             yield self.text_widget
 
-    async def mark_complete(self) -> None:
+    async def mark_complete(self, time_taken: float | None = None) -> None:
         """Mark the work step as complete and update the UI."""
         self.work_step.mark_complete()
+
         if self.status_widget:
             self.status_widget.update("✓")
             self.status_widget.remove_class("step-in-progress")
             self.status_widget.add_class("step-complete")
+
+        # update the actual text
+        if self.text_widget:
+            if time_taken is not None:
+                self.text_widget.update(f"{self.work_step.name} ({time_taken:.2f}s)")
+            else:
+                self.text_widget.update(self.work_step.name)
+            self.text_widget.remove_class("step-text")
+            self.text_widget.add_class("step-text-complete")
 
     def mark_grey(self) -> None:
         """Mark the work step as grey (completed but not current focus)."""
