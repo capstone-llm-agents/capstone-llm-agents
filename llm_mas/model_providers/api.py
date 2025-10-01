@@ -1,6 +1,7 @@
 """Models API layer."""
 
 from llm_mas.model_providers.ollama.call_llm import OllamaProvider
+from llm_mas.model_providers.openai.call_llm import OpenAIProvider
 from llm_mas.model_providers.provider import ModelProvider
 from llm_mas.utils.config.general_config import GENERAL_CONFIG, GeneralConfig
 from llm_mas.utils.config.models_config import ModelConfig, ModelType
@@ -27,6 +28,7 @@ class ModelsAPI:
         config = GENERAL_CONFIG
         providers: dict[str, ModelProvider] = {
             "ollama": OllamaProvider(),
+            "openai": OpenAIProvider(),
         }
         return config, providers
 
