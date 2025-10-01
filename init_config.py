@@ -12,14 +12,15 @@ class DefaultConfig:
         self.example_file_name = example_file_path
 
 
-def main() -> None:
-    """Create initial configuration files."""
+def init_config() -> None:
+    """Initialize configuration files."""
     Path("config").mkdir(exist_ok=True)
 
     # create empty config files if they don't exist
     configs = [
         DefaultConfig("config/models.yaml", "config_example/models.yaml"),
         DefaultConfig("config/vector.yaml", "config_example/vector.yaml"),
+        DefaultConfig("config/app.yaml", "config_example/app.yaml"),
     ]
     for config in configs:
         file_path = Path(config.file_name)
@@ -36,6 +37,11 @@ def main() -> None:
             print(f"{config.file_name} already exists, skipping.")  # noqa: T201
 
     print("Initialization complete.")  # noqa: T201
+
+
+def main() -> None:
+    """Create initial configuration files."""
+    init_config()
 
 
 if __name__ == "__main__":

@@ -2,7 +2,7 @@
 
 from llm_mas.model_providers.ollama.call_llm import OllamaProvider
 from llm_mas.model_providers.provider import ModelProvider
-from llm_mas.utils.config.general_config import GeneralConfig
+from llm_mas.utils.config.general_config import GENERAL_CONFIG, GeneralConfig
 from llm_mas.utils.config.models_config import ModelConfig, ModelType
 
 
@@ -24,7 +24,7 @@ class ModelsAPI:
     @staticmethod
     def _get_config_and_providers() -> tuple[GeneralConfig, dict[str, ModelProvider]]:
         """Get the general configuration and model providers."""
-        config = GeneralConfig("config/models.yaml", "config/vector.yaml")
+        config = GENERAL_CONFIG
         providers: dict[str, ModelProvider] = {
             "ollama": OllamaProvider(),
         }
