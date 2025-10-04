@@ -15,7 +15,7 @@ class MessageType(Enum):
 
     # task based dialogue (handling the task)
     QUERY = auto()  # "What is on Anton's calendar today?" -> yields other INFORMATION or ERROR
-    TASK = auto()  # "Book a flight to New York for next Monday." -> yields other CONFIRMATION or ERROR
+    TASK = auto()  # "Book a flight to New York for next Monday." -> yields other INFORMATION or ERROR
     # NOTE: A QUERY or TASK are both REQUESTS. REQUESTS can be follow ups which can include extra INFORMATION.
 
     WAIT = auto()  # "Ok, thanks let me know when you're done." -> yields other INFORMATION or ERROR or QUERY or TASK
@@ -23,7 +23,6 @@ class MessageType(Enum):
 
     # results based dialogue (providing results)
     INFORMATION = auto()  # "The weather in New York is sunny." -> yields other THANKS or DISAPPOINTMENT
-    CONFIRMATION = auto()  # "Your flight has been booked." -> yields other THANKS or DISAPPOINTMENT
 
     # closing based dialogue (ending the conversation)
     THANKS = auto()  # "Thanks for your help!" -> yields END
@@ -43,9 +42,11 @@ class NetworkMessage:
         recipient: str,
         fragments: list[NetworkFragment],
         message_type: MessageType,
+        context: dict | None = None,  # some messages may need extra context / data
     ) -> None:
         """Initialize the message with sender, recipient, content, and type."""
         self.sender = sender
         self.recipient = recipient
         self.fragments = fragments
         self.message_type = message_type
+        self.context = context if context is not None else {}
