@@ -1,6 +1,7 @@
 """A fragment that can be sent over the network."""
 
 from enum import Enum, auto
+from typing import Any
 
 
 class FragmentSource(Enum):
@@ -16,7 +17,7 @@ class FragmentSource(Enum):
 class FragmentKindSerializable:
     """A serializable version of FragmentKind."""
 
-    def __init__(self, name: str, content: str, description: str | None = None) -> None:
+    def __init__(self, name: str, content: dict[str, Any], description: str | None = None) -> None:
         """Initialize a FragmentKindSerializable with a name."""
         self.name = name
         self.content = content
