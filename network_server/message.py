@@ -36,17 +36,21 @@ class MessageType(Enum):
 class NetworkMessage:
     """A message that can be sent over the network."""
 
-    def __init__(
+    def __init__(  # noqa: PLR0913
         self,
-        sender: str,
-        recipient: str,
+        sender: str,  # name of the agent
+        sender_client: str,  # name/id of the client
+        recipient: str,  # name of the agent
+        recipient_client: str,  # name/id of the client
         fragments: list[NetworkFragment],
         message_type: MessageType,
         context: dict | None = None,  # some messages may need extra context / data
     ) -> None:
         """Initialize the message with sender, recipient, content, and type."""
         self.sender = sender
+        self.sender_client = sender_client
         self.recipient = recipient
+        self.recipient_client = recipient_client
         self.fragments = fragments
         self.message_type = message_type
         self.context = context if context is not None else {}
