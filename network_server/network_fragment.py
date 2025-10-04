@@ -39,3 +39,16 @@ class NetworkFragment:
         self.kind = kind
         self.description = description
         self.source = source
+
+    def serialize(self) -> dict[str, Any]:
+        """Serialize the network fragment to a dictionary."""
+        return {
+            "name": self.name,
+            "kind": {
+                "name": self.kind.name,
+                "content": self.kind.content,
+                "description": self.kind.description,
+            },
+            "description": self.description,
+            "source": self.source.name,
+        }

@@ -6,7 +6,7 @@
 # the endpoints you kinda need are
 # - GET /friends?key=TOKEN - get the list of friends for the user (some SQL db needed for this)
 # - POST /message/{friend_name/id}/key=TOKEN - send a message to a friend's assistant agent
-# - GET /agents/{friend_name/id}/?key=TOKEN - get the list of agents for a friend
+# - GET /agents/{friend_name/id}/?key=TOKEN - get the list of agents for a friend (only need name and description)
 
 # and then stuff for logging in, signing up, sending friend requests etc. (but idk you can cook this how you want)
 
@@ -14,3 +14,7 @@
 # - POST /signup?username=USERNAME&password=PASSWORD - sign up and get the token
 # - POST /friend_request/{friend_name/id}/?key=TOKEN - send a friend request to a user
 # - POST /accept_friend_request/{friend_name/id}/ - accept a friend request from a user
+
+# then you need to run the server and allow the running client to connect to it
+# as long as the client can call the endpoints and send/receive messages it should be fine
+# for the running client to receive messages from the server we need to use polling or websockets

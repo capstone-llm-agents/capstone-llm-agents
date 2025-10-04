@@ -54,3 +54,15 @@ class NetworkMessage:
         self.fragments = fragments
         self.message_type = message_type
         self.context = context if context is not None else {}
+
+    def serialize(self) -> dict:
+        """Serialize the message to a dictionary."""
+        return {
+            "sender": self.sender,
+            "sender_client": self.sender_client,
+            "recipient": self.recipient,
+            "recipient_client": self.recipient_client,
+            "fragments": [fragment.serialize() for fragment in self.fragments],
+            "message_type": self.message_type.name,
+            "context": self.context,
+        }
