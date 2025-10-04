@@ -16,7 +16,7 @@ class MessageType(Enum):
     # task based dialogue (handling the task)
     QUERY = auto()  # "What is on Anton's calendar today?" -> yields other INFORMATION or ERROR
     TASK = auto()  # "Book a flight to New York for next Monday." -> yields other CONFIRMATION or ERROR
-    # NOTE: A QUERY or TASK are both REQUESTS. REQUESTS can be follow ups
+    # NOTE: A QUERY or TASK are both REQUESTS. REQUESTS can be follow ups which can include extra INFORMATION.
 
     WAIT = auto()  # "Ok, thanks let me know when you're done." -> yields other INFORMATION or ERROR or QUERY or TASK
     # WAIT can also yield QUERY or TASK from the other side if they need more information perhaps counter-intuitively
