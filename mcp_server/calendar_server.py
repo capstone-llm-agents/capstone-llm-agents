@@ -55,7 +55,7 @@ def safe_tool[F: Callable[..., Any]](func: F) -> F:
     return cast("F", wrapper)
 
 
-@mcp.tool(name="CreateCalendar")
+@mcp.tool(name="Create_ICS_Calendar/Schedule")
 @safe_tool
 def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.ics") -> str:
     """Generate a calendar schedule from a task prompt and write it to an ICS file."""
@@ -92,7 +92,7 @@ def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.
     return plan["content"]
 
 
-@mcp.tool(name="ReadCalendar")
+@mcp.tool(name="Read_ICS_Calendar/Schedule")
 @safe_tool
 def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
     """Read an ICS file and return a human-readable task list."""
@@ -125,7 +125,7 @@ def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
     return result["content"]
 
 
-@mcp.tool(name="UpdateCalendar")
+@mcp.tool(name="Update_ICS_Calendar/Schedule")
 def create_ics_calendar_with_context(
     prompt: str,
     file_name_read: str = "./calendars/test_calendar.ics",
@@ -162,7 +162,7 @@ def create_ics_calendar_with_context(
     End: 10:00
     ...
     """
-
+    print("made it here for the update calendar")
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": extracted_prompt}])
 
     create_ics_file(result["content"], file_name_write)

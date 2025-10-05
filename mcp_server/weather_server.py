@@ -21,21 +21,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 ########llm agent setup########
-Model_type = 2 #use 1 for gemma3 or 2 for openai
-
-if Model_type == 1:
-    llm_config = {
-        "api_type": "ollama",
-        "model": "gemma3",
-    }
-elif Model_type == 2:
-    llm_config = {
-        "api_type": "openai",
-        "model": "gpt-4o-mini",
-        "api_key": os.environ.get("OPENAI_API_KEY"),
-    }
-else:
-    print("No model has been selected in weather_server.py")
+from server_llm_config import Model_type, llm_config
 
 weather_agent = ConversableAgent(
     name="weather_agent",
