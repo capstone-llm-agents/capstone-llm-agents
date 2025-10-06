@@ -28,9 +28,9 @@ def text_to_pdf(text, filename):
 
     pdf.output(filename, 'F')
 
-input_filename = 'test.txt'
+#input_filename = 'test.txt'
 output_filename = 'output.pdf'
-file = open(input_filename)
-text = file.read()
-file.close()
+#file = open(input_filename)
+text = "Test two Title\ntest two text\n\n\ntest two text\ntest two text\ntest two text finsih"
+#file.close()
 text_to_pdf(text, output_filename)
