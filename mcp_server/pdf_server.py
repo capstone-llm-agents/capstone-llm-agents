@@ -89,14 +89,14 @@ def create_pdf_file(prompt):
             splitted = text.split('\n')
             i = 0
             for line in splitted:
-                print("Am stuck here 1")
+                #print("Am stuck here 1")
                 lines = textwrap.wrap(line, width_text)
 
                 if len(lines) == 0:
                     pdf.ln()
 
                 for wrap in lines:
-                    print("Am stuck here 2")
+                    #print("Am stuck here 2")
                     if i == 0:
                         pdf.set_font(family='Courier', size=title_fontsize_mm, style='B')
                         pdf.cell(0, title_fontsize_mm, wrap, ln=1, align='C')
@@ -104,11 +104,11 @@ def create_pdf_file(prompt):
                     else:
                         pdf.set_font(family='Courier', size=fontsize_pt)
                         pdf.cell(0, fontsize_mm, wrap, ln=1)
-            print("Am stuck here 3")
+            #print("Am stuck here 3")
             pdf.output(filename, 'F')
-            print("Am stuck here 4")
+            #print("Am stuck here 4")
         text_to_pdf(LLM_details, output_filename)#LLM details is the PDF agents output
-        print("Am stuck here 5")
+        #print("Am stuck here 5")
         print("#####PDF file created")
         result = LLM_details
     except:
