@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.13"
 
 [[package]]
@@ -271,6 +271,7 @@ dependencies = [
     { name = "chromadb" },
     { name = "fastapi", extra = ["standard"] },
     { name = "google-genai" },
+    { name = "httpx" },
     { name = "icalendar" },
     { name = "ics" },
     { name = "mcp", extra = ["cli"] },
@@ -288,6 +289,7 @@ dependencies = [
     { name = "textual" },
     { name = "textual-dev" },
     { name = "tzlocal" },
+    { name = "websockets" },
 ]
 
 [package.metadata]
@@ -298,6 +300,7 @@ requires-dist = [
     { name = "chromadb", specifier = ">=1.0.20" },
     { name = "fastapi", extras = ["standard"], specifier = ">=0.118.0" },
     { name = "google-genai", specifier = ">=1.39.1" },
+    { name = "httpx", specifier = ">=0.28.0" },
     { name = "icalendar", specifier = ">=6.3.1" },
     { name = "ics", specifier = ">=0.7.2" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.12.4" },
@@ -315,6 +318,7 @@ requires-dist = [
     { name = "textual", specifier = ">=5.3.0" },
     { name = "textual-dev", specifier = ">=1.7.0" },
     { name = "tzlocal", specifier = ">=5.3.1" },
+    { name = "websockets", specifier = ">=14.0" },
 ]
 
 [[package]]

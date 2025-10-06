@@ -1,20 +1,65 @@
-"""Run the network server."""
+"""Run the network server.
 
-# TODO: Run the HTTP server for the REST API and/or WebSocket connection for real-time communication if you have aura.
-# use fastapi or something idk
+This module provides a simple way to run the local network server for testing.
+The server supports:
+- User authentication (login/signup/logout)
+- Friend management (add friends, accept friend requests)
+- Agent discovery (list friends' agents)
+- Message sending via HTTP
+- Real-time WebSocket communication
+"""
 
-# the endpoints you kinda need are
-# - GET /friends?key=TOKEN - get the list of friends for the user (some SQL db needed for this)
-# - POST /message/{friend_name/id}/key=TOKEN - send a message to a friend's assistant agent
-# - GET /agents/{friend_name/id}/?key=TOKEN - get the list of agents for a friend (only need name and description)
+import argparse
+import sys
 
-# and then stuff for logging in, signing up, sending friend requests etc. (but idk you can cook this how you want)
 
-# - POST /login?username=USERNAME&password=PASSWORD - log in and get the token
-# - POST /signup?username=USERNAME&password=PASSWORD - sign up and get the token
-# - POST /friend_request/{friend_name/id}/?key=TOKEN - send a friend request to a user
-# - POST /accept_friend_request/{friend_name/id}/ - accept a friend request from a user
+def run_server(host: str = "127.0.0.1", port: int = 8000) -> None:
+    """Run the local network server.
 
-# then you need to run the server and allow the running client to connect to it
-# as long as the client can call the endpoints and send/receive messages it should be fine
-# for the running client to receive messages from the server we need to use polling or websockets
+    Args:
+        host: The host to bind the server to
+        port: The port to bind the server to
+
+    """
+    from network_server.local_server import LocalServer
+
+    print(f"Starting local network server on {host}:{port}")
+    print(f"HTTP endpoints available at: http://{host}:{port}")
+    print(f"WebSocket endpoint available at: ws://{host}:{port}/ws")
+    print("\nTest users available:")
+    print("  - alice / password123")
+    print("  - bob / password123")
+    print("  - charlie / password123")
+    print("\nPress Ctrl+C to stop the server\n")
+
+    server = LocalServer()
+    server.run(host=host, port=port)
+
+
+def main() -> None:
+    """Main entry point for running the server."""
+    parser = argparse.ArgumentParser(description="Run the local network server")
+    parser.add_argument(
+        "--host",
+        type=str,
+        default="127.0.0.1",
+        help="Host to bind the server to (default: 127.0.0.1)",
+    )
+    parser.add_argument(
+        "--port",
+        type=int,
+        default=8000,
+        help="Port to bind the server to (default: 8000)",
+    )
+
+    args = parser.parse_args()
+
+    try:
+        run_server(host=args.host, port=args.port)
+    except KeyboardInterrupt:
+        print("\nShutting down server...")
+        sys.exit(0)
+
+
+if __name__ == "__main__":
+    main()
