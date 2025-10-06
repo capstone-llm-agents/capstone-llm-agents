@@ -1,0 +1,81 @@
+import functools
+import logging
+import traceback
+from collections.abc import Callable
+from datetime import datetime
+from typing import Any, TypeVar, cast
+
+import uvicorn
+from autogen import ConversableAgent
+from calendar_functions import convert_ics_to_text, create_ics_file
+from mcp.server import Server
+from mcp.server.fastmcp import FastMCP
+from mcp.server.sse import SseServerTransport
+from starlette.applications import Starlette
+from starlette.requests import Request
+from starlette.responses import Response
+from starlette.routing import Mount, Route
+
+from dotenv import load_dotenv
+
+load_dotenv()
+from server_llm_config import Model_type, llm_config
+
+weather_agent = ConversableAgent(
+    name="weather_agent",
+    system_message="""Your Job is to assist the user with their tasks.
+    """,
+    llm_config=llm_config,
+    human_input_mode="NEVER",
+)
+########llm agent setup########
+
+# create the MCP server
+mcp = FastMCP("SSE Example Server")
+
+
+########## Weather agent tools ###############
+@mcp.tool(name="create_pdf_file")
+def create_pdf_file(prompt):
+    return prompt
+
+def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:
+    """Create a Starlette application that can serve the MCP server with SSE."""
+    sse = SseServerTransport("/messages/")
+
+    async def handle_sse(request: Request) -> Response:
+        async with sse.connect_sse(
+            request.scope,
+            request.receive,
+            request._send,  # noqa: SLF001 (request._send is a private method, but needed for Starlette's internal use)
+        ) as (read_stream, write_stream):
+            await mcp_server.run(
+                read_stream,
+                write_stream,
+                mcp_server.create_initialization_options(),
+            )
+
+        # 204 - No Content response
+        # This is to indicate that the SSE connection is established and no immediate response is needed.
+        return Response(status_code=204)
+
+    return Starlette(
+        debug=debug,
+        routes=[
+            Route("/sse", endpoint=handle_sse),
+            Mount("/messages/", app=sse.handle_post_message),
+        ],
+    )
+
+
+if __name__ == "__main__":
+    # get the underlying MCP server so we can give it to Starlette
+    mcp_server = mcp._mcp_server  # noqa: SLF001
+
+    # create Starlette app with SSE support
+    starlette_app = create_starlette_app(mcp_server, debug=True)
+
+    port = 8082
+
+    # run the server using uvicorn
+    uvicorn.run(starlette_app, host="localhost", port=port)
