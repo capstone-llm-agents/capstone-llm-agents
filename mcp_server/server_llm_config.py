@@ -1,4 +1,4 @@
-Model_type = 2 #use 1 for gemma3 or 2 for openai
+Model_type = 1 #use 1 for gemma3 or 2 for openai
 import os
 if Model_type == 1:
     llm_config = {
