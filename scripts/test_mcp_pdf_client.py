@@ -20,7 +20,7 @@ async def main() -> None:
             print("Available tools:", [tool.name for tool in response.tools])
 
             # call weather tool
-            result = await session.call_tool("create_pdf_file", {"prompt": "What is the weather in Pakenham victoria tomorrow at 3pm as well as what will the weather be in paris on the 4th of september 2025."})
+            result = await session.call_tool("create_pdf_file", {"prompt": "I plan to go to the beach tomorrow morning, have lunch at the fish and chips shop as well as go to the movies at night. can you put my schedule into a pdf file?"})
             print("Weather creation result:", result)
 
 

@@ -21,8 +21,8 @@ from dotenv import load_dotenv
 load_dotenv()
 from server_llm_config import Model_type, llm_config
 
-weather_agent = ConversableAgent(
-    name="weather_agent",
+pdf_agent = ConversableAgent(
+    name="pdf_agent",
     system_message="""Your Job is to assist the user with their tasks.
     """,
     llm_config=llm_config,
@@ -37,7 +37,37 @@ mcp = FastMCP("SSE Example Server")
 ########## Weather agent tools ###############
 @mcp.tool(name="create_pdf_file")
 def create_pdf_file(prompt):
-    return prompt
+    try:
+        print("Using create pdf function")
+        #current_date = datetime.now().date()
+
+        agent_prompt = f"""
+        Tasks: {prompt}
+
+        Based off what task you are provided you are to follow the following rules on how you will format your response to be created into a PDF file.
+        Any time you create a new line it will also create a new line in the text.
+        The first line you write will be the title.
+        Always keep the title short and concise.
+        Do not add any unesisary text such asl clarifications or thank youse only write what you want to add to the file.
+        You may use dot points or paragraphs do what you think will look best.
+        """
+
+        extracted_details = pdf_agent.generate_reply(messages=[{"role": "user", "content": agent_prompt}])
+        print("#####LLM response#####")
+        if Model_type == 1:
+            LLM_details = extracted_details["content"]
+            print(LLM_details)
+        elif Model_type == 2:
+            LLM_details = extracted_details
+            print(LLM_details)
+        else:
+            print("Error within weather_server.py response collection")
+
+        result = LLM_details
+    except:
+        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"  # temporary error catching
+
+        return result
 
 def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:
     """Create a Starlette application that can serve the MCP server with SSE."""
