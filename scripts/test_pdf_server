@@ -15,6 +15,10 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
+#https://stackoverflow.com/questions/10112244/convert-plain-text-to-pdf-in-python
+import textwrap
+from fpdf import FPDF
+import unicodedata
 
 from dotenv import load_dotenv
 
@@ -56,16 +60,59 @@ def create_pdf_file(prompt):
         print("#####LLM response#####")
         if Model_type == 1:
             LLM_details = extracted_details["content"]
-            print(LLM_details)
+            #print(LLM_details)
         elif Model_type == 2:
             LLM_details = extracted_details
-            print(LLM_details)
+            #print(LLM_details)
         else:
             print("Error within weather_server.py response collection")
 
+        output_filename = 'output.pdf'
+        test_text = "This is a test title\nHere is a test paragraph\n\n\nDone\n"
+        LLM_details = LLM_details.encode('latin-1', 'replace').decode('latin-1')#fpdf module doesn't support other formats
+        print(LLM_details)
+        def text_to_pdf(text, filename):
+            a4_width_mm = 210
+            pt_to_mm = 0.35
+            fontsize_pt = 10
+            fontsize_mm = fontsize_pt * pt_to_mm
+            title_font_size = 50
+            title_fontsize_mm = title_font_size * pt_to_mm
+            margin_bottom_mm = 10
+            character_width_mm = 7 * pt_to_mm
+            width_text = a4_width_mm / character_width_mm
+
+            pdf = FPDF(orientation='P', unit='mm', format='A4')
+            pdf.set_auto_page_break(True, margin=margin_bottom_mm)
+            pdf.add_page()
+            pdf.set_font(family='Courier', size=fontsize_pt)
+            splitted = text.split('\n')
+            i = 0
+            for line in splitted:
+                print("Am stuck here 1")
+                lines = textwrap.wrap(line, width_text)
+
+                if len(lines) == 0:
+                    pdf.ln()
+
+                for wrap in lines:
+                    print("Am stuck here 2")
+                    if i == 0:
+                        pdf.set_font(family='Courier', size=title_fontsize_mm, style='B')
+                        pdf.cell(0, title_fontsize_mm, wrap, ln=1, align='C')
+                        i = (i + 1)
+                    else:
+                        pdf.set_font(family='Courier', size=fontsize_pt)
+                        pdf.cell(0, fontsize_mm, wrap, ln=1)
+            print("Am stuck here 3")
+            pdf.output(filename, 'F')
+            print("Am stuck here 4")
+        text_to_pdf(LLM_details, output_filename)#LLM details is the PDF agents output
+        print("Am stuck here 5")
+        print("#####PDF file created")
         result = LLM_details
     except:
-        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"  # temporary error catching
+        result = "An error has occurred within the PDF file creator."
 
         return result
 
