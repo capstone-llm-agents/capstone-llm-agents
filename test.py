@@ -7,6 +7,8 @@ def text_to_pdf(text, filename):
     pt_to_mm = 0.35
     fontsize_pt = 10
     fontsize_mm = fontsize_pt * pt_to_mm
+    title_font_size = 50
+    title_fontsize_mm = title_font_size * pt_to_mm
     margin_bottom_mm = 10
     character_width_mm = 7 * pt_to_mm
     width_text = a4_width_mm / character_width_mm
@@ -16,7 +18,7 @@ def text_to_pdf(text, filename):
     pdf.add_page()
     pdf.set_font(family='Courier', size=fontsize_pt)
     splitted = text.split('\n')
-
+    i = 0
     for line in splitted:
         lines = textwrap.wrap(line, width_text)
 
@@ -24,7 +26,13 @@ def text_to_pdf(text, filename):
             pdf.ln()
 
         for wrap in lines:
-            pdf.cell(0, fontsize_mm, wrap, ln=1)
+            if i == 0:
+                pdf.set_font(family='Courier', size=title_fontsize_mm, style='B')
+                pdf.cell(0, title_fontsize_mm, wrap, ln=1, align='C')
+                i = (i + 1)
+            else:
+                pdf.set_font(family='Courier', size=fontsize_pt)
+                pdf.cell(0, fontsize_mm, wrap, ln=1)
 
     pdf.output(filename, 'F')
 
