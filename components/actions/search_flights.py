@@ -32,16 +32,6 @@ class SearchFlights(Action):
             msg = "Aviationstack API key not found. Please set the AVIATIONSTACK_API_KEY environment variable."
             raise ValueError(msg)
 
-        chat_history = context.conversation.get_chat_history()
-        messages = chat_history.as_dicts()
-
-        last_message = messages[-1] if messages else None
-        if not last_message:
-            msg = "No chat history available for web search."
-            raise ValueError(msg)
-
-        query = last_message["content"]
-
         # In a real-world scenario, you would parse the user's intent to extract
         # origin, destination, and dates. For this example, we'll extract them
         # from the action parameters which are assumed to be provided by the LLM

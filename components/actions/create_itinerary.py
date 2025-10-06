@@ -18,21 +18,17 @@ class CreateItinerary(Action):
         """Initialize the CreateItinerary action."""
         super().__init__(description="Generates a day-by-day itinerary based on search results and user preferences.")
 
+        self.use_fragments_for_context()
+
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by generating an itinerary with an LLM."""
-        chat_history = context.conversation.get_chat_history()
-        messages = chat_history.as_dicts()
-        last_message = messages[-1] if messages else None
-
-        if not last_message:
-            msg = "No chat history available to respond to."
-            raise ValueError(msg)
+        last_message = self.get_last_message_content(context)
 
         # The core of this action is feeding the LLM with all relevant information
         # The `last_result` context will contain the output from previous actions
         # like SearchFlights, SearchAccommodations, etc.
-        relevant_data = context.last_result.as_json_pretty()
+        relevant_data = self.get_context_from_last_result(context)
 
         # Construct a detailed prompt to guide the LLM's output
         prompt_with_instructions = f"""
@@ -42,7 +38,7 @@ class CreateItinerary(Action):
         Include details like suggested times, brief descriptions, and any relevant travel info (e.g., "Take a train").
         Make it sound engaging and helpful.
 
-        User Request: {last_message["content"]}
+        User Request: {last_message}
 
         Relevant Travel Data:
         {relevant_data}
@@ -56,4 +52,4 @@ class CreateItinerary(Action):
             return res
         except Exception as e:
             msg = f"An error occurred while calling the LLM to create the itinerary: {e}"
-            raise ValueError(msg)
+            raise ValueError(msg) from e

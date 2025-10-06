@@ -21,16 +21,6 @@ class BookFlight(Action):
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by booking the flight."""
-        chat_history = context.conversation.get_chat_history()
-
-        messages = chat_history.as_dicts()
-
-        last_message = messages[-1] if messages else None
-
-        if not last_message:
-            msg = "No chat history available to respond to."
-            raise ValueError(msg)
-
         # Expect the flight number to be passed as a parameter
         flight_number = TRAVEL_CONTEXT.flight_number
 
