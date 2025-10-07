@@ -1,14 +1,10 @@
-# main_menu.py (fixed)
+"""Main menu screen for PyQt6 app."""
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QPushButton
+from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
 from llm_mas.client.account.client import Client
-from llm_mas.client.ui.pyqt.screens.user_chat_screen import UserChatScreen
-from llm_mas.client.ui.pyqt.screens.mcp_client import MCPClientScreen
-from llm_mas.client.ui.pyqt.screens.agent_list import AgentListScreen
-from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
-from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.mas.conversation import Conversation
+
 
 class MainMenu(QWidget):
     """Main menu for PyQt6 app with navigation."""
