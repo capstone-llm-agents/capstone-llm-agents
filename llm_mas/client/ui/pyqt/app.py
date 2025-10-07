@@ -1,30 +1,39 @@
 """PyQt6 application with full screen navigation and proper QStackedWidget setup."""
 
-import sys
 import asyncio
-from PyQt6.QtCore import pyqtSignal, QObject
+import sys
+
+from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from qasync import QEventLoop
 
+from llm_mas.client.account.client import Client
+from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
+from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
+from llm_mas.mas.agentstate import State
+from llm_mas.mas.checkpointer import CheckPointer
 from llm_mas.client.ui.pyqt.screens.main_menu import MainMenu
 from llm_mas.client.ui.pyqt.screens.mcp_client import MCPClientScreen
+from llm_mas.client.ui.pyqt.screens.upload_screen import UploadScreen
 from llm_mas.client.ui.pyqt.screens.user_chat_screen import UserChatScreen
-from llm_mas.client.ui.pyqt.screens.agent_list import AgentListScreen
-from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
-from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
 
 
 class NavigationManager(QObject):
     """Signal manager to handle navigation requests between screens."""
+
     navigate = pyqtSignal(str, object)  # screen_name, payload
 
 
 class PyQtApp(QStackedWidget):
-    def __init__(self, client):
+    """Main PyQt application class with navigation and screen management."""
+
+    def __init__(self, client: Client, checkpoint: CheckPointer) -> None:
+        """Initialize the main application with client and navigation."""
         super().__init__()
         self.client = client
+        self.checkpoint = checkpoint
         self.setWindowTitle(f"Welcome Back - {client.get_username()}")
 
         # Navigation manager
@@ -35,7 +44,7 @@ class PyQtApp(QStackedWidget):
         self.screens = {}
 
         # Instantiate MainMenu with nav
-        self.main_menu = MainMenu(client, nav=self.nav)
+        self.main_menu = MainMenu(client, checkpoint, nav=self.nav)
         self._add_screen("main_menu", self.main_menu)
 
         # Show main menu initially
@@ -46,6 +55,15 @@ class PyQtApp(QStackedWidget):
         """Add a screen to the stacked widget and cache it."""
         self.screens[name] = widget
         self.addWidget(widget)
+
+    def closeEvent(self, event) -> None:
+        conversations = self.client.mas.conversation_manager.get_all_conversations()
+        print(conversations)
+        #state: State = {"messages": conversations.message.as_dicts()}
+        #print(state)
+        #self.checkpoint.save(state)
+        print("Closing main menu")
+        event.accept()
 
     def _navigate(self, screen_name: str, payload=None):
         """Handle navigation requests to switch screens."""
@@ -59,7 +77,7 @@ class PyQtApp(QStackedWidget):
                 screen = MCPClientScreen(self.client, self.nav)
             elif screen_name == "user_chat":
                 conversation = payload.get("conversation") if payload else None
-                screen = UserChatScreen(self.client, conversation, nav=self.nav)
+                screen = UserChatScreen(self.client, conversation,self.checkpoint, nav=self.nav)
             elif screen_name == "agent_list":
                 screen = AgentListScreen(self.client, self.nav)
             elif screen_name == "conversations":
@@ -67,6 +85,8 @@ class PyQtApp(QStackedWidget):
                 screen = ConversationsScreen(self.client, self.nav, conversations)
             elif screen_name == "agent_network":
                 screen = AgentNetworkScreen(self.client, self.nav)
+            elif screen_name == "upload_kb":
+                screen = UploadScreen(self.client, self.nav)
             else:
                 APP_LOGGER.error(f"Unknown screen requested: {screen_name}")
                 return
@@ -84,18 +104,18 @@ class PyQtApp(QStackedWidget):
             await asyncio.gather(*BACKGROUND_TASKS, return_exceptions=True)
 
 
-def run_app(client):
+def run_app(client, checkpoint):
     """Run the PyQt6 application with asyncio event loop."""
     app = QApplication(sys.argv)
 
-    with open("llm_mas/client/ui/pyqt/styles.qss", "r") as f:
+    with open("llm_mas/client/ui/pyqt/styles.qss") as f:
         qss = f.read()
         app.setStyleSheet(qss)
 
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    window = PyQtApp(client)
+    window = PyQtApp(client, checkpoint)
     window.show()
 
     with loop:
