@@ -203,6 +203,7 @@ class DefaultErrorHandler(ErrorHandler):
             sender=state.agent,
             reason=Reason(f"There was an error: {message.error.text}"),
             content="That's not what I wanted.",
+            send_to_self=True,
         )
 
 

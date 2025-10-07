@@ -16,11 +16,11 @@ class ProposalMessage(AssistantMessage):
         self,
         content: str,
         sender: Agent,
-        action_context: ActionContext,
+        task: Task,
     ) -> None:
         """Initialize the proposal message with content and action context."""
         super().__init__(content=content, sender=sender, message_type=MessageType.PROPOSAL)
-        self.action_context = action_context
+        self.task = task
 
 
 class RejectionMessage(AssistantMessage):
