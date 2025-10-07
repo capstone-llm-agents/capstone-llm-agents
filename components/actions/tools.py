@@ -11,6 +11,7 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.tools.tool_action_creator import ToolActionCreator
 from llm_mas.utils.config.models_config import ModelType
@@ -82,10 +83,12 @@ class GetTools(Action):
                 "description": tool.description,
             }
 
-        res.set_param(
-            "tools",
-            [convert_tool_to_dict(tool) for tool in tools],
-        )
+        tools = [convert_tool_to_dict(tool) for tool in tools]
+
+        res.set_param("tools", tools)
+
+        APP_LOGGER.debug(f"Available tools: {tools}")
+
         return res
 
 
