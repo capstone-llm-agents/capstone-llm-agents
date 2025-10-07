@@ -11,6 +11,7 @@ from llm_mas.client.account.client import Client
 from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
 from llm_mas.mas.agentstate import State
+from llm_mas.mas.checkpointer import CheckPointer
 from llm_mas.client.ui.pyqt.screens.main_menu import MainMenu
 from llm_mas.client.ui.pyqt.screens.mcp_client import MCPClientScreen
 from llm_mas.client.ui.pyqt.screens.upload_screen import UploadScreen
