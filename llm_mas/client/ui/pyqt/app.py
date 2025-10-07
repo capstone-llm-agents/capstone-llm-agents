@@ -94,8 +94,10 @@ class PyQtApp(QStackedWidget):
         mcp_client = MCPClient()
         server1 = SSEConnectedServer("http://localhost:8080/sse")
         server2 = SSEConnectedServer("http://localhost:8081/sse")
+        server3 = SSEConnectedServer("http://localhost:8082/sse")
         mcp_client.add_connected_server(server1)
         mcp_client.add_connected_server(server2)
+        mcp_client.add_connected_server(server3)
 
         # Setup agent friendships
         ASSISTANT_AGENT.add_friend(WEATHER_AGENT)
@@ -114,7 +116,7 @@ class PyQtApp(QStackedWidget):
         self.client.user.add_friend(ASSISTANT_AGENT)
 
         # Create checkpoint if not exists
-        if not hasattr(self, 'checkpoint') or self.checkpoint is None:
+        if not hasattr(self, "checkpoint") or self.checkpoint is None:
             self.checkpoint = CheckPointer("test.sqlite")
 
         # Create and show main menu
@@ -145,7 +147,7 @@ class PyQtApp(QStackedWidget):
                 screen = MCPClientScreen(self.client, self.nav)
             elif screen_name == "user_chat":
                 conversation = payload.get("conversation") if payload else None
-                screen = UserChatScreen(self.client, conversation,self.checkpoint, nav=self.nav)
+                screen = UserChatScreen(self.client, conversation, self.checkpoint, nav=self.nav)
             elif screen_name == "conversations":
                 conversations = self.client.mas.conversation_manager.get_all_conversations()
                 screen = ConversationsScreen(self.client, self.nav, conversations)
