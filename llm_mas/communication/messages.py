@@ -44,15 +44,6 @@ class AcceptanceMessage(AssistantMessage):
         super().__init__(content=content, sender=sender, message_type=MessageType.ACCEPTANCE)
 
 
-class WaitMessage(AssistantMessage):
-    """Wait message class for LLM interactions."""
-
-    def __init__(self, sender: Agent, task: Task, content: str = "Ok, thanks let me know when you're done.") -> None:
-        """Initialize the wait message with content."""
-        super().__init__(content=content, sender=sender, message_type=MessageType.WAIT)
-        self.task = task
-
-
 class QueryMessage(AssistantMessage):
     """Query message class for LLM interactions."""
 
@@ -88,6 +79,14 @@ class InformationMessage(AssistantMessage):
         """Initialize the information message with content and action result."""
         super().__init__(content=content, sender=sender, message_type=MessageType.INFORMATION)
         self.action_result = action_result
+
+
+class ThanksMessage(AssistantMessage):
+    """Thanks message class for LLM interactions."""
+
+    def __init__(self, sender: Agent, content: str = "Thanks for your help!") -> None:
+        """Initialize the thanks message with content."""
+        super().__init__(content=content, sender=sender, message_type=MessageType.THANKS)
 
 
 class DisappointmentMessage(AssistantMessage):

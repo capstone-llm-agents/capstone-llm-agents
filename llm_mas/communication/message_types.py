@@ -11,16 +11,13 @@ class MessageType(Enum):
     # has ActionContext
     REJECTION = auto()  # "I cannot help with that." -> yields other DISAPPOINTMENT
     # has Reason
-    ACCEPTANCE = auto()  # "Sure, I can help with that." -> yields other WAIT
+    ACCEPTANCE = auto()  # "Sure, I can help with that." -> yields other TASK
 
     # task based dialogue (handling the task)
     QUERY = auto()  # "What is on Anton's calendar today?" -> yields other INFORMATION or ERROR
     # has ActionContext
     TASK = auto()  # "Book a flight to New York for next Monday." -> yields other INFORMATION or ERROR
     # NOTE: A QUERY or TASK are both REQUESTS. REQUESTS can be follow ups which can include extra INFORMATION.
-
-    WAIT = auto()  # "Ok, thanks let me know when you're done." -> yields other INFORMATION or ERROR or QUERY or TASK
-    # WAIT can also yield QUERY or TASK from the other side if they need more information perhaps counter-intuitively
 
     # results based dialogue (providing results)
     INFORMATION = auto()  # "The weather in New York is sunny." -> yields other THANKS or DISAPPOINTMENT

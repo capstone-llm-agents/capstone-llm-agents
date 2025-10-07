@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
+from llm_mas.communication.task.agent_task import Task
+
 if TYPE_CHECKING:
     from llm_mas.communication.message_types import MessageType
     from llm_mas.mas.agent import Agent
@@ -19,6 +21,8 @@ class CommunicationState:
         """The agent using this communication interface."""
         self.talking_to = talking_to
         """The other agent in the conversation."""
+        self.current_task: Task | None = None
+        """The current task being worked on, if any."""
 
 
 TMsg = TypeVar("TMsg", bound="AssistantMessage")
