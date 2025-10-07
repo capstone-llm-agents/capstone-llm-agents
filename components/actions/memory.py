@@ -1,8 +1,4 @@
-from datetime import datetime
 from typing import override
-
-from mem0 import Memory as Mem
-
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -27,18 +23,6 @@ class MemorySaveLong(Action):
             },
         }
 
-        """
-        Qdrant config
-            config = {
-                        "vector_store":{
-                            "provider": "qdrant",
-                            "config": {
-                                "host": "localhost",
-                                "port": 6333,
-                            }
-                        }
-                    }
-        """
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
