@@ -1,6 +1,7 @@
 """PyQt6 application with full screen navigation and proper QStackedWidget setup."""
 
 import asyncio
+import os
 import sys
 
 from PyQt6.QtCore import QObject, pyqtSignal
@@ -9,6 +10,7 @@ from qasync import QEventLoop
 
 from components.agents.assistant_agent import ASSISTANT_AGENT
 from components.agents.calendar_agent import CALENDAR_AGENT
+from components.agents.github_agent import GITHUB_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
 from llm_mas.client.account.client import Client
@@ -24,7 +26,7 @@ from llm_mas.mas.agentstate import State
 from llm_mas.mas.checkpointer import CheckPointer
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
-from llm_mas.mcp_client.connected_server import SSEConnectedServer
+from llm_mas.mcp_client.connected_server import HTTPConnectedServer, SSEConnectedServer
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
 from llm_mas.utils.config.general_config import GENERAL_CONFIG
 
@@ -85,6 +87,7 @@ class PyQtApp(QStackedWidget):
 
         # Initialize MAS and agents
         mas = MAS()
+        mas.add_agent(GITHUB_AGENT)
         mas.add_agent(ASSISTANT_AGENT)
         mas.add_agent(CALENDAR_AGENT)
         mas.add_agent(WEATHER_AGENT)
@@ -98,6 +101,15 @@ class PyQtApp(QStackedWidget):
         mcp_client.add_connected_server(server1)
         mcp_client.add_connected_server(server2)
         mcp_client.add_connected_server(server3)
+
+        # test github server
+        github_token = os.getenv("GITHUB_PERSONAL_ACCESS_TOKEN")
+
+        if not github_token:
+            APP_LOGGER.warning("GITHUB_PERSONAL_ACCESS_TOKEN not set in environment variables.")
+        else:
+            github_server = HTTPConnectedServer("https://api.githubcopilot.com/mcp", auth_token=github_token)
+            mcp_client.add_connected_server(github_server)
 
         # Setup agent friendships
         ASSISTANT_AGENT.add_friend(WEATHER_AGENT)

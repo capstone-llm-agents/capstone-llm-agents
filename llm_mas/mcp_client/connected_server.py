@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from mcp import ClientSession, Implementation, Resource, Tool
 from mcp.client.sse import sse_client
+from mcp.client.streamable_http import streamablehttp_client
 from mcp.types import BlobResourceContents, ContentBlock, TextResourceContents
 from pydantic import AnyUrl
 
@@ -13,9 +14,12 @@ from pydantic import AnyUrl
 class ConnectedServer:
     """A class to manage a connection to an MCP server."""
 
-    def __init__(self, server_url: str) -> None:
+    def __init__(self, server_url: str, auth_token: str | None = None) -> None:
         """Initialize the connected server with the given URL."""
         self.server_url = server_url
+        self.headers = {}
+        if auth_token:
+            self.headers["Authorization"] = f"Bearer {auth_token}"
 
     async def list_tools(self, session: ClientSession) -> list[Tool]:
         """List available tools on the MCP server."""
@@ -66,15 +70,34 @@ class ConnectedServer:
 class SSEConnectedServer(ConnectedServer):
     """A class to manage a connection to an MCP server using Server-Sent Events (SSE)."""
 
-    def __init__(self, server_url: str) -> None:
+    def __init__(self, server_url: str, auth_token: str | None = None) -> None:
         """Initialize the SSE connected server with the given URL."""
-        super().__init__(server_url)
+        super().__init__(server_url, auth_token)
 
     @asynccontextmanager
     async def connect(self) -> AsyncGenerator[ClientSession]:
         """Connect to the MCP server using SSE."""
         try:
-            async with sse_client(url=self.server_url) as streams:  # noqa: SIM117
+            async with sse_client(url=self.server_url, headers=self.headers) as streams:  # noqa: SIM117
+                async with ClientSession(read_stream=streams[0], write_stream=streams[1]) as session:
+                    yield session
+        except Exception as e:
+            msg = f"Failed to connect to the server at {self.server_url} - {e}"
+            raise ConnectionError(msg) from e
+
+
+class HTTPConnectedServer(ConnectedServer):
+    """A class to manage a connection to an MCP server using Server-Sent Events (SSE)."""
+
+    def __init__(self, server_url: str, auth_token: str | None = None) -> None:
+        """Initialize the SSE connected server with the given URL."""
+        super().__init__(server_url, auth_token)
+
+    @asynccontextmanager
+    async def connect(self) -> AsyncGenerator[ClientSession]:
+        """Connect to the MCP server using SSE."""
+        try:
+            async with streamablehttp_client(url=self.server_url, headers=self.headers) as streams:  # noqa: SIM117
                 async with ClientSession(read_stream=streams[0], write_stream=streams[1]) as session:
                     yield session
         except Exception as e:
