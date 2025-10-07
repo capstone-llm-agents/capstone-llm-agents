@@ -1,6 +1,6 @@
 """Default communication interface."""
 
-from typing import override
+from typing import TYPE_CHECKING, override
 
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_result import ActionResult
@@ -31,7 +31,11 @@ from llm_mas.communication.messages import (
     TaskMessage,
     ThanksMessage,
 )
-from llm_mas.mas.agent import Agent
+
+if TYPE_CHECKING:
+    from llm_mas.mas.agent import Agent
+
+
 from llm_mas.mas.conversation import AssistantMessage
 from llm_mas.model_providers.api import ModelsAPI
 
@@ -39,7 +43,7 @@ from llm_mas.model_providers.api import ModelsAPI
 class DefaultCommunicationInterface(CommunicationInterface):
     """Default communication interface."""
 
-    def __init__(self, agent: Agent) -> None:
+    def __init__(self, agent: "Agent") -> None:
         """Initialize the default communication interface."""
         super().__init__(agent)
 

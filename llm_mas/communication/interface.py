@@ -17,11 +17,8 @@ class CommunicationState:
     def __init__(self, agent: Agent, talking_to: Agent) -> None:
         """Initialize the communication state."""
         self.agent = agent
-        """The agent using this communication interface."""
         self.talking_to = talking_to
-        """The other agent in the conversation."""
         self.current_task: Task | None = None
-        """The current task being worked on, if any."""
 
 
 TMsg = TypeVar("TMsg", bound="AssistantMessage")
