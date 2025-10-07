@@ -12,6 +12,7 @@ from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScre
 from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
 from llm_mas.client.ui.pyqt.screens.main_menu import MainMenu
 from llm_mas.client.ui.pyqt.screens.mcp_client import MCPClientScreen
+from llm_mas.client.ui.pyqt.screens.upload_screen import UploadScreen
 from llm_mas.client.ui.pyqt.screens.user_chat_screen import UserChatScreen
 from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
@@ -70,6 +71,8 @@ class PyQtApp(QStackedWidget):
                 screen = ConversationsScreen(self.client, self.nav, conversations)
             elif screen_name == "agent_network":
                 screen = AgentNetworkScreen(self.client, self.nav)
+            elif screen_name == "upload_kb":
+                screen = UploadScreen(self.client, self.nav)
             else:
                 APP_LOGGER.error(f"Unknown screen requested: {screen_name}")
                 return
