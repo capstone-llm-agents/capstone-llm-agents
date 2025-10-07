@@ -1,13 +1,14 @@
 """Main menu screen for PyQt6 app with navigation."""
+
 from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget
 
 from llm_mas.client.account.client import Client
+from llm_mas.mas.agentstate import State
+from llm_mas.mas.checkpointer import CheckPointer
 from llm_mas.mas.conversation import Conversation
 
 
-from llm_mas.mas.checkpointer import CheckPointer
-from llm_mas.mas.agentstate import State
 class MainMenu(QWidget):
     """Main menu for PyQt6 app with navigation."""
 
@@ -56,17 +57,16 @@ class MainMenu(QWidget):
         self.mcp_client_btn.clicked.connect(self._on_mcp_client)
         self.view_conversations_btn.clicked.connect(self._on_view_conversations)
 
-
     # Navigation handlers
     def _on_talk_agent(self) -> None:
         """Navigate to user chat screen."""
+        conversation = self.client.mas.conversation_manager.start_conversation("User Assistant Chat")
 
-        self.nav.navigate.emit("user_chat", {"conversation": Conversation("User Assistant Chat")})
+        self.nav.navigate.emit("user_chat", {"conversation": conversation})
 
     def _on_mcp_client(self) -> None:
         """Navigate to MCP client info screen."""
         self.nav.navigate.emit("mcp_client", None)
-
 
     def _on_view_conversations(self) -> None:
         """Navigate to conversations screen."""
