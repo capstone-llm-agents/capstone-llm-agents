@@ -11,6 +11,7 @@ from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.agent.workspace import Workspace
+from llm_mas.communication.task.agent_task import Task
 from llm_mas.mas.entity import Entity
 from llm_mas.tools.tool_manager import ToolManager
 
@@ -45,6 +46,9 @@ class Agent(Entity):
 
         # tools manager
         self.tool_manager = tool_manager
+
+        # task stack
+        self.task_stack: list[Task] = []
 
     async def act(self, context: ActionContext, params: ActionParams | None = None) -> ActionResult:
         """Perform an action in the workspace using the agent's action selection strategy."""
@@ -96,3 +100,19 @@ class Agent(Entity):
     def finished_working(self) -> bool:
         """Check if the agent has finished working."""
         return self.workspace.action_history.has_action(StopAction())
+
+    def add_task(self, task: Task) -> None:
+        """Add a task to the agent's task stack."""
+        self.task_stack.append(task)
+
+    def get_current_task(self) -> Task | None:
+        """Get the current task from the agent's task stack."""
+        if not self.task_stack:
+            return None
+        return self.task_stack[-1]
+
+    def complete_current_task(self) -> Task | None:
+        """Complete the current task and remove it from the task stack."""
+        if not self.task_stack:
+            return None
+        return self.task_stack.pop()
