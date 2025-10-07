@@ -16,9 +16,9 @@ from llm_mas.utils.config.general_config import GENERAL_CONFIG
 def main():
     # Initialize MAS
     mas = MAS()
+    mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(ASSISTANT_AGENT)
     mas.add_agent(TRAVEL_PLANNER_AGENT)
-    mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(WEATHER_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
 
@@ -26,8 +26,10 @@ def main():
     mcp_client = MCPClient()
     server1 = SSEConnectedServer("http://localhost:8080/sse")
     server2 = SSEConnectedServer("http://localhost:8081/sse")
+    server3 = SSEConnectedServer("http://localhost:8082/sse")
     mcp_client.add_connected_server(server1)
     mcp_client.add_connected_server(server2)
+    mcp_client.add_connected_server(server3)
 
     # Create client
     client = Client("Test User", mas, mcp_client, GENERAL_CONFIG)
@@ -37,7 +39,7 @@ def main():
     user.add_friend(ASSISTANT_AGENT)
     ASSISTANT_AGENT.add_friend(WEATHER_AGENT)
     ASSISTANT_AGENT.add_friend(CALENDAR_AGENT)
-    #ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
+    # ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
     ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
 
     run_app(client)
