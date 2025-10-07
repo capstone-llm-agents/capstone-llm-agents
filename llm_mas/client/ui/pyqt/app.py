@@ -16,6 +16,7 @@ from components.agents.websearch_agent import WEBSEARCH_AGENT
 from llm_mas.client.account.client import Client
 from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
+from llm_mas.client.ui.pyqt.screens.friends_screen import FriendsScreen
 from llm_mas.client.ui.pyqt.screens.login_screen import LoginScreen
 from llm_mas.client.ui.pyqt.screens.main_menu import MainMenu
 from llm_mas.client.ui.pyqt.screens.mcp_client import MCPClientScreen
@@ -29,6 +30,7 @@ from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import HTTPConnectedServer, SSEConnectedServer
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
 from llm_mas.utils.config.general_config import GENERAL_CONFIG
+from network_server.client import NetworkClient
 
 
 class NavigationManager(QObject):
@@ -74,7 +76,7 @@ class PyQtApp(QStackedWidget):
 
         self.resize(900, 600)
 
-    def _on_login_success(self, network_client):
+    def _on_login_success(self, network_client: NetworkClient):
         """Handle successful login - create Client and show main menu."""
         self.network_client = network_client
 
@@ -165,6 +167,8 @@ class PyQtApp(QStackedWidget):
                 screen = ConversationsScreen(self.client, self.nav, conversations)
             elif screen_name == "agent_network":
                 screen = AgentNetworkScreen(self.client, self.nav)
+            elif screen_name == "friends":
+                screen = FriendsScreen(self.client, self.nav)
             elif screen_name == "upload_kb":
                 screen = UploadScreen(self.client, self.nav)
             else:

@@ -5,6 +5,7 @@ from llm_mas.mas.mas import MAS
 from llm_mas.mas.user import User
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.utils.config.general_config import GeneralConfig
+from network_server.client import NetworkClient
 
 
 class Client:
@@ -16,6 +17,8 @@ class Client:
         self.mcp_client = mcp_client
         self.user = User(name=username, description="A user of the multi-agent system.")
         self.config = config
+
+        self.network_client = NetworkClient()
 
     def get_username(self) -> str:
         """Return the username of the client."""

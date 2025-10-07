@@ -39,6 +39,18 @@ class NetworkInterface(ABC):
         """
 
     @abstractmethod
+    async def get_pending_friend_requests(self, user_token: str) -> list[dict[str, Any]]:
+        """Get the list of pending friend requests for a user.
+
+        Args:
+            user_token: Authentication token for the user
+
+        Returns:
+            List of friend request dictionaries containing id, username, created_at, etc.
+
+        """
+
+    @abstractmethod
     async def get_agents(self, friend_id: str, user_token: str) -> list[dict[str, Any]]:
         """Get the list of agents for a friend.
 
@@ -128,6 +140,10 @@ class Network:
     async def get_friends(self, user_token: str) -> list[dict[str, Any]]:
         """Get the list of friends for a user."""
         return await self._impl.get_friends(user_token)
+
+    async def get_pending_friend_requests(self, user_token: str) -> list[dict[str, Any]]:
+        """Get the list of pending friend requests for a user."""
+        return await self._impl.get_pending_friend_requests(user_token)
 
     async def get_agents(self, friend_id: str, user_token: str) -> list[dict[str, Any]]:
         """Get the list of agents for a friend."""
