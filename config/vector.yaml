@@ -1,0 +1,5 @@
+version: "1.0"
+provider: "chroma"
+config:
+  collection_name: "test"
+  path: "./db"

@@ -60,7 +60,7 @@ async def call_llm_with_examples(
 # embedding model
 async def get_embedding(text: str) -> list[float]:
     """Get the embedding for the given text using Ollama."""
-    model = "mxbai-embed-large"
+    model = "nomic-embed-text"
     response = await asyncio.to_thread(
         ollama.embed,
         model=model,

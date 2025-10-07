@@ -1,4 +1,4 @@
-"""The hello action simply prints a greeting message."""
+"""Retrieve knowledge relevant to the current conversation from the KB."""
 
 from typing import override
 
@@ -6,14 +6,11 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.knowledge_base.knowledge_base import KnowledgeBase
-
-EXAMPLE_KB = KnowledgeBase()
-EXAMPLE_KB.add_fact("The house is purple.")
+from llm_mas.knowledge_base.knowledge_base import GLOBAL_KB
 
 
 class RetrieveKnowledge(Action):
-    """An action that prints a greeting message."""
+    """Action: query the Knowledge Base to retrieve relevant facts for RAG."""
 
     def __init__(self) -> None:
         """Initialize the RetrieveKnowledge action."""
@@ -21,9 +18,25 @@ class RetrieveKnowledge(Action):
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
-        """Perform the action by printing a greeting."""
-        facts = EXAMPLE_KB.query("")
+        """Query the KB using the latest user message as the retrieval query.
+
+        Returns an ActionResult with:
+        - facts: list[str] of the top result texts
+        - sources: list[dict] with source_path and score for traceability
+        """
+        messages = context.conversation.get_chat_history().as_dicts()
+        # Find last user message content
+        user_query = ""
+        for msg in reversed(messages):
+            if msg.get("role") == "user":
+                user_query = str(msg.get("content", "")).strip()
+                break
+
+        results = GLOBAL_KB.query(user_query, top_k=5) if user_query else []
+        facts = [r["text"] for r in results]
+        sources = [{"source_path": r["source_path"], "score": r["score"]} for r in results]
 
         res = ActionResult()
         res.set_param("facts", facts)
+        res.set_param("sources", sources)
         return res

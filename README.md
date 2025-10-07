@@ -60,3 +60,22 @@ Run them with ```python ./mcp_server/<server_file_name>```
 For example, ```python ./mcp_server/calendar_server.py``` to run the server with the calendar tools.
 
 The application also supports external servers you can add them through the GUI. Currently it doesn't support headers, so most servers don't work. This will be fixed later on.
+
+## Storing API Keys as Environment Variables
+### Windows
+On windows we can set a **temporary** environment using ```set VARIABLE_NAME=value``` in command prompt and ``$env:VARIABLE_NAME=value`` in windows PowerShell, for example to set an OpenAI API key it would be something like ```set OPENAI_API_KEY=sk-.....``` in cmd or ```$env:OPENAI_API_KEY=sk-...``` .
+To set a permenant environment variable follow the following steps:
+1. Search for **Edit the system environment variables** in the search bar and open the first match.
+2. In the opened window click on the **Environment variables** on the bottom right.
+3. In the **User Variables for user** tab click on the **New** button and enter the variable name which would be the API Key Name and the varaiable value would be the API Key itself.
+[For more information visit](https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_environment_variables?view=powershell-7.5)
+
+### Mac
+On Mac we first need to identify which shell your running this can be done by doing ```echo $$SHELL``` in terminal which should print out the shell you are using.
+The defualt shell on modern Mac computers is **Zsh**, older Macs might be using **Bash**.
+1. For **Zsh** you need to open the ```~/.zshrc``` file using a text editor of your choice, but the simplest way is using nano by running ```nano ~/.zshrc``` and adding a variable in the file with ```export VARIABLE_NAME="variable-value"```, for example for an OpenAI API key it would be ```export OPENAI_API_KEY="sk-...."```.
+2. For **Bash** you need to open the ```~/.bash_profile``` file using a text editor of your choice and follow the same steps as for **Zah**.
+
+### Linux
+On Linux similar to Mac we first need to identify which shell your running this can be done by doing ```echo $$SHELL``` in terminal which should print out the shell you are using.
+for **Bash** and **Zsh** its the same process, but there are a lot of shells available on linux so you need to research the specific shell you are using.

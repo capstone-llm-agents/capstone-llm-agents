@@ -1,5 +1,12 @@
 """Main entry point for the PyQt6 LLM MAS application."""
 
+import asyncio
+
+from components.agents.assistant_agent import ASSISTANT_AGENT
+from components.agents.calendar_agent import CALENDAR_AGENT
+from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
+from components.agents.weather_agent import WEATHER_AGENT
+from components.agents.websearch_agent import WEBSEARCH_AGENT
 from llm_mas.client.account.client import Client
 from llm_mas.client.ui.pyqt.app import run_app
 from llm_mas.mas.mas import MAS
@@ -16,9 +23,9 @@ def main():
     # Initialize MAS
     mas = MAS()
     mas.add_agent(ASSISTANT_AGENT)
+    mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(WEATHER_AGENT)
-    #mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
 
     # MCP client
@@ -39,13 +46,11 @@ def main():
     #ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
     ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
 
+    app = TextualApp(client)
+    app.run()
 
-    # AGENT NETWORK SCREEN TEST just for more connections
-
-    CALENDAR_AGENT.add_friend(WEATHER_AGENT)
-
-    # Run PyQt6 app
-    run_app(client)
+    # shutdown
+    asyncio.run(app.on_shutdown())
 
 
 if __name__ == "__main__":
