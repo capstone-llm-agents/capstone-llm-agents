@@ -88,9 +88,9 @@ class AgentMessage(MessageBubble):
 
         return indicator
 
-    async def mark_step_complete(self, indicator: WorkStepIndicator) -> None:
+    async def mark_step_complete(self, indicator: WorkStepIndicator, time_taken: float | None = None) -> None:
         """Mark a work step as complete and manage the visual state."""
-        await indicator.mark_complete()
+        await indicator.mark_complete(time_taken)
 
     async def finalize_all_steps(self) -> None:
         """Mark the final step as green and keep previous ones grey."""

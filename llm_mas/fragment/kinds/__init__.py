@@ -1,0 +1,1 @@
+"""Some base fragment kinds."""

@@ -4,6 +4,7 @@ import asyncio
 
 from components.agents.assistant_agent import ASSISTANT_AGENT
 from components.agents.calendar_agent import CALENDAR_AGENT
+from components.agents.example_agent import EXAMPLE_AGENT
 from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
@@ -12,13 +13,14 @@ from llm_mas.client.ui.textual_app.app import TextualApp
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
-from llm_mas.utils.config.general_config import GENERAL_CONFIG, GeneralConfig
+from llm_mas.utils.config.general_config import GENERAL_CONFIG
 
 
 def main() -> None:
     """Run the main application logic."""
     mas = MAS()
 
+    mas.add_agent(EXAMPLE_AGENT)
     mas.add_agent(ASSISTANT_AGENT)
     mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(CALENDAR_AGENT)

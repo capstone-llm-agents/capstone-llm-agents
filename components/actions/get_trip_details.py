@@ -36,8 +36,7 @@ class GetTripDetails(Action):
             msg = "No chat history available to respond to."
             raise ValueError(msg)
 
-        if context.last_result.is_empty():
-            context.last_result.set_param("travel_context", str(TRAVEL_CONTEXT))
+        context.last_result.set_param("travel_context", str(TRAVEL_CONTEXT))
 
         # override content
         last_message["content"] = f"""
