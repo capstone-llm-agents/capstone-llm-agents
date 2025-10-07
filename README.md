@@ -37,7 +37,36 @@ Run ```uv sync``` to install the packages.
 
 ## Running the Project
 
-```python main.py```
+### Starting the Network Server (Optional but Recommended)
+
+The application includes a network server that enables user authentication and multi-user features. To use these features:
+
+1. Start the network server in a separate terminal:
+   ```bash
+   python -m network_server.run_network
+   ```
+   
+   The server will start on `http://127.0.0.1:8000`
+
+2. The server comes with test users:
+   - Username: `alice`, Password: `password123`
+   - Username: `bob`, Password: `password123`
+   - Username: `charlie`, Password: `password123`
+
+You can also create new users through the signup screen.
+
+### Running the Application
+
+```bash
+python main.py
+```
+
+When the application starts:
+- If the network server is running, you'll see a login/signup screen
+- You can log in with existing credentials or create a new account
+- If the server is not running, you can click "Skip (Offline Mode)" to continue without network features
+
+**Note:** Network features include friend management, agent discovery, and cross-user messaging. In offline mode, these features will not be available.
 
 ## Running a Script
 

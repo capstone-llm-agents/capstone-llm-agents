@@ -1,7 +1,9 @@
-"""Main menu screen for PyQt6 app with navigation."""
+"""Main menu screen for PyQt6 app."""
+
+import asyncio
 
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QPushButton, QVBoxLayout, QWidget
+from PyQt6.QtWidgets import QMessageBox, QPushButton, QVBoxLayout, QWidget
 
 from llm_mas.client.account.client import Client
 from llm_mas.mas.agentstate import State
@@ -43,10 +45,9 @@ class MainMenu(QWidget):
         # width
         for btn in [
             self.talk_agent_btn,
-            self.agent_network_btn,
-            self.upload_kb_btn,
             self.mcp_client_btn,
             self.view_conversations_btn,
+            self.agent_network_btn,
         ]:
             btn.setMaximumWidth(200)
 
@@ -60,7 +61,6 @@ class MainMenu(QWidget):
     # Navigation handlers
     def _on_talk_agent(self) -> None:
         """Navigate to user chat screen."""
-
         conversation = self.client.mas.conversation_manager.start_or_get_conversation("User Assistant Chat")
 
         self.nav.navigate.emit("user_chat", {"conversation": conversation})

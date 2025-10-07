@@ -28,3 +28,15 @@ class Client:
     def add_agent(self, agent: Agent) -> None:
         """Add an agent to the MAS associated with the client."""
         self.mas.add_agent(agent)
+
+    def get_agents(self) -> list[Agent]:
+        """Return the list of agents in the MAS associated with the client."""
+        return self.mas.get_agents()
+
+    def get_assistant_agent(self) -> Agent | None:
+        """Return the assistant agent in the MAS associated with the client."""
+        return self.mas.get_assistant_agent()
+
+    def get_discovery_agent(self) -> Agent | None:
+        """Return the discovery agent in the MAS associated with the client."""
+        return self.mas.get_discovery_agent()

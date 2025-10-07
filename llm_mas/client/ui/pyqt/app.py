@@ -7,17 +7,26 @@ from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from qasync import QEventLoop
 
+from components.agents.assistant_agent import ASSISTANT_AGENT
+from components.agents.calendar_agent import CALENDAR_AGENT
+from components.agents.weather_agent import WEATHER_AGENT
+from components.agents.websearch_agent import WEBSEARCH_AGENT
 from llm_mas.client.account.client import Client
 from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
-from llm_mas.mas.agentstate import State
-from llm_mas.mas.checkpointer import CheckPointer
+from llm_mas.client.ui.pyqt.screens.login_screen import LoginScreen
 from llm_mas.client.ui.pyqt.screens.main_menu import MainMenu
 from llm_mas.client.ui.pyqt.screens.mcp_client import MCPClientScreen
 from llm_mas.client.ui.pyqt.screens.upload_screen import UploadScreen
 from llm_mas.client.ui.pyqt.screens.user_chat_screen import UserChatScreen
 from llm_mas.logging.loggers import APP_LOGGER
+from llm_mas.mas.agentstate import State
+from llm_mas.mas.checkpointer import CheckPointer
+from llm_mas.mas.mas import MAS
+from llm_mas.mcp_client.client import MCPClient
+from llm_mas.mcp_client.connected_server import SSEConnectedServer
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
+from llm_mas.utils.config.general_config import GENERAL_CONFIG
 
 
 class NavigationManager(QObject):
@@ -29,12 +38,17 @@ class NavigationManager(QObject):
 class PyQtApp(QStackedWidget):
     """Main PyQt application class with navigation and screen management."""
 
-    def __init__(self, client: Client, checkpoint: CheckPointer) -> None:
+    def __init__(self, client: Client, checkpoint: CheckPointer, show_login=True) -> None:
         """Initialize the main application with client and navigation."""
         super().__init__()
         self.client = client
-        self.checkpoint = checkpoint
-        self.setWindowTitle(f"Welcome Back - {client.get_username()}")
+        self.network_client = None
+
+        if client:
+            self.checkpoint = checkpoint
+            self.setWindowTitle(f"Welcome Back - {client.get_username()}")
+        else:
+            self.setWindowTitle("LLM Multi-Agent System")
 
         # Navigation manager
         self.nav = NavigationManager()
@@ -43,13 +57,70 @@ class PyQtApp(QStackedWidget):
         # Screens cache
         self.screens = {}
 
-        # Instantiate MainMenu with nav
-        self.main_menu = MainMenu(client, checkpoint, nav=self.nav)
-        self._add_screen("main_menu", self.main_menu)
+        # Show login screen first if requested
+        if show_login and not client:
+            self.login_screen = LoginScreen()
+            self.login_screen.login_successful.connect(self._on_login_success)
+            self._add_screen("login", self.login_screen)
+            self.setCurrentWidget(self.login_screen)
+        else:
+            # Instantiate MainMenu with nav
+            self.main_menu = MainMenu(client, checkpoint, nav=self.nav)
+            self._add_screen("main_menu", self.main_menu)
+            # Show main menu initially
+            self.setCurrentWidget(self.main_menu)
 
-        # Show main menu initially
-        self.setCurrentWidget(self.main_menu)
         self.resize(900, 600)
+
+    def _on_login_success(self, network_client):
+        """Handle successful login - create Client and show main menu."""
+        self.network_client = network_client
+
+        if network_client:
+            # Use network username
+            username = network_client.username if hasattr(network_client, "username") else "Network User"
+        else:
+            # Offline mode
+            username = "Offline User"
+
+        # Initialize MAS and agents
+        mas = MAS()
+        mas.add_agent(ASSISTANT_AGENT)
+        mas.add_agent(CALENDAR_AGENT)
+        mas.add_agent(WEATHER_AGENT)
+        mas.add_agent(WEBSEARCH_AGENT)
+
+        # Setup MCP client
+        mcp_client = MCPClient()
+        server1 = SSEConnectedServer("http://localhost:8080/sse")
+        server2 = SSEConnectedServer("http://localhost:8081/sse")
+        mcp_client.add_connected_server(server1)
+        mcp_client.add_connected_server(server2)
+
+        # Setup agent friendships
+        ASSISTANT_AGENT.add_friend(WEATHER_AGENT)
+        ASSISTANT_AGENT.add_friend(CALENDAR_AGENT)
+        ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
+
+        # Create the client with the logged-in user
+        self.client = Client(username, mas, mcp_client, GENERAL_CONFIG)
+        self.setWindowTitle(f"Welcome Back - {username}")
+
+        # Store network client in application client if available
+        if network_client:
+            self.client.network_client = network_client
+
+        # Setup user friendships
+        self.client.user.add_friend(ASSISTANT_AGENT)
+
+        # Create checkpoint if not exists
+        if not hasattr(self, 'checkpoint') or self.checkpoint is None:
+            self.checkpoint = CheckPointer("test.sqlite")
+
+        # Create and show main menu
+        self.main_menu = MainMenu(self.client, self.checkpoint, nav=self.nav)
+        self._add_screen("main_menu", self.main_menu)
+        self.setCurrentWidget(self.main_menu)
 
     def _add_screen(self, name: str, widget):
         """Add a screen to the stacked widget and cache it."""
@@ -59,9 +130,6 @@ class PyQtApp(QStackedWidget):
     def closeEvent(self, event) -> None:
         conversations = self.client.mas.conversation_manager.get_all_conversations()
         print(conversations)
-        #state: State = {"messages": conversations.message.as_dicts()}
-        #print(state)
-        #self.checkpoint.save(state)
         print("Closing main menu")
         event.accept()
 
@@ -78,8 +146,6 @@ class PyQtApp(QStackedWidget):
             elif screen_name == "user_chat":
                 conversation = payload.get("conversation") if payload else None
                 screen = UserChatScreen(self.client, conversation,self.checkpoint, nav=self.nav)
-            elif screen_name == "agent_list":
-                screen = AgentListScreen(self.client, self.nav)
             elif screen_name == "conversations":
                 conversations = self.client.mas.conversation_manager.get_all_conversations()
                 screen = ConversationsScreen(self.client, self.nav, conversations)
