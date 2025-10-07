@@ -14,15 +14,17 @@ from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.agent.work_step import SelectingActionWorkStep, PerformingActionWorkStep
 from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
-
-
+from llm_mas.mas.checkpointer import CheckPointer
+from llm_mas.mas.conversation import Message
+from llm_mas.mas.agentstate import State
 class UserChatScreen(QWidget):
     """PyQt6 chat screen with real MAS agent workflow."""
 
-    def __init__(self, client: Client, conversation: Conversation, nav: QWidget, artificial_delay: float | None = 0.1):
+    def __init__(self, client: Client, conversation: Conversation, checkpoint: CheckPointer,nav: QWidget, artificial_delay: float | None = 0.1):
         super().__init__()
         self.client = client
         self.conversation = conversation
+        self.checkpoint = checkpoint
         self.nav = nav
         self.artificial_delay = artificial_delay
         self._current_task: asyncio.Task | None = None
@@ -37,7 +39,7 @@ class UserChatScreen(QWidget):
         # Top bar with back button
         top_bar = QHBoxLayout()
         self.back_btn = QPushButton("← Back")
-        self.back_btn.clicked.connect(lambda: self.nav.navigate.emit("main_menu", None))
+        self.back_btn.clicked.connect(lambda: (self._save_on_exit(), self.nav.navigate.emit("main_menu", None)))
         top_bar.addWidget(self.back_btn)
         top_bar.addStretch()
         layout.addLayout(top_bar)
@@ -62,12 +64,40 @@ class UserChatScreen(QWidget):
         self.send_btn.clicked.connect(self._on_send)
         self.input_line.returnPressed.connect(self._on_send)
 
+
+
+    def _save_on_exit(self):
+        # Save conversation state to checkpoint
+        message = self.conversation.get_chat_history()
+        state: State = {"messages": message.as_dicts()}
+        self.checkpoint.save(state)
+
     def _add_initial_assistant_message(self):
         agent = self.client.get_mas().get_assistant_agent()
+        #check if conversation is empty, then load from checkpoint
         if agent and not self.conversation.chat_history.messages:
-            msg = "Hello! I'm your assistant. How can I help you today?"
-            self._add_agent_message(agent, msg)
-            self.conversation.add_message(agent, msg)
+            state = self.checkpoint.fetch()
+            #load conversation if it exists
+            if state:
+                for message in state:
+                    message_to_save = Message(
+                        role=message['role'],
+                        content=message['content'],
+                        sender=agent
+                    )
+                    self.conversation.chat_history.add_message(message_to_save)
+                    if message_to_save.role == "user":
+                        self._add_user_message(message_to_save.content)
+                    elif message_to_save.role == "assistant":
+                        self._add_agent_message(agent, message_to_save.content)
+
+            else:
+                # add default initial message
+                msg = "Hello! I'm your assistant. How can I help you today?"
+                self._add_agent_message(agent, msg)
+                self.conversation.add_message(agent, msg)
+
+
 
     def _add_user_message(self, text: str):
         bubble = UserMessage(text)
