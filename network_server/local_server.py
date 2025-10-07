@@ -83,7 +83,6 @@ class LocalServer:
                 user_id TEXT NOT NULL,
                 username TEXT NOT NULL,
                 expires_at TEXT NOT NULL,
-                is_active INTEGER DEFAULT 1,
                 FOREIGN KEY (user_id) REFERENCES users (id)
             )
         """)
@@ -214,17 +213,13 @@ class LocalServer:
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute(
-            "SELECT user_id, username, expires_at, is_active FROM tokens WHERE token = ?",
+            "SELECT user_id, username, expires_at FROM tokens WHERE token = ?",
             (token,),
         )
         row = cursor.fetchone()
         conn.close()
 
         if not row:
-            return None
-
-        # Check if token is active
-        if row["is_active"] != 1:
             return None
 
         expires_at = datetime.fromisoformat(row["expires_at"])
@@ -260,26 +255,15 @@ class LocalServer:
 
             user_id = row["id"]
 
-            # Check if user already has an active session
-            cursor.execute(
-                "SELECT token FROM tokens WHERE user_id = ? AND is_active = 1 AND expires_at > ?",
-                (user_id, datetime.now().isoformat()),
-            )
-            active_session = cursor.fetchone()
-
-            if active_session:
+            # Check if user already has an active WebSocket connection
+            if user_id in self.active_connections:
                 conn.close()
                 raise HTTPException(
                     status_code=status.HTTP_409_CONFLICT,
-                    detail="User is already logged in from another location. Please logout first.",
+                    detail="User is already logged in from another location.",
                 )
 
-            # Deactivate any old tokens for this user
-            cursor.execute(
-                "UPDATE tokens SET is_active = 0 WHERE user_id = ?",
-                (user_id,),
-            )
-
+            # Generate new token (old tokens can remain for token validation)
             token = self._generate_token(user_id, username)
             conn.close()
             return {
@@ -287,32 +271,6 @@ class LocalServer:
                 "token": token,
                 "user": {"id": user_id, "username": username},
             }
-
-        @self.app.post("/logout")
-        async def logout(token: str) -> dict[str, Any]:
-            """Log out a user by invalidating their token."""
-            user_info = self._validate_token(token)
-            if not user_info:
-                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
-
-            conn = self._get_connection()
-            cursor = conn.cursor()
-
-            # Mark token as inactive
-            cursor.execute("UPDATE tokens SET is_active = 0 WHERE token = ?", (token,))
-            conn.commit()
-
-            # Close any active WebSocket connection
-            user_id = user_info["user_id"]
-            if user_id in self.active_connections:
-                try:
-                    await self.active_connections[user_id].close()
-                except Exception:
-                    pass
-                del self.active_connections[user_id]
-
-            conn.close()
-            return {"success": True, "message": "Logged out successfully"}
 
         @self.app.post("/signup")
         async def signup(username: str, password: str) -> dict[str, Any]:

@@ -113,54 +113,12 @@ class PyQtApp(QStackedWidget):
         # Setup user friendships
         self.client.user.add_friend(ASSISTANT_AGENT)
 
-        # Create and show main menu
-        self.main_menu = MainMenu(self.client, nav=self.nav)
-        self._add_screen("main_menu", self.main_menu)
-        self.setCurrentWidget(self.main_menu)
-
-    def _on_login_success(self, network_client):
-        """Handle successful login - create Client and show main menu."""
-        self.network_client = network_client
-
-        if network_client:
-            # Use network username
-            username = network_client.username if hasattr(network_client, "username") else "Network User"
-        else:
-            # Offline mode
-            username = "Offline User"
-
-        # Initialize MAS and agents
-        mas = MAS()
-        mas.add_agent(ASSISTANT_AGENT)
-        mas.add_agent(CALENDAR_AGENT)
-        mas.add_agent(WEATHER_AGENT)
-        mas.add_agent(WEBSEARCH_AGENT)
-
-        # Setup MCP client
-        mcp_client = MCPClient()
-        server1 = SSEConnectedServer("http://localhost:8080/sse")
-        server2 = SSEConnectedServer("http://localhost:8081/sse")
-        mcp_client.add_connected_server(server1)
-        mcp_client.add_connected_server(server2)
-
-        # Setup agent friendships
-        ASSISTANT_AGENT.add_friend(WEATHER_AGENT)
-        ASSISTANT_AGENT.add_friend(CALENDAR_AGENT)
-        ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
-
-        # Create the client with the logged-in user
-        self.client = Client(username, mas, mcp_client, GENERAL_CONFIG)
-        self.setWindowTitle(f"Welcome Back - {username}")
-
-        # Store network client in application client if available
-        if network_client:
-            self.client.network_client = network_client
-
-        # Setup user friendships
-        self.client.user.add_friend(ASSISTANT_AGENT)
+        # Create checkpoint if not exists
+        if not hasattr(self, 'checkpoint') or self.checkpoint is None:
+            self.checkpoint = CheckPointer("test.sqlite")
 
         # Create and show main menu
-        self.main_menu = MainMenu(self.client, nav=self.nav)
+        self.main_menu = MainMenu(self.client, self.checkpoint, nav=self.nav)
         self._add_screen("main_menu", self.main_menu)
         self.setCurrentWidget(self.main_menu)
 
