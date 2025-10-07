@@ -2,6 +2,7 @@
 
 from components.agents.assistant_agent import ASSISTANT_AGENT
 from components.agents.calendar_agent import CALENDAR_AGENT
+from components.agents.pdf_agent import PDF_AGENT
 from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
@@ -16,8 +17,9 @@ from llm_mas.utils.config.general_config import GENERAL_CONFIG
 def main():
     # Initialize MAS
     mas = MAS()
-    mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(ASSISTANT_AGENT)
+    mas.add_agent(CALENDAR_AGENT)
+    mas.add_agent(PDF_AGENT)
     mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(WEATHER_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
