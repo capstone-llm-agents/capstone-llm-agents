@@ -9,14 +9,14 @@ from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrow
 from llm_mas.action_system.base.selectors.embedding_selector import EmbeddingSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.agent import Agent
-from llm_mas.model_providers.ollama.call_llm import get_embedding
+from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.tools.tool_action_creator import DefaultToolActionCreator
 from llm_mas.tools.tool_manager import ToolManager
 from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = GraphBasedNarrower()
-selector = EmbeddingSelector(get_embedding)
+selector = EmbeddingSelector(ModelsAPI.get_embedding)
 
 # tools
 tool_narrower = DefaultToolNarrower()
@@ -40,7 +40,7 @@ CALENDAR_AGENT.add_action(RespondWithChatHistory())
 CALENDAR_AGENT.add_action(StopAction())
 CALENDAR_AGENT.add_action(UpdateTools(tool_creator))
 CALENDAR_AGENT.add_action(GetTools(tool_creator))
-CALENDAR_AGENT.add_action(GetRelevantTools(tool_creator, embedding_model=get_embedding))
+CALENDAR_AGENT.add_action(GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding))
 CALENDAR_AGENT.add_action(GetParamsForToolCall(tool_creator))
 
 
@@ -51,9 +51,12 @@ narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory(), SimpleR
 narrower.add_action_edge(RespondWithChatHistory(), [StopAction()])
 narrower.add_action_edge(SimpleResponse(), [StopAction()])
 narrower.add_action_edge(UpdateTools(tool_creator), [GetTools(tool_creator)])
-narrower.add_action_edge(GetTools(tool_creator), [GetRelevantTools(tool_creator, embedding_model=get_embedding)])
 narrower.add_action_edge(
-    GetRelevantTools(tool_creator, embedding_model=get_embedding),
+    GetTools(tool_creator),
+    [GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding)],
+)
+narrower.add_action_edge(
+    GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding),
     [GetParamsForToolCall(tool_creator)],
 )
 narrower.add_action_edge(GetParamsForToolCall(tool_creator), [])

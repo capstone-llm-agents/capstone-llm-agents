@@ -1,13 +1,17 @@
 """The stop module defines a StopAction class that stops the agent's execution."""
 
+import datetime
 from typing import override
+
+from mem0 import Memory as Mem
 
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from mem0 import Memory as Mem
-from datetime import datetime
+from llm_mas.utils.config.general_config import GENERAL_CONFIG
+
+
 class StopAction(Action):
     """An action that stops the agent's execution."""
 
@@ -18,26 +22,37 @@ class StopAction(Action):
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by stopping the agent."""
+        # don't save memory if disabled, just stop immediately
+        if not GENERAL_CONFIG.app.memory_enabled():
+            return ActionResult()
+
         config = {
             "vector_store": {
                 "provider": "chroma",
                 "config": {
                     "collection_name": "test",
                     "path": "db",
-                }
-            }
+                },
+            },
         }
         m = Mem.from_config(config)
         chat_history = context.conversation.get_chat_history()
         messages = chat_history.as_dicts()
         last_message = messages[-1]
-        memory_to_save_user = f'User said {last_message['content']}'
+        memory_to_save_user = f"User said {last_message['content']}"
         second_last_message = messages[-2]
-        memory_to_save_agent = f'Agent said {second_last_message['content']}'
-        now = datetime.now()
+        memory_to_save_agent = f"Agent said {second_last_message['content']}"
+        now = datetime.datetime.now(tz=datetime.UTC)
+
         date_string = now.strftime("%Y-%m-%d %H:%M:%S")
-        m.add(messages=memory_to_save_user, agent_id=context.agent.name,
-              metadata={'Speaker': 'User', 'timestamp': date_string})
-        m.add(messages=memory_to_save_agent, agent_id=context.agent.name,
-              metadata={'speaker': 'Agent', 'timestamp': date_string})
+        m.add(
+            messages=memory_to_save_user,
+            agent_id=context.agent.name,
+            metadata={"Speaker": "User", "timestamp": date_string},
+        )
+        m.add(
+            messages=memory_to_save_agent,
+            agent_id=context.agent.name,
+            metadata={"speaker": "Agent", "timestamp": date_string},
+        )
         return ActionResult()

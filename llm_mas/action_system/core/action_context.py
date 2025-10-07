@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from llm_mas.action_system.core.action_result import ActionResult
+    from llm_mas.fragment.fragment import Fragment
     from llm_mas.mas.agent import Agent
     from llm_mas.mas.conversation import Conversation, ConversationManager
     from llm_mas.mas.user import User
@@ -32,6 +33,8 @@ class ActionContext:
         self.user = user
         self.conversation_manager = conversation_manager
 
+        self.fragments: list[Fragment] = []
+
     @classmethod
     def from_action_result(
         cls,
@@ -47,3 +50,7 @@ class ActionContext:
             user=context.user,
             conversation_manager=context.conversation_manager,
         )
+
+    def add_fragment(self, fragment: Fragment) -> None:
+        """Add a fragment to the context."""
+        self.fragments.append(fragment)

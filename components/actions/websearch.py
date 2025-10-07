@@ -25,15 +25,7 @@ class WebSearch(Action):
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
-        chat_history = context.conversation.get_chat_history()
-        messages = chat_history.as_dicts()
-
-        last_message = messages[-1] if messages else None
-        if not last_message:
-            msg = "No chat history available for web search."
-            raise ValueError(msg)
-
-        query = last_message["content"]
+        query = self.get_last_message_content(context)
 
         # do the search asynchronously
         response = await client.responses.create(

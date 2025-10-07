@@ -7,7 +7,8 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.model_providers.api import ModelsAPI
+from llm_mas.utils.config.models_config import ModelType
 from llm_mas.utils.json_parser import extract_json_from_response
 
 
@@ -21,22 +22,15 @@ class AssessResponse(Action):
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by assessing the quality of the last response."""
-        # ask llm for parameters
-        last_result = context.last_result
-
         # get response
-        agent_res = last_result.get_param("response")
+        agent_res = context.last_result.get_param("response")
 
         if agent_res is None:
             msg = "No response found in the last action result."
             raise ValueError(msg)
 
         # user message
-        last_message = context.conversation.chat_history.messages[-1].content
-
-        if last_message is None:
-            msg = "No user message found in the conversation history."
-            raise ValueError(msg)
+        last_message = self.get_last_message_content(context)
 
         prompt = f"""You are an expert assistant that reviews the quality of responses from other AI assistants.
         The goal is to ensure high-quality, helpful, and relevant responses.
@@ -58,7 +52,7 @@ class AssessResponse(Action):
         - quality: A rating from 1 to 10 of the quality of the response.
         - issues: A list of any issues found in the response, or an empty list if none.
         - suggestions: A list of suggestions for improvement, or an empty list if none."""
-        response = await call_llm(prompt)
+        response = await ModelsAPI.call_llm(prompt, model=ModelType.DEFAULT)
 
         content = extract_json_from_response(response)
 

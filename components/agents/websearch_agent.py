@@ -8,13 +8,13 @@ from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrow
 from llm_mas.action_system.base.selectors.llm_selector import LLMSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.agent import Agent
-from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.tools.tool_manager import ToolManager
 from llm_mas.tools.tool_narrower import ToolNarrower
 
 action_space = ActionSpace()
 narrower = GraphBasedNarrower()
-selector = LLMSelector(call_llm)
+selector = LLMSelector(llm_call=ModelsAPI.call_llm)
 tool_narrower = ToolNarrower()
 tool_manager = ToolManager(tool_narrower)
 
