@@ -10,6 +10,7 @@ A WebSocket-based network server for multi-agent communication with support for 
 - **Message Sending**: Send messages to friend's agents via HTTP
 - **Real-time Communication**: WebSocket support for receiving messages instantly
 - **Pluggable Architecture**: Easy to swap between local test server and production server
+- **Persistent Storage**: SQLite database for data persistence across server restarts
 
 ## Architecture
 
@@ -64,6 +65,17 @@ The server will start with three test users:
 - `alice` / `password123`
 - `bob` / `password123`
 - `charlie` / `password123`
+
+### Database Storage
+
+The server uses SQLite for persistent storage. The database is automatically created at:
+```
+db/network.sqlite3
+```
+
+Data persists across server restarts. To reset the database, simply delete the file and restart the server.
+
+For more details on the database schema and migration, see [DATABASE_MIGRATION.md](DATABASE_MIGRATION.md).
 
 ## API Endpoints
 
