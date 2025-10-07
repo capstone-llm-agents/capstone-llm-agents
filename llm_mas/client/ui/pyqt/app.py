@@ -28,7 +28,7 @@ class NavigationManager(QObject):
 class PyQtApp(QStackedWidget):
     """Main PyQt application class with navigation and screen management."""
 
-    def __init__(self, client: Client) -> None:
+    def __init__(self, client: Client, checkpoint: CheckPointer) -> None:
         """Initialize the main application with client and navigation."""
         super().__init__()
         self.client = client
