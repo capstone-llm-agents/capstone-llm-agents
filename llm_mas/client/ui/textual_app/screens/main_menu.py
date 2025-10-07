@@ -37,10 +37,12 @@ class MainMenu(Screen):
         """Handle button presses to navigate to different screens."""
         # example agent to agent conversation
 
+        conv = self.client.mas.conversation_manager.start_conversation("User Assistant Chat")
+
         if event.button.id == "list_agents":
             self.app.push_screen(AgentListScreen(self.client))
         elif event.button.id == "talk_agent":
-            self.app.push_screen(UserChatScreen(self.client, conversation=Conversation("User Assistant Chat")))
+            self.app.push_screen(UserChatScreen(self.client, conversation=conv))
         elif event.button.id == "mcp_client_info":
             self.app.push_screen(MCPClientScreen(self.client))
         elif event.button.id == "view_conversations":
