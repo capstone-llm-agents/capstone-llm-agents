@@ -1,6 +1,5 @@
 """An action to list available friends in the agent system."""
 
-from collections.abc import Awaitable, Callable
 from typing import override
 
 from llm_mas.action_system.core.action import Action
@@ -8,7 +7,8 @@ from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.mas.agent import Agent
-from llm_mas.utils.embeddings import VectorSelector
+from llm_mas.utils.config.models_config import ModelType
+from llm_mas.utils.embeddings import EmbeddingFunction, VectorSelector
 from llm_mas.utils.random_id import generate_random_id
 
 
@@ -40,7 +40,7 @@ class AskFriendForHelp(Action):
 
     def __init__(
         self,
-        embedding_model: Callable[[str], Awaitable[list[float]]],
+        embedding_model: EmbeddingFunction,
         vector_selector: VectorSelector | None = None,
     ) -> None:
         """Initialize the AskFriendForHelp action."""
@@ -64,9 +64,10 @@ class AskFriendForHelp(Action):
         agent_friends = [friend for friend in friends if isinstance(friend, Agent)]
 
         friend = self.vector_selector.select(
-            query_vector=await self.embedding_model(last_message),
+            query_vector=await self.embedding_model(last_message, ModelType.EMBEDDING),
             items_with_vectors=[
-                (friend, await self.embedding_model(friend.get_description())) for friend in agent_friends
+                (friend, await self.embedding_model(friend.get_description(), ModelType.EMBEDDING))
+                for friend in agent_friends
             ],
         )[0]
 

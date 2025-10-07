@@ -41,9 +41,12 @@ class TextualApp(App):
         # log
         APP_LOGGER.info("Shutting down application, cancelling background tasks...")
 
+        APP_LOGGER.info(f"Number of background tasks: {len(BACKGROUND_TASKS)}")
+
         # cancel all background tasks
         for task in list(BACKGROUND_TASKS):
             if not task.done():
+                APP_LOGGER.info(f"Cancelling task: {task}")
                 task.cancel()
 
         # wait for tasks to complete cancellation

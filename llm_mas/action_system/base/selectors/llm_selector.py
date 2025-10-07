@@ -21,9 +21,8 @@ from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.conversation import AssistantMessage, UserAssistantExample, UserMessage
 from llm_mas.mas.user import User
-from llm_mas.model_providers.ollama.call_llm import (
-    call_llm_with_examples,
-)
+from llm_mas.model_providers.api import ModelsAPI
+from llm_mas.utils.config.models_config import ModelType
 from llm_mas.utils.json_parser import extract_json_from_response
 
 
@@ -69,13 +68,15 @@ class LLMSelector(ActionSelector):
         examples.append(self.craft_example(actions1, context1, 2))
         examples.append(self.craft_example(actions2, context2, 0))
 
-        response = await call_llm_with_examples(
-            examples,
+        messages = [example.user_message.as_dict() for example in examples]
+        messages.append(
             UserMessage(
                 self.get_select_action_prompt(action_space.get_actions(), context),
                 sender=User("Test User", "A test user"),
-            ),
+            ).as_dict(),
         )
+
+        response = await ModelsAPI.call_llm_with_chat_history(messages, ModelType.DEFAULT)
 
         # TODO: use the params  # noqa: TD003
         name, params = self.parse_response(response)
