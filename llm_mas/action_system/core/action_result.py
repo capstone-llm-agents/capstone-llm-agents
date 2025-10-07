@@ -1,11 +1,12 @@
 """ActionParams module defines the ActionParams class for defining parameters used in actions."""
 
-# TODO: update docstrings
-
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import TYPE_CHECKING, Any
+
+if TYPE_CHECKING:
+    from llm_mas.fragment.fragment import Fragment
 
 
 class ActionResult:
@@ -14,6 +15,9 @@ class ActionResult:
     def __init__(self) -> None:
         """Initialize the action results."""
         self.results: dict[str, Any] = {}
+
+        # fragments
+        self.fragments: list[Fragment] = []
 
     def set_param(self, key: str, value: Any) -> None:  # noqa: ANN401
         """Set a parameter value."""
@@ -40,3 +44,7 @@ class ActionResult:
     def is_empty(self) -> bool:
         """Check if the action result is empty."""
         return not self.results
+
+    def add_fragment(self, fragment: Fragment) -> None:
+        """Add a fragment to the action result."""
+        self.fragments.append(fragment)
