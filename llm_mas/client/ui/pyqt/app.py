@@ -5,7 +5,7 @@ import asyncio
 from PyQt6.QtCore import pyqtSignal, QObject
 from PyQt6.QtWidgets import QApplication, QStackedWidget
 from qasync import QEventLoop
-
+from llm_mas.mas.agentstate import State
 from llm_mas.client.ui.pyqt.screens.main_menu import MainMenu
 from llm_mas.client.ui.pyqt.screens.mcp_client import MCPClientScreen
 from llm_mas.client.ui.pyqt.screens.user_chat_screen import UserChatScreen
@@ -22,9 +22,10 @@ class NavigationManager(QObject):
 
 
 class PyQtApp(QStackedWidget):
-    def __init__(self, client):
+    def __init__(self, client, checkpoint):
         super().__init__()
         self.client = client
+        self.checkpoint = checkpoint
         self.setWindowTitle(f"Welcome Back - {client.get_username()}")
 
         # Navigation manager
@@ -35,7 +36,7 @@ class PyQtApp(QStackedWidget):
         self.screens = {}
 
         # Instantiate MainMenu with nav
-        self.main_menu = MainMenu(client, nav=self.nav)
+        self.main_menu = MainMenu(client, checkpoint, nav=self.nav)
         self._add_screen("main_menu", self.main_menu)
 
         # Show main menu initially
@@ -46,6 +47,15 @@ class PyQtApp(QStackedWidget):
         """Add a screen to the stacked widget and cache it."""
         self.screens[name] = widget
         self.addWidget(widget)
+
+    def closeEvent(self, event) -> None:
+        conversations = self.client.mas.conversation_manager.get_all_conversations()
+        print(conversations)
+        #state: State = {"messages": conversations.message.as_dicts()}
+        #print(state)
+        #self.checkpoint.save(state)
+        print("Closing main menu")
+        event.accept()
 
     def _navigate(self, screen_name: str, payload=None):
         """Handle navigation requests to switch screens."""
@@ -59,7 +69,7 @@ class PyQtApp(QStackedWidget):
                 screen = MCPClientScreen(self.client, self.nav)
             elif screen_name == "user_chat":
                 conversation = payload.get("conversation") if payload else None
-                screen = UserChatScreen(self.client, conversation, nav=self.nav)
+                screen = UserChatScreen(self.client, conversation,self.checkpoint, nav=self.nav)
             elif screen_name == "agent_list":
                 screen = AgentListScreen(self.client, self.nav)
             elif screen_name == "conversations":
@@ -84,7 +94,7 @@ class PyQtApp(QStackedWidget):
             await asyncio.gather(*BACKGROUND_TASKS, return_exceptions=True)
 
 
-def run_app(client):
+def run_app(client, checkpoint):
     """Run the PyQt6 application with asyncio event loop."""
     app = QApplication(sys.argv)
 
@@ -95,7 +105,7 @@ def run_app(client):
     loop = QEventLoop(app)
     asyncio.set_event_loop(loop)
 
-    window = PyQtApp(client)
+    window = PyQtApp(client, checkpoint)
     window.show()
 
     with loop:

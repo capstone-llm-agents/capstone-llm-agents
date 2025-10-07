@@ -9,13 +9,15 @@ from llm_mas.client.ui.pyqt.screens.agent_list import AgentListScreen
 from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
 from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.mas.conversation import Conversation
-
+from llm_mas.mas.checkpointer import CheckPointer
+from llm_mas.mas.agentstate import State
 class MainMenu(QWidget):
     """Main menu for PyQt6 app with navigation."""
 
-    def __init__(self, client: Client, nav) -> None:
+    def __init__(self, client: Client, checkpoint: CheckPointer, nav) -> None:
         super().__init__()
         self.client = client
+        self.checkpoint = checkpoint
         self.nav = nav  # this is NavigationManager now - app.py
         self._init_ui()
 
@@ -51,9 +53,11 @@ class MainMenu(QWidget):
         self.view_conversations_btn.clicked.connect(self._on_view_conversations)
         self.agent_network_btn.clicked.connect(self._on_agent_network)
 
+
     # Navigation handlers
     def _on_talk_agent(self):
         """Navigate to user chat screen."""
+
         self.nav.navigate.emit("user_chat", {"conversation": Conversation("User Assistant Chat")})
 
     def _on_mcp_client(self):

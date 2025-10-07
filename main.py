@@ -1,4 +1,5 @@
 """Main entry point for the PyQt6 LLM MAS application."""
+from anyio.lowlevel import checkpoint
 
 from components.agents.assistant_agent import ASSISTANT_AGENT
 from components.agents.calendar_agent import CALENDAR_AGENT
@@ -11,7 +12,7 @@ from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
 from llm_mas.utils.config.general_config import GENERAL_CONFIG
-
+from llm_mas.mas.checkpointer import CheckPointer
 
 def main():
     # Initialize MAS
@@ -39,8 +40,8 @@ def main():
     ASSISTANT_AGENT.add_friend(CALENDAR_AGENT)
     #ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
     ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
-
-    run_app(client)
+    checkpoint = CheckPointer("test.sqlite")
+    run_app(client, checkpoint)
 
 
 if __name__ == "__main__":
