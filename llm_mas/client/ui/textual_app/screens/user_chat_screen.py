@@ -117,6 +117,10 @@ class UserChatScreen(BaseChatScreen):
                 time_taken = end_time - start_time
                 APP_LOGGER.debug(f"Action took {time_taken:.2f}s to complete")
 
+                # add fragments from result to the step
+                for fragment in res.fragments:
+                    await performing_indicator.add_fragment(fragment)
+
                 performing_step.mark_complete()
                 if performing_indicator:
                     await agent_bubble.mark_step_complete(performing_indicator, time_taken)
