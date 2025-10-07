@@ -20,12 +20,12 @@ def main() -> None:
     """Run the main application logic."""
     mas = MAS()
 
-    mas.add_agent(EXAMPLE_AGENT)
     mas.add_agent(ASSISTANT_AGENT)
     mas.add_agent(TRAVEL_PLANNER_AGENT)
     mas.add_agent(CALENDAR_AGENT)
     mas.add_agent(WEATHER_AGENT)
     mas.add_agent(WEBSEARCH_AGENT)
+    mas.add_agent(EXAMPLE_AGENT)
 
     mcp_client = MCPClient()
     mcp_client.add_connected_server(SSEConnectedServer("http://localhost:8080/sse"))

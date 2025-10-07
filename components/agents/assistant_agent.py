@@ -1,6 +1,7 @@
 """The assistant agent module defines the main assistant that talks to the user and handles their requests."""
 
 from components.actions.assess_response import AssessResponse
+from components.actions.communicate import Communicate
 from components.actions.list_friends import AskFriendForHelp
 from components.actions.retrieve_knowledge import RetrieveKnowledge
 from components.actions.simple_reflect import SimpleReflect
@@ -43,11 +44,11 @@ ASSISTANT_AGENT.add_action(AssessResponse())
 ASSISTANT_AGENT.add_action(SimpleReflect())
 
 narrower.add_default_action(RetrieveKnowledge())
-narrower.add_default_action(AskFriendForHelp(embedding_model=ModelsAPI.get_embedding))
+narrower.add_default_action(Communicate(embedding_model=ModelsAPI.get_embedding))
 
 # add some edges
 narrower.add_action_edge(AssessResponse(), [SimpleReflect()])
 narrower.add_action_edge(SimpleReflect(), [StopAction()])
 narrower.add_action_edge(RetrieveKnowledge(), [SimpleResponse()])
 narrower.add_action_edge(SimpleResponse(), [AssessResponse()])
-narrower.add_action_edge(AskFriendForHelp(embedding_model=ModelsAPI.get_embedding), [AssessResponse()])
+narrower.add_action_edge(Communicate(embedding_model=ModelsAPI.get_embedding), [AssessResponse()])

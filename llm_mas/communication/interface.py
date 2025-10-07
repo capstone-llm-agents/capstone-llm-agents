@@ -20,6 +20,10 @@ class CommunicationState:
         self.talking_to = talking_to
         self.current_task: Task | None = None
 
+    def swap(self) -> None:
+        """Swap the agent and the one they are talking to."""
+        self.agent, self.talking_to = self.talking_to, self.agent
+
 
 TMsg = TypeVar("TMsg", bound="AssistantMessage")
 

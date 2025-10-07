@@ -36,6 +36,7 @@ if TYPE_CHECKING:
     from llm_mas.mas.agent import Agent
 
 
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.conversation import AssistantMessage
 from llm_mas.model_providers.api import ModelsAPI
 
@@ -74,7 +75,7 @@ class DefaultProposalHandler(ProposalHandler):
         """Handle an incoming proposal message."""
         # for simplicity just accept all proposals
         # in a real system you might want to check the proposal against some criteria
-        return AcceptanceMessage(sender=state.agent)
+        return AcceptanceMessage(sender=state.talking_to)
 
 
 class DefaultRejectionHandler(RejectionHandler):
@@ -84,7 +85,7 @@ class DefaultRejectionHandler(RejectionHandler):
     def handle_message(self, message: RejectionMessage, state: CommunicationState) -> DisappointmentMessage:
         """Handle an incoming rejection message."""
         return DisappointmentMessage(
-            sender=state.agent,
+            sender=state.talking_to,
             reason=Reason("The proposal was rejected."),
             content="That's disappointing.",
             send_to_self=True,
@@ -106,7 +107,7 @@ class DefaultAcceptanceHandler(AcceptanceHandler):
             raise ValueError(msg)
 
         return TaskMessage(
-            sender=state.agent,
+            sender=state.talking_to,
             task=state.current_task,
             content="Please start working on the task.",
         )
@@ -130,14 +131,14 @@ class DefaultQueryHandler(QueryHandler):
         action_context = ActionContext.from_action_result(result, message.action_context)
 
         try:
-            action_result = await state.agent.act(action_context)
+            action_result, context = await state.talking_to.work(action_context)
             return InformationMessage(
-                sender=state.agent,
+                sender=state.talking_to,
                 content=f"Here is the information you requested about '{prompt}'.",
                 action_result=action_result,
             )
         except Exception as e:  # noqa: BLE001
-            return ErrorMessage(sender=state.agent, error=CommError(str(e)))
+            return ErrorMessage(sender=state.talking_to, error=CommError(str(e)), content=str(e))
 
 
 class DefaultTaskHandler(TaskHandler):
@@ -151,15 +152,16 @@ class DefaultTaskHandler(TaskHandler):
     ) -> InformationMessage | ErrorMessage:
         """Handle an incoming task message."""
         # execute the task using the agent's action system
+        APP_LOGGER.debug(f"Executing task: {message.task.description}")
         try:
-            action_result = await state.agent.act(message.task.action_context)
+            action_result, context = await state.talking_to.work(message.task.action_context)
             return InformationMessage(
-                sender=state.agent,
+                sender=state.talking_to,
                 content=f"Task '{message.task.description}' completed successfully.",
                 action_result=action_result,
             )
         except Exception as e:  # noqa: BLE001
-            return ErrorMessage(sender=state.agent, error=CommError(str(e)))
+            return ErrorMessage(sender=state.talking_to, error=CommError(str(e)), content=str(e))
 
 
 class DefaultInformationHandler(InformationHandler):
@@ -173,7 +175,7 @@ class DefaultInformationHandler(InformationHandler):
     ) -> ThanksMessage | EndMessage:
         """Handle an incoming information message."""
         # for simplicity just thank and end the conversation
-        return EndMessage(sender=state.agent, content="Thank you for the information. Goodbye!")
+        return EndMessage(sender=state.talking_to, content="Thank you for the information. Goodbye!")
 
 
 class DefaultThanksHandler(ThanksHandler):
@@ -183,7 +185,7 @@ class DefaultThanksHandler(ThanksHandler):
     def handle_message(self, message: ThanksMessage, state: CommunicationState) -> EndMessage:
         """Handle an incoming thanks message."""
         # for simplicity just end the conversation
-        return EndMessage(sender=state.agent, content="You're welcome! Goodbye!")
+        return EndMessage(sender=state.talking_to, content="You're welcome! Goodbye!")
 
 
 class DefaultDisappointmentHandler(DisappointmentHandler):
@@ -193,7 +195,7 @@ class DefaultDisappointmentHandler(DisappointmentHandler):
     def handle_message(self, message: DisappointmentMessage, state: CommunicationState) -> ProposalMessage | EndMessage:
         """Handle an incoming disappointment message."""
         # for simplicity just end the conversation
-        return EndMessage(sender=state.agent, content="Goodbye!")
+        return EndMessage(sender=state.talking_to, content="Goodbye!")
 
 
 class DefaultErrorHandler(ErrorHandler):
@@ -204,7 +206,7 @@ class DefaultErrorHandler(ErrorHandler):
         """Handle an incoming error message."""
         # for simplicity just express disappointment
         return DisappointmentMessage(
-            sender=state.agent,
+            sender=state.talking_to,
             reason=Reason(f"There was an error: {message.error.text}"),
             content="That's not what I wanted.",
             send_to_self=True,
@@ -218,7 +220,7 @@ class DefaultEndHandler(EndHandler):
     def handle_message(self, message: AssistantMessage, state: CommunicationState) -> EndMessage:
         """Handle an incoming end message by acknowledging it."""
         # just acknowledge the end message
-        return EndMessage(sender=state.agent, content="Goodbye!")
+        return EndMessage(sender=state.talking_to, content="Goodbye!")
 
 
 class DefaultFreeFormHandler(FreeFormHandler):
@@ -233,7 +235,7 @@ class DefaultFreeFormHandler(FreeFormHandler):
 
         # create a new message to return
         return AssistantMessage(
-            sender=state.agent,
+            sender=state.talking_to,
             content=response,
             message_type=message.message_type,
         )
