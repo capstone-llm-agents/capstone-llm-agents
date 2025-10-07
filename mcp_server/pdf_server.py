@@ -1,5 +1,6 @@
 import functools
 import logging
+import os
 
 # https://stackoverflow.com/questions/10112244/convert-plain-text-to-pdf-in-python
 import textwrap
@@ -77,6 +78,10 @@ def create_pdf_file(prompt: str, file_name: str) -> str:
             "latin-1"
         )  # fpdf module doesn't support other formats
         print(LLM_details)
+
+        # mkdir pdf folder if it doesn't exist
+        if not os.path.exists("./pdfs"):
+            os.makedirs("./pdfs")
 
         def text_to_pdf(text, filename):
             a4_width_mm = 210

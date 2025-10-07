@@ -219,3 +219,6 @@ logs
 
 # Hide db
 db
+
+# Hide ./pdfs
+pdfs
