@@ -22,22 +22,15 @@ class AssessResponse(Action):
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by assessing the quality of the last response."""
-        # ask llm for parameters
-        last_result = context.last_result
-
         # get response
-        agent_res = last_result.get_param("response")
+        agent_res = context.last_result.get_param("response")
 
         if agent_res is None:
             msg = "No response found in the last action result."
             raise ValueError(msg)
 
         # user message
-        last_message = context.conversation.chat_history.messages[-1].content
-
-        if last_message is None:
-            msg = "No user message found in the conversation history."
-            raise ValueError(msg)
+        last_message = self.get_last_message_content(context)
 
         prompt = f"""You are an expert assistant that reviews the quality of responses from other AI assistants.
         The goal is to ensure high-quality, helpful, and relevant responses.

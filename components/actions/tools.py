@@ -186,15 +186,10 @@ class GetParamsForToolCall(Action):
             raise ValueError(msg)
 
         # ask llm for parameters
-        chat_history = context.conversation.get_chat_history()
-        messages = chat_history.as_dicts()
-        last_message = messages[-1] if messages else None
-        if not last_message:
-            msg = "No chat history available to respond to."
-            raise ValueError(msg)
+        last_message = self.get_last_message_content(context)
 
         prompt = f"""You are an expert at using tools. Given the following prompt:
-        {last_message["content"]}
+        {last_message}
         Generate the parameters for the tool '{tool.name}' with the following input schema:
         {json.dumps(tool.inputSchema, indent=4)}
         Respond ONLY with the parameters in JSON format, like this:
@@ -230,7 +225,7 @@ class GetParamsForToolCall(Action):
             raise ValueError(msg)
 
         res = ActionResult()
-        res.set_param("query", last_message["content"])
+        res.set_param("query", last_message)
         res.set_param("tool_name", tool.name)
         res.set_param("params", action_params.to_dict())
         return res

@@ -1,6 +1,6 @@
 """The stop module defines a StopAction class that stops the agent's execution."""
 
-from datetime import datetime
+import datetime
 from typing import override
 
 from mem0 import Memory as Mem
@@ -33,7 +33,7 @@ class StopAction(Action):
                     "collection_name": "test",
                     "path": "db",
                 },
-            }
+            },
         }
         m = Mem.from_config(config)
         chat_history = context.conversation.get_chat_history()
@@ -42,7 +42,8 @@ class StopAction(Action):
         memory_to_save_user = f"User said {last_message['content']}"
         second_last_message = messages[-2]
         memory_to_save_agent = f"Agent said {second_last_message['content']}"
-        now = datetime.now()
+        now = datetime.datetime.now(tz=datetime.UTC)
+
         date_string = now.strftime("%Y-%m-%d %H:%M:%S")
         m.add(
             messages=memory_to_save_user,

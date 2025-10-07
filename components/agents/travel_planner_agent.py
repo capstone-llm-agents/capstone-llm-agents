@@ -24,7 +24,7 @@ from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = TravelNarrower()
-selector = EmbeddingSelector(ModelsAPI.call_llm)
+selector = EmbeddingSelector(ModelsAPI.get_embedding)
 
 # tools
 tool_narrower = DefaultToolNarrower()

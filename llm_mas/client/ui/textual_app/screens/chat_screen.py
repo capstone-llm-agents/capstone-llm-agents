@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import contextlib
+import time
 from typing import TYPE_CHECKING
 
 from textual.containers import ScrollableContainer
@@ -120,6 +121,8 @@ class ChatScreen(Screen):
                 selecting_step = SelectingActionWorkStep()
                 selecting_indicator = await agent_bubble.add_work_step(selecting_step)
 
+                start_time = time.time()
+
                 try:
                     selected_action = await agent.select_action(context)
                 except TimeoutError:
@@ -130,14 +133,20 @@ class ChatScreen(Screen):
                     )
                     return
 
+                end_time = time.time()
+                time_taken = end_time - start_time
+                APP_LOGGER.debug(f"Action selection took {time_taken:.2f}s to complete")
+
                 selecting_step.mark_complete()
                 if selecting_indicator:
-                    await agent_bubble.mark_step_complete(selecting_indicator)
+                    await agent_bubble.mark_step_complete(selecting_indicator, time_taken)
 
                 performing_step = PerformingActionWorkStep(selected_action)
                 performing_indicator = await agent_bubble.add_work_step(performing_step)
 
                 params = ActionParams()
+
+                start_time = time.time()
 
                 try:
                     res = await agent.do_selected_action(selected_action, context, params)
@@ -153,10 +162,14 @@ class ChatScreen(Screen):
                     )
                     return
 
+                end_time = time.time()
+                time_taken = end_time - start_time
+                APP_LOGGER.debug(f"Action took {time_taken:.2f}s to complete")
+
                 # mark execution complete
                 performing_step.mark_complete()
                 if performing_indicator:
-                    await agent_bubble.mark_step_complete(performing_indicator)
+                    await agent_bubble.mark_step_complete(performing_indicator, time_taken)
 
                 self.chat_container.scroll_end(animate=False)
 
