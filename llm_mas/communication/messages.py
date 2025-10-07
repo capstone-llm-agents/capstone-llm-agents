@@ -92,9 +92,21 @@ class ThanksMessage(AssistantMessage):
 class DisappointmentMessage(AssistantMessage):
     """Disappointment message class for LLM interactions."""
 
-    def __init__(self, sender: Agent, reason: Reason, content: str = "That's not what I wanted.") -> None:
+    def __init__(
+        self,
+        sender: Agent,
+        reason: Reason,
+        content: str = "That's not what I wanted.",
+        *,
+        send_to_self: bool = False,
+    ) -> None:
         """Initialize the disappointment message with content and reason."""
-        super().__init__(content=content, sender=sender, message_type=MessageType.DISAPPOINTMENT)
+        super().__init__(
+            content=content,
+            sender=sender,
+            message_type=MessageType.DISAPPOINTMENT,
+            send_to_self=send_to_self,
+        )
         self.reason = reason
 
 

@@ -83,6 +83,7 @@ class DefaultRejectionHandler(RejectionHandler):
             sender=state.agent,
             reason=Reason("The proposal was rejected."),
             content="That's disappointing.",
+            send_to_self=True,
         )
 
 

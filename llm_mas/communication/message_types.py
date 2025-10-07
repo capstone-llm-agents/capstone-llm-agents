@@ -9,7 +9,7 @@ class MessageType(Enum):
     # proposal based dialogue (initiating a conversation)
     PROPOSAL = auto()  # "Can you help me with something?" -> yields other ACCEPTANCE or REJECTION
     # has ActionContext
-    REJECTION = auto()  # "I cannot help with that." -> yields other DISAPPOINTMENT
+    REJECTION = auto()  # "I cannot help with that." -> yields self DISAPPOINTMENT
     # has Reason
     ACCEPTANCE = auto()  # "Sure, I can help with that." -> yields other TASK
 
@@ -25,7 +25,7 @@ class MessageType(Enum):
 
     # closing based dialogue (ending the conversation)
     THANKS = auto()  # "Thanks for your help!" -> yields END
-    DISAPPOINTMENT = auto()  # "That's not what I wanted." -> yields self PROPOSAL or END
+    DISAPPOINTMENT = auto()  # "That's not what I wanted." -> yields other PROPOSAL or END
     # has Reason
     # NOTE: DISAPPOINTMENT can yield PROPOSAL if the other side wants to try again.
     # It is also the only message type that yields a response from itself.
