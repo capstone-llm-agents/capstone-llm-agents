@@ -12,6 +12,7 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
+from llm_mas.logging.loggers import APP_LOGGER
 
 
 class SearchFlights(Action):
@@ -36,6 +37,9 @@ class SearchFlights(Action):
         # origin, destination, and dates. For this example, we'll extract them
         # from the action parameters which are assumed to be provided by the LLM
         # after it has processed the user's request.
+
+        # log the current travel context
+        APP_LOGGER.debug(f"Current travel context: {TRAVEL_CONTEXT}")
 
         origin = get_city_iata(TRAVEL_CONTEXT.origin or "Melbourne")
         destination = get_city_iata(TRAVEL_CONTEXT.city or "Tokyo")
