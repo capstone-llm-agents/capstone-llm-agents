@@ -1,6 +1,10 @@
 import functools
 import logging
+
+# https://stackoverflow.com/questions/10112244/convert-plain-text-to-pdf-in-python
+import textwrap
 import traceback
+import unicodedata
 from collections.abc import Callable
 from datetime import datetime
 from typing import Any, TypeVar, cast
@@ -8,6 +12,8 @@ from typing import Any, TypeVar, cast
 import uvicorn
 from autogen import ConversableAgent
 from calendar_functions import convert_ics_to_text, create_ics_file
+from dotenv import load_dotenv
+from fpdf import FPDF
 from mcp.server import Server
 from mcp.server.fastmcp import FastMCP
 from mcp.server.sse import SseServerTransport
@@ -15,12 +21,6 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
-#https://stackoverflow.com/questions/10112244/convert-plain-text-to-pdf-in-python
-import textwrap
-from fpdf import FPDF
-import unicodedata
-
-from dotenv import load_dotenv
 
 load_dotenv()
 from server_llm_config import Model_type, llm_config
@@ -40,10 +40,10 @@ mcp = FastMCP("SSE Example Server")
 
 ########## Weather agent tools ###############
 @mcp.tool(name="create_pdf_file")
-def create_pdf_file(prompt):
+def create_pdf_file(prompt: str, file_name: str) -> str:
     try:
         print("Using create pdf function")
-        #current_date = datetime.now().date()
+        # current_date = datetime.now().date()
 
         agent_prompt = f"""
         Tasks: {prompt}
@@ -60,17 +60,24 @@ def create_pdf_file(prompt):
         print("#####LLM response#####")
         if Model_type == 1:
             LLM_details = extracted_details["content"]
-            #print(LLM_details)
+            # print(LLM_details)
         elif Model_type == 2:
             LLM_details = extracted_details
-            #print(LLM_details)
+            # print(LLM_details)
         else:
             print("Error within weather_server.py response collection")
 
-        output_filename = 'output.pdf'
+        # add .pdf if not included
+        if not file_name.endswith(".pdf"):
+            file_name = file_name + ".pdf"
+
+        output_filename = f"./pdfs/{file_name}"
         test_text = "This is a test title\nHere is a test paragraph\n\n\nDone\n"
-        LLM_details = LLM_details.encode('latin-1', 'replace').decode('latin-1')#fpdf module doesn't support other formats
+        LLM_details = LLM_details.encode("latin-1", "replace").decode(
+            "latin-1"
+        )  # fpdf module doesn't support other formats
         print(LLM_details)
+
         def text_to_pdf(text, filename):
             a4_width_mm = 210
             pt_to_mm = 0.35
@@ -82,39 +89,42 @@ def create_pdf_file(prompt):
             character_width_mm = 7 * pt_to_mm
             width_text = a4_width_mm / character_width_mm
 
-            pdf = FPDF(orientation='P', unit='mm', format='A4')
+            pdf = FPDF(orientation="P", unit="mm", format="A4")
             pdf.set_auto_page_break(True, margin=margin_bottom_mm)
             pdf.add_page()
-            pdf.set_font(family='Courier', size=fontsize_pt)
-            splitted = text.split('\n')
+            pdf.set_font(family="Courier", size=fontsize_pt)
+            splitted = text.split("\n")
             i = 0
             for line in splitted:
-                #print("Am stuck here 1")
+                # print("Am stuck here 1")
                 lines = textwrap.wrap(line, width_text)
 
                 if len(lines) == 0:
                     pdf.ln()
 
                 for wrap in lines:
-                    #print("Am stuck here 2")
+                    # print("Am stuck here 2")
                     if i == 0:
-                        pdf.set_font(family='Courier', size=title_fontsize_mm, style='B')
-                        pdf.cell(0, title_fontsize_mm, wrap, ln=1, align='C')
-                        i = (i + 1)
+                        pdf.set_font(family="Courier", size=title_fontsize_mm, style="B")
+                        pdf.cell(0, title_fontsize_mm, wrap, ln=1, align="C")
+                        i = i + 1
                     else:
-                        pdf.set_font(family='Courier', size=fontsize_pt)
+                        pdf.set_font(family="Courier", size=fontsize_pt)
                         pdf.cell(0, fontsize_mm, wrap, ln=1)
-            #print("Am stuck here 3")
-            pdf.output(filename, 'F')
-            #print("Am stuck here 4")
-        text_to_pdf(LLM_details, output_filename)#LLM details is the PDF agents output
-        #print("Am stuck here 5")
+            # print("Am stuck here 3")
+            pdf.output(filename, "F")
+            # print("Am stuck here 4")
+
+        text_to_pdf(LLM_details, output_filename)  # LLM details is the PDF agents output
+        # print("Am stuck here 5")
         print("#####PDF file created")
-        result = LLM_details
+        result = f"PDF file created: {output_filename}. It has the following content: {LLM_details}. You can confirm with the user that the file has been created."
     except:
         result = "An error has occurred within the PDF file creator."
-
         return result
+
+    return result
+
 
 def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:
     """Create a Starlette application that can serve the MCP server with SSE."""
