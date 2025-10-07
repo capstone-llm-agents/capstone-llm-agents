@@ -74,12 +74,13 @@ class MainMenu(QWidget):
     def _on_talk_agent(self) -> None:
         """Navigate to user chat screen."""
 
-        self.nav.navigate.emit("user_chat", {"conversation": Conversation("User Assistant Chat")})
+        conversation = self.client.mas.conversation_manager.start_or_get_conversation("User Assistant Chat")
+
+        self.nav.navigate.emit("user_chat", {"conversation": conversation})
 
     def _on_mcp_client(self) -> None:
         """Navigate to MCP client info screen."""
         self.nav.navigate.emit("mcp_client", None)
-
 
     def _on_view_conversations(self) -> None:
         """Navigate to conversations screen."""
