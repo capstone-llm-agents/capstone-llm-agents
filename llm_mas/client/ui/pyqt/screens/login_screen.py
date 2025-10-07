@@ -33,9 +33,7 @@ class LoginScreen(QWidget):
 
         # Title
         title = QLabel("LLM Multi-Agent System")
-        title.setStyleSheet(
-            "font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;"
-        )
+        title.setStyleSheet("font-size: 28px; font-weight: bold; color: #2c3e50; margin-bottom: 10px;")
         title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         layout.addWidget(title)
 
@@ -48,9 +46,7 @@ class LoginScreen(QWidget):
         # Status label
         self.status_label = QLabel("")
         self.status_label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.status_label.setStyleSheet(
-            "color: #666; font-size: 13px; margin-bottom: 15px; min-height: 20px;"
-        )
+        self.status_label.setStyleSheet("color: #666; font-size: 13px; margin-bottom: 15px; min-height: 20px;")
         layout.addWidget(self.status_label)
 
         # Username field
@@ -99,8 +95,7 @@ class LoginScreen(QWidget):
         self.signup_btn.setMaximumWidth(320)
         self.signup_btn.setMinimumHeight(38)
         self.signup_btn.setStyleSheet(
-            "font-size: 14px; padding: 8px; "
-            "background-color: #2ecc71; color: white; border: none; border-radius: 4px;"
+            "font-size: 14px; padding: 8px; background-color: #2ecc71; color: white; border: none; border-radius: 4px;"
         )
         layout.addWidget(self.signup_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
         layout.addSpacing(20)
@@ -110,8 +105,7 @@ class LoginScreen(QWidget):
         self.skip_btn.setMaximumWidth(320)
         self.skip_btn.setMinimumHeight(32)
         self.skip_btn.setStyleSheet(
-            "font-size: 12px; padding: 6px; "
-            "background-color: #95a5a6; color: white; border: none; border-radius: 4px;"
+            "font-size: 12px; padding: 6px; background-color: #95a5a6; color: white; border: none; border-radius: 4px;"
         )
         layout.addWidget(self.skip_btn, alignment=Qt.AlignmentFlag.AlignHCenter)
 
@@ -143,8 +137,7 @@ class LoginScreen(QWidget):
                 if success:
                     self.status_label.setText(f"✓ Successfully logged in as {username}")
                     self.status_label.setStyleSheet(
-                        "color: #27ae60; font-size: 14px; font-weight: bold; "
-                        "margin-bottom: 15px; min-height: 20px;"
+                        "color: #27ae60; font-size: 14px; font-weight: bold; margin-bottom: 15px; min-height: 20px;"
                     )
                     # Brief delay to show success message
                     await asyncio.sleep(0.8)
@@ -193,8 +186,7 @@ class LoginScreen(QWidget):
                 if success:
                     self.status_label.setText(f"✓ Account created! Welcome, {username}")
                     self.status_label.setStyleSheet(
-                        "color: #27ae60; font-size: 14px; font-weight: bold; "
-                        "margin-bottom: 15px; min-height: 20px;"
+                        "color: #27ae60; font-size: 14px; font-weight: bold; margin-bottom: 15px; min-height: 20px;"
                     )
                     # Brief delay to show success message
                     await asyncio.sleep(0.8)
@@ -221,8 +213,7 @@ class LoginScreen(QWidget):
         reply = QMessageBox.question(
             self,
             "Offline Mode",
-            "Continue without network connection?\n\n"
-            "You won't be able to use network features.",
+            "Continue without network connection?\n\nYou won't be able to use network features.",
             QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No,
         )
 

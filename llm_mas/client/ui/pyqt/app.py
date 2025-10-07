@@ -29,6 +29,7 @@ from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import HTTPConnectedServer, SSEConnectedServer
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
 from llm_mas.utils.config.general_config import GENERAL_CONFIG
+from network_server.client import NetworkClient
 
 
 class NavigationManager(QObject):
@@ -74,7 +75,7 @@ class PyQtApp(QStackedWidget):
 
         self.resize(900, 600)
 
-    def _on_login_success(self, network_client):
+    def _on_login_success(self, network_client: NetworkClient):
         """Handle successful login - create Client and show main menu."""
         self.network_client = network_client
 
