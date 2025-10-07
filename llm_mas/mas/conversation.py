@@ -146,3 +146,9 @@ class ConversationManager:
             for conversation in self.conversations.values()
             if set(conversation.participants) == set(entities)
         ]
+
+    def start_or_get_conversation(self, conversation_name: str) -> Conversation:
+        """Start a new conversation or get an existing one."""
+        if conversation_name in self.conversations:
+            return self.conversations[conversation_name]
+        return self.start_conversation(conversation_name)
