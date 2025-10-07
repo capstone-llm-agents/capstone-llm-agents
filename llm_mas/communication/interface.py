@@ -4,10 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Generic, TypeVar
 
-from llm_mas.communication.task.agent_task import Task
-
 if TYPE_CHECKING:
     from llm_mas.communication.message_types import MessageType
+    from llm_mas.communication.task.agent_task import Task
     from llm_mas.mas.agent import Agent
     from llm_mas.mas.conversation import AssistantMessage
 
