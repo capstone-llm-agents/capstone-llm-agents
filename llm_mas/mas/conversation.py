@@ -1,8 +1,13 @@
 """The conversation module defines messages, chat history and conversation management for the multi-agent system."""
 
-from llm_mas.mas.agent import Agent
+from typing import TYPE_CHECKING
+
+from llm_mas.communication.message_types import MessageType
 from llm_mas.mas.entity import Entity
 from llm_mas.mas.user import User
+
+if TYPE_CHECKING:
+    from llm_mas.mas.agent import Agent
 
 
 class Message:
@@ -30,9 +35,18 @@ class UserMessage(Message):
 class AssistantMessage(Message):
     """Assistant message class for LLM interactions."""
 
-    def __init__(self, content: str, sender: Agent) -> None:
+    def __init__(
+        self,
+        content: str,
+        sender: "Agent",
+        message_type: MessageType = MessageType.FREE_FORM,
+        *,
+        send_to_self: bool = False,  # super hacky
+    ) -> None:
         """Initialize the assistant message with content."""
         super().__init__(role="assistant", content=content, sender=sender)
+        self.message_type = message_type
+        self.send_to_self = send_to_self
 
 
 class ChatHistory:
