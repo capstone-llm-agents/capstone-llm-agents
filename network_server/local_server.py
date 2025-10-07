@@ -21,7 +21,7 @@ class LocalServer:
 
     def __init__(self, db_path: str | None = None) -> None:
         """Initialize the local server with SQLite database storage.
-        
+
         Args:
             db_path: Path to the SQLite database file. If None, uses db/network.sqlite3
         """
@@ -30,10 +30,10 @@ class LocalServer:
             db_dir = Path(__file__).parent.parent / "db"
             db_dir.mkdir(exist_ok=True)
             db_path = str(db_dir / "network.sqlite3")
-        
+
         self.db_path = db_path
         self.active_connections: dict[str, WebSocket] = {}  # user_id -> websocket (not persisted)
-        
+
         # Initialize database
         self._init_database()
 
@@ -314,20 +314,53 @@ class LocalServer:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
 
             user_id = user_data["user_id"]
-            
+
             conn = self._get_connection()
             cursor = conn.cursor()
-            cursor.execute("""
+            cursor.execute(
+                """
                 SELECT u.id, u.username
                 FROM friends f
                 JOIN users u ON f.friend_id = u.id
                 WHERE f.user_id = ?
-            """, (user_id,))
-            
+            """,
+                (user_id,),
+            )
+
             friends_list = [{"id": row["id"], "username": row["username"]} for row in cursor.fetchall()]
             conn.close()
-            
+
             return friends_list
+
+        @self.app.get("/friend-requests/pending")
+        async def get_pending_friend_requests(token: str) -> list[dict[str, Any]]:
+            """Get the list of pending friend requests for the authenticated user."""
+            user_data = self._validate_token(token)
+            if not user_data:
+                raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
+            user_id = user_data["user_id"]
+
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                SELECT u.id, u.username, fr.created_at
+                FROM friend_requests fr
+                JOIN users u ON fr.requester_id = u.id
+                WHERE fr.recipient_id = ?
+                ORDER BY fr.created_at DESC
+            """,
+                (user_id,),
+            )
+
+            requests_list = [
+                {"id": row["id"], "username": row["username"], "created_at": row["created_at"]}
+                for row in cursor.fetchall()
+            ]
+            conn.close()
+
+            return requests_list
 
         @self.app.get("/agents/{friend_id}")
         async def get_agents(friend_id: str, token: str) -> list[dict[str, Any]]:
@@ -354,10 +387,12 @@ class LocalServer:
                 "SELECT name, description, type FROM agents WHERE user_id = ?",
                 (friend_id,),
             )
-            agents = [{"name": row["name"], "description": row["description"], "type": row["type"]} 
-                     for row in cursor.fetchall()]
+            agents = [
+                {"name": row["name"], "description": row["description"], "type": row["type"]}
+                for row in cursor.fetchall()
+            ]
             conn.close()
-            
+
             return agents
 
         @self.app.post("/friend_request/{friend_username}")
@@ -528,7 +563,7 @@ class LocalServer:
                     (user_id,),
                 )
                 queued_messages = cursor.fetchall()
-                
+
                 for msg_row in queued_messages:
                     message_data = {
                         "id": msg_row["id"],
@@ -537,7 +572,7 @@ class LocalServer:
                         "message": json.loads(msg_row["message_json"]),
                     }
                     await websocket.send_json(message_data)
-                
+
                 # Clear the queue
                 cursor.execute("DELETE FROM message_queue WHERE recipient_id = ?", (user_id,))
                 conn.commit()
@@ -548,11 +583,13 @@ class LocalServer:
                     data = await websocket.receive_json()
                     # Handle incoming messages from the client
                     # For now, just echo back or handle specific message types
-                    await websocket.send_json({
-                        "type": "ack",
-                        "message": "Message received",
-                        "data": data,
-                    })
+                    await websocket.send_json(
+                        {
+                            "type": "ack",
+                            "message": "Message received",
+                            "data": data,
+                        }
+                    )
             except WebSocketDisconnect:
                 # Clean up when the client disconnects
                 if user_id in self.active_connections:

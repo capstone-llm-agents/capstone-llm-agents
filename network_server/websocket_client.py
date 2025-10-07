@@ -91,6 +91,29 @@ class WebSocketNetworkClient(NetworkInterface):
             print(f"Error getting friends: {e}")
             return []
 
+    async def get_pending_friend_requests(self, user_token: str) -> list[dict[str, Any]]:
+        """Get the list of pending friend requests for a user.
+
+        Args:
+            user_token: Authentication token for the user
+
+        Returns:
+            List of friend request dictionaries
+
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/friend-requests/pending",
+                    params={"token": user_token},
+                    timeout=30.0,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPError as e:
+            print(f"Error getting pending friend requests: {e}")
+            return []
+
     async def get_agents(self, friend_id: str, user_token: str) -> list[dict[str, Any]]:
         """Get the list of agents for a friend.
 

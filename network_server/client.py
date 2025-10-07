@@ -3,7 +3,9 @@
 This module provides a high-level client that simplifies common operations.
 """
 
-from typing import Any
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Any
 
 from network_server.message import (
     MessageType,
@@ -16,6 +18,9 @@ from network_server.network_fragment import (
     NetworkFragment,
 )
 from network_server.websocket_client import WebSocketNetworkClient
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
 
 
 class NetworkClient:
@@ -124,10 +129,22 @@ class NetworkClient:
 
         Returns:
             List of friend dictionaries
+
         """
         if not self._token:
             return []
         return await self._network.get_friends(self._token)
+
+    async def get_pending_friend_requests(self) -> list[dict[str, Any]]:
+        """Get the list of pending friend requests.
+
+        Returns:
+            List of friend request dictionaries
+
+        """
+        if not self._token:
+            return []
+        return await self._network.get_pending_friend_requests(self._token)
 
     async def get_agents(self, friend_id: str) -> list[dict[str, Any]]:
         """Get the list of agents for a friend.
@@ -258,7 +275,7 @@ class NetworkClient:
         result = await self._network.send_message(message)
         return result.get("success", False)
 
-    def add_message_handler(self, handler: Any) -> None:
+    def add_message_handler(self, handler: Callable[[dict[str, Any]], None]) -> None:
         """Add a handler for incoming messages.
 
         Args:
