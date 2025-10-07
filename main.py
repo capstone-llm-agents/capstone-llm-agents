@@ -39,6 +39,11 @@ def main():
     #ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
     ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
 
+
+    # AGENT NETWORK SCREEN TEST just for more connections
+
+    CALENDAR_AGENT.add_friend(WEATHER_AGENT)
+
     # Run PyQt6 app
     run_app(client)
 

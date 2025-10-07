@@ -106,3 +106,33 @@ MainMenu QPushButton {
 }
 
 
+QScrollBar:horizontal {
+    background: #2e2e2e;      
+    height: 12px;              
+    margin: 0px 0px 0px 0px;  
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal {
+    background: #5c5c5c;      
+    min-width: 20px;           
+    border-radius: 6px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background: #888888;     
+}
+
+QScrollBar::add-line:horizontal,
+QScrollBar::sub-line:horizontal {
+    width: 0px;              
+}
+
+QScrollBar::add-page:horizontal,
+QScrollBar::sub-page:horizontal {
+    background: none;          
+}
+
+
+
+
