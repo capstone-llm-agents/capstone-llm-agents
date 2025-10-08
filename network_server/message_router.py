@@ -7,6 +7,10 @@ and the agent communication layer (AssistantMessage/CommunicationInterface).
 import logging
 from typing import TYPE_CHECKING, Any
 
+from llm_mas.action_system.core.action_context import ActionContext
+from llm_mas.action_system.core.action_result import ActionResult
+from llm_mas.communication.comm_extras import Reason
+from llm_mas.communication.interface import CommunicationState
 from llm_mas.communication.message_types import MessageType
 from llm_mas.communication.messages import (
     AcceptanceMessage,
@@ -18,12 +22,13 @@ from llm_mas.communication.messages import (
     ThanksMessage,
 )
 from llm_mas.communication.task.agent_task import Task
+from llm_mas.mas.conversation import AssistantMessage
+from llm_mas.utils.random_id import generate_random_id
 from network_server.message import NetworkMessage
-from network_server.network_fragment import FragmentSource, NetworkFragment
+from network_server.network_fragment import FragmentKindSerializable, FragmentSource, NetworkFragment
 
 if TYPE_CHECKING:
     from llm_mas.client.account.client import Client
-    from llm_mas.communication.interface import CommunicationState
     from llm_mas.mas.agent import Agent
     from llm_mas.mas.conversation import AssistantMessage
 
@@ -96,49 +101,54 @@ class MessageRouter:
         content = self._extract_text_from_fragments(network_message.fragments)
         message_type = network_message.message_type
 
+        # create new conversation
+        conversation = self.client.mas.conversation_manager.start_conversation(
+            f"network-conversation-{generate_random_id()}",
+        )
+
+        action_context = ActionContext(
+            conversation=conversation,
+            last_result=ActionResult(),
+            mcp_client=self.client.mcp_client,
+            agent=sender_agent,
+            user=self.client.user,
+            conversation_manager=self.client.mas.conversation_manager,
+        )
+
+        task_description = network_message.context.get("task_description", content)
+        task = Task(description=task_description, action_context=action_context)
+
         # Create the appropriate message type based on MessageType
         if message_type == MessageType.PROPOSAL:
             # Extract task information from context
-            task_description = network_message.context.get("task_description", content)
-            task = Task(description=task_description)
             return ProposalMessage(content=content, sender=sender_agent, task=task)
 
         if message_type == MessageType.ACCEPTANCE:
             return AcceptanceMessage(sender=sender_agent, content=content)
 
         if message_type == MessageType.REJECTION:
-            from llm_mas.communication.comm_extras import Reason
-
             reason_text = network_message.context.get("reason", "Cannot process request")
-            reason = Reason(explanation=reason_text)
+            reason = Reason(text=reason_text)
             return RejectionMessage(sender=sender_agent, reason=reason, content=content)
 
         if message_type == MessageType.QUERY:
-            from llm_mas.action_system.core.action_context import ActionContext
-
             # Create minimal action context from network message
-            action_context = ActionContext(query=content)
             return QueryMessage(content=content, sender=sender_agent, action_context=action_context)
 
         if message_type == MessageType.TASK:
-            task_description = network_message.context.get("task_description", content)
-            task = Task(description=task_description)
             return TaskMessage(content=content, sender=sender_agent, task=task)
 
         if message_type == MessageType.INFORMATION:
-            from llm_mas.action_system.core.action_result import ActionResult
-
             # Create action result from context
             result_data = network_message.context.get("result", content)
-            action_result = ActionResult(result=result_data)
+            action_result = ActionResult()
+            action_result.results = result_data
             return InformationMessage(content=content, sender=sender_agent, action_result=action_result)
 
         if message_type == MessageType.THANKS:
             return ThanksMessage(sender=sender_agent, content=content)
 
         # Default: create a generic AssistantMessage
-        from llm_mas.mas.conversation import AssistantMessage
-
         return AssistantMessage(content=content, sender=sender_agent, message_type=message_type)
 
     async def handle_incoming_network_message(self, message_data: dict[str, Any]) -> None:
@@ -157,7 +167,6 @@ class MessageRouter:
             network_msg_data = message_data.get("message", {})
 
             # Reconstruct the NetworkMessage
-            from network_server.network_fragment import FragmentKindSerializable
 
             fragments = [
                 NetworkFragment(
@@ -193,7 +202,6 @@ class MessageRouter:
             sender_agent = self._find_agent_by_name(network_message.sender)
             if not sender_agent:
                 # Create a proxy agent for the remote sender
-                from llm_mas.mas.agent import Agent
 
                 # Use a simple placeholder for remote agents
                 sender_agent = self.client.get_assistant_agent()
@@ -212,7 +220,6 @@ class MessageRouter:
                 return
 
             # Create communication state
-            from llm_mas.communication.interface import CommunicationState
 
             comm_state = CommunicationState(agent=recipient_agent, talking_to=sender_agent)
 
