@@ -12,6 +12,9 @@ class MAS:
         self.agents: list[Agent] = []
         self.conversation_manager = ConversationManager()
 
+        self.assistant_agent: Agent | None = None
+        self.discovery_agent: Agent | None = None
+
     def add_agent(self, agent: Agent) -> None:
         """Add an agent to the MAS."""
         self.agents.append(agent)
@@ -25,4 +28,22 @@ class MAS:
         """Return the first agent that is an assistant agent."""
         if not self.agents:
             return None
-        return self.agents[0]
+        return self.assistant_agent or self.agents[0]
+
+    def set_assistant_agent(self, agent: Agent) -> None:
+        """Set the assistant agent and ensure it is part of the MAS."""
+        if agent not in self.agents:
+            self.add_agent(agent)
+        self.assistant_agent = agent
+
+    def get_discovery_agent(self) -> Agent | None:
+        """Return the first agent that is a discovery agent."""
+        if not self.agents:
+            return None
+        return self.discovery_agent or self.agents[0]
+
+    def set_discovery_agent(self, agent: Agent) -> None:
+        """Set the discovery agent and ensure it is part of the MAS."""
+        if agent not in self.agents:
+            self.add_agent(agent)
+        self.discovery_agent = agent

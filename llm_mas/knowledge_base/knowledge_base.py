@@ -653,6 +653,14 @@ class KnowledgeBase:
         scored.sort(key=lambda x: x["score"], reverse=True)
         return scored[: max(1, top_k)]
 
+    # --------------- Stats ---------------
+    def record_count(self) -> int:
+        """Return the total number of indexed chunks in the knowledge base."""
+        return len(self._records)
+
+    def is_empty(self) -> bool:
+        """Return True if the knowledge base has no indexed content."""
+        return len(self._records) == 0
 
 # Global singleton to share across UI and actions
 GLOBAL_KB = KnowledgeBase()
