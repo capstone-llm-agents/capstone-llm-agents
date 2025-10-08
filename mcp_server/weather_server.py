@@ -193,7 +193,7 @@ if __name__ == "__main__":
     # create Starlette app with SSE support
     starlette_app = create_starlette_app(mcp_server, debug=True)
 
-    port = 8082
+    port = 8080
 
     # run the server using uvicorn
     uvicorn.run(starlette_app, host="localhost", port=port)
