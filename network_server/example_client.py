@@ -23,15 +23,24 @@ from network_server.network_fragment import (
 )
 from network_server.websocket_client import WebSocketNetworkClient
 
+# Global flag to track if messages were received
+messages_received = []
 
-async def on_message_received(message: dict) -> None:
+
+def on_message_received(message: dict) -> None:
     """Handle incoming messages from the WebSocket.
 
     Args:
         message: The received message data
 
     """
-    print(f"\n[Received Message]: {message}\n")
+    print(f"\n{'=' * 60}")
+    print(f"[✓ MESSAGE RECEIVED]")
+    print(f"{'=' * 60}")
+    print(f"Message Type: {message.get('type', 'unknown')}")
+    print(f"Content: {message}")
+    print(f"{'=' * 60}\n")
+    messages_received.append(message)
 
 
 async def example_usage() -> None:
@@ -149,8 +158,82 @@ async def example_usage() -> None:
         print(f"   Note: {friend_request_result.get('error')}\n")
 
     # Keep the connection alive for a bit to receive any incoming messages
-    print("7. Keeping connection alive for 5 seconds to receive messages...")
+    print("7. Testing message receive functionality...")
+    print("   Creating a second client as 'bob' to send a message to alice...\n")
+
+    # Create a second client to send a message to alice
+    sender_client = WebSocketNetworkClient(
+        base_url="http://127.0.0.1:8000",
+        ws_url="ws://127.0.0.1:8000/ws",
+    )
+    sender_network = Network(sender_client)
+
+    # Login as bob
+    print("   Logging in as 'bob'...")
+    bob_login = await sender_network.login("bob", "password123")
+    if bob_login.get("success"):
+        print(f"   ✓ Bob logged in successfully!")
+        bob_token = bob_login.get("token")
+        bob_user_id = bob_login.get("user", {}).get("id")
+        alice_user_id = login_result.get("user", {}).get("id")
+
+        # Wait a moment for WebSocket to connect
+        await asyncio.sleep(1)
+
+        # Create a test message from bob to alice
+        print(f"   Sending test message from bob to alice...\n")
+        test_fragment = NetworkFragment(
+            name="test_message",
+            kind=FragmentKindSerializable(
+                name="text",
+                content={"text": "Hi Alice! This is a test message from Bob."},
+                description="Test message for receive functionality",
+            ),
+            description="Test message",
+            source=FragmentSource.USER,
+        )
+
+        test_message = NetworkMessage(
+            sender="bob_assistant",
+            sender_client=bob_user_id,
+            recipient="alice_assistant",
+            recipient_client=alice_user_id,
+            fragments=[test_fragment],
+            message_type=MessageType.PROPOSAL,
+            context={"conversation_id": "test_receive_001"},
+        )
+
+        # Send the message from bob to alice
+        send_result = await sender_network.send_message(test_message)
+        if send_result.get("success"):
+            print(f"   ✓ Test message sent from bob to alice!")
+            print(f"   Message ID: {send_result.get('message_id')}\n")
+        else:
+            print(f"   ✗ Failed to send test message: {send_result.get('error')}\n")
+
+        # Logout bob
+        await sender_client.logout()
+        print("   ✓ Bob logged out\n")
+    else:
+        print(f"   ✗ Bob login failed: {bob_login.get('error')}\n")
+
+    # Now wait for alice to receive the message
+    print("   Waiting for 5 seconds for alice to receive the message...")
+    print("   (Messages will be displayed with '✓ MESSAGE RECEIVED' banner)\n")
+
+    initial_message_count = len(messages_received)
+    print("   (Messages will be displayed with '✓ MESSAGE RECEIVED' banner)\n")
     await asyncio.sleep(5)
+
+    # Check if any messages were received
+    new_messages_count = len(messages_received) - initial_message_count
+    if new_messages_count > 0:
+        print(f"\n   ✓ SUCCESS: Received {new_messages_count} message(s) during the wait period!")
+    else:
+        print("\n   ✗ WARNING: No messages were received during the wait period.")
+        print("   This may indicate an issue with the WebSocket connection or message routing.")
+
+    print(f"\n   Total messages received during this session: {len(messages_received)}")
 
     # Logout
     print("\n8. Logging out...")
@@ -159,6 +242,7 @@ async def example_usage() -> None:
         print("   ✓ Logged out successfully!")
 
     print("\n=== Example Complete ===")
+    print(f"=== Total Messages Received: {len(messages_received)} ===")
 
 
 async def main() -> None:
