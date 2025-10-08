@@ -130,7 +130,7 @@ python -m network_server.test_network
 
 ### Simple Usage
 ```python
-from network_server.client import NetworkClient
+from network_server.network_client import NetworkClient
 
 # Create client
 client = NetworkClient()

@@ -12,7 +12,7 @@ from PyQt6.QtWidgets import (
     QWidget,
 )
 
-from network_server.client import NetworkClient
+from network_server.network_client import NetworkClient
 
 
 class LoginScreen(QWidget):

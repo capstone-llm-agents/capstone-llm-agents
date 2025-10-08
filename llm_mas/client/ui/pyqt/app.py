@@ -30,7 +30,7 @@ from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import HTTPConnectedServer, SSEConnectedServer
 from llm_mas.utils.background_tasks import BACKGROUND_TASKS
 from llm_mas.utils.config.general_config import GENERAL_CONFIG
-from network_server.client import NetworkClient
+from network_server.network_client import NetworkClient
 
 
 class NavigationManager(QObject):

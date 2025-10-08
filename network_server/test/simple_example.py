@@ -5,7 +5,7 @@ This demonstrates the easiest way to use the network server.
 
 import asyncio
 
-from network_server.client import NetworkClient
+from network_server.network_client import NetworkClient
 from network_server.message import MessageType
 
 

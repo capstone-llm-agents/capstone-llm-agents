@@ -5,7 +5,7 @@ from llm_mas.mas.mas import MAS
 from llm_mas.mas.user import User
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.utils.config.general_config import GeneralConfig
-from network_server.client import NetworkClient
+from network_server.network_client import NetworkClient
 
 
 class Client:

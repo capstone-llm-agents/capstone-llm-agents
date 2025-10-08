@@ -23,7 +23,7 @@ from llm_mas.logging.loggers import APP_LOGGER
 if TYPE_CHECKING:
     from llm_mas.client.account.client import Client
     from llm_mas.client.ui.pyqt.app import NavigationManager
-    from network_server.client import NetworkClient
+    from network_server.network_client import NetworkClient
 
 
 class FriendRequestWorker(QThread):

@@ -5,25 +5,60 @@ with a production implementation in the future.
 """
 
 import json
+import logging
 import secrets
 import sqlite3
 import uuid
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+import uvicorn
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect, status
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+
+from llm_mas.communication.message_types import MessageType
+from network_server.message import NetworkMessage
+from network_server.network_fragment import FragmentKindSerializable, FragmentSource, NetworkFragment
+
+# Set up logger
+logger = logging.getLogger(__name__)
+
+
+class MessageRequest(BaseModel):
+    """Request model for sending messages."""
+
+    sender: str
+    sender_client: str
+    recipient: str
+    recipient_client: str
+    fragments: list[dict[str, Any]]
+    message_type: str
+    context: dict[str, Any] | None = None
 
 
 class LocalServer:
-    """Local server implementation for testing network functionality."""
+    """Local server implementation for testing network functionality.
+
+    This server uses SQLite for data persistence and WebSockets for real-time
+    communication. All messages are properly structured using NetworkMessage
+    and NetworkFragment classes to ensure type safety and consistency.
+
+    The server provides:
+    - User authentication and token management
+    - Friend relationships and friend requests
+    - Agent management per user
+    - Message queuing and real-time delivery via WebSocket
+    - Proper serialization/deserialization of NetworkMessage objects
+    """
 
     def __init__(self, db_path: str | None = None) -> None:
         """Initialize the local server with SQLite database storage.
 
         Args:
             db_path: Path to the SQLite database file. If None, uses db/network.sqlite3
+
         """
         # Set up database path
         if db_path is None:
@@ -162,7 +197,7 @@ class LocalServer:
             user_ids[user_data["username"]] = user_id
             cursor.execute(
                 "INSERT INTO users (id, username, password, created_at) VALUES (?, ?, ?, ?)",
-                (user_id, user_data["username"], user_data["password"], datetime.now().isoformat()),
+                (user_id, user_data["username"], user_data["password"], datetime.now(tz=UTC).isoformat()),
             )
 
         # Set up friendships
@@ -202,7 +237,7 @@ class LocalServer:
         cursor = conn.cursor()
         cursor.execute(
             "INSERT INTO tokens (token, user_id, username, expires_at) VALUES (?, ?, ?, ?)",
-            (token, user_id, username, (datetime.now() + timedelta(days=7)).isoformat()),
+            (token, user_id, username, (datetime.now(tz=UTC) + timedelta(days=7)).isoformat()),
         )
         conn.commit()
         conn.close()
@@ -223,7 +258,7 @@ class LocalServer:
             return None
 
         expires_at = datetime.fromisoformat(row["expires_at"])
-        if datetime.now() > expires_at:
+        if datetime.now(tz=UTC) > expires_at:
             # Delete expired token
             conn = self._get_connection()
             cursor = conn.cursor()
@@ -233,6 +268,49 @@ class LocalServer:
             return None
 
         return {"user_id": row["user_id"], "username": row["username"]}
+
+    def _deserialize_network_fragment(self, fragment_data: dict[str, Any]) -> NetworkFragment:
+        """Deserialize a NetworkFragment from dictionary data.
+
+        Args:
+            fragment_data: Dictionary containing fragment data
+
+        Returns:
+            NetworkFragment object
+
+        """
+        return NetworkFragment(
+            name=fragment_data["name"],
+            kind=FragmentKindSerializable(
+                name=fragment_data["kind"]["name"],
+                content=fragment_data["kind"]["content"],
+                description=fragment_data["kind"].get("description"),
+            ),
+            description=fragment_data.get("description"),
+            source=FragmentSource[fragment_data["source"]],
+        )
+
+    def _deserialize_network_message(self, message_data: dict[str, Any]) -> NetworkMessage:
+        """Deserialize a NetworkMessage from dictionary data.
+
+        Args:
+            message_data: Dictionary containing message data
+
+        Returns:
+            NetworkMessage object
+
+        """
+        fragments = [self._deserialize_network_fragment(frag) for frag in message_data["fragments"]]
+
+        return NetworkMessage(
+            sender=message_data["sender"],
+            sender_client=message_data["sender_client"],
+            recipient=message_data["recipient"],
+            recipient_client=message_data["recipient_client"],
+            fragments=fragments,
+            message_type=MessageType[message_data["message_type"]],
+            context=message_data.get("context", {}),
+        )
 
     def _register_routes(self) -> None:
         """Register all the HTTP and WebSocket routes."""
@@ -287,7 +365,7 @@ class LocalServer:
             user_id = str(uuid.uuid4())
             cursor.execute(
                 "INSERT INTO users (id, username, password, created_at) VALUES (?, ?, ?, ?)",
-                (user_id, username, password, datetime.now().isoformat()),
+                (user_id, username, password, datetime.now(tz=UTC).isoformat()),
             )
 
             # Create default assistant agent
@@ -436,7 +514,7 @@ class LocalServer:
             # Send friend request
             cursor.execute(
                 "INSERT INTO friend_requests (requester_id, recipient_id, created_at) VALUES (?, ?, ?)",
-                (user_id, friend_id, datetime.now().isoformat()),
+                (user_id, friend_id, datetime.now(tz=UTC).isoformat()),
             )
             conn.commit()
             conn.close()
@@ -488,8 +566,17 @@ class LocalServer:
             return {"success": True, "message": "Friend request accepted"}
 
         @self.app.post("/message/{friend_id}")
-        async def send_message(friend_id: str, token: str, message: dict[str, Any]) -> dict[str, Any]:
-            """Send a message to a friend's agent."""
+        async def send_message(friend_id: str, token: str, message_request: MessageRequest) -> dict[str, Any]:
+            """Send a NetworkMessage to a friend's agent.
+
+            This endpoint accepts a MessageRequest (which contains the serialized
+            NetworkMessage data), reconstructs a proper NetworkMessage object with
+            NetworkFragment instances, stores it in the database queue, and
+            attempts to deliver it immediately via WebSocket if the friend is online.
+
+            The message is stored as a serialized NetworkMessage in JSON format,
+            preserving all fragment structure and metadata.
+            """
             user_data = self._validate_token(token)
             if not user_data:
                 raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
@@ -507,18 +594,29 @@ class LocalServer:
                 conn.close()
                 raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not friends with this user")
 
-            # Store the message in the queue
+            # Reconstruct NetworkMessage from the request using helper method
+            network_message = self._deserialize_network_message(
+                {
+                    "sender": message_request.sender,
+                    "sender_client": message_request.sender_client,
+                    "recipient": message_request.recipient,
+                    "recipient_client": message_request.recipient_client,
+                    "fragments": message_request.fragments,
+                    "message_type": message_request.message_type,
+                    "context": message_request.context or {},
+                },
+            )
+
+            # Store the serialized NetworkMessage in the queue
             message_id = str(uuid.uuid4())
-            message_data = {
-                "id": message_id,
-                "from_user_id": user_id,
-                "timestamp": datetime.now().isoformat(),
-                "message": message,
-            }
+            timestamp = datetime.now(tz=UTC).isoformat()
+            serialized_message = json.dumps(network_message.serialize())
 
             cursor.execute(
-                "INSERT INTO message_queue (id, recipient_id, from_user_id, timestamp, message_json) VALUES (?, ?, ?, ?, ?)",
-                (message_id, friend_id, user_id, message_data["timestamp"], json.dumps(message)),
+                """INSERT INTO message_queue
+                   (id, recipient_id, from_user_id, timestamp, message_json)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (message_id, friend_id, user_id, timestamp, serialized_message),
             )
             conn.commit()
             conn.close()
@@ -526,14 +624,20 @@ class LocalServer:
             # If the friend is connected via WebSocket, send the message directly
             if friend_id in self.active_connections:
                 try:
-                    await self.active_connections[friend_id].send_json(message_data)
+                    message_envelope = {
+                        "id": message_id,
+                        "from_user_id": user_id,
+                        "timestamp": timestamp,
+                        "message": network_message.serialize(),
+                    }
+                    await self.active_connections[friend_id].send_json(message_envelope)
                     # Remove from queue since it was delivered
                     conn = self._get_connection()
                     cursor = conn.cursor()
                     cursor.execute("DELETE FROM message_queue WHERE id = ?", (message_id,))
                     conn.commit()
                     conn.close()
-                except Exception:
+                except (WebSocketDisconnect, RuntimeError):
                     # Connection might be stale, remove it
                     del self.active_connections[friend_id]
 
@@ -541,7 +645,10 @@ class LocalServer:
 
         @self.app.websocket("/ws")
         async def websocket_endpoint(websocket: WebSocket, token: str) -> None:
-            """WebSocket endpoint for real-time communication."""
+            """WebSocket endpoint for real-time communication.
+
+            Receives NetworkMessage objects and delivers them to connected clients.
+            """
             # Validate token
             user_data = self._validate_token(token)
             if not user_data:
@@ -555,7 +662,7 @@ class LocalServer:
             self.active_connections[user_id] = websocket
 
             try:
-                # Send any queued messages
+                # Send any queued messages (containing serialized NetworkMessage objects)
                 conn = self._get_connection()
                 cursor = conn.cursor()
                 cursor.execute(
@@ -565,13 +672,14 @@ class LocalServer:
                 queued_messages = cursor.fetchall()
 
                 for msg_row in queued_messages:
-                    message_data = {
+                    # Deserialize the NetworkMessage and send it to the client
+                    message_envelope = {
                         "id": msg_row["id"],
                         "from_user_id": msg_row["from_user_id"],
                         "timestamp": msg_row["timestamp"],
-                        "message": json.loads(msg_row["message_json"]),
+                        "message": json.loads(msg_row["message_json"]),  # NetworkMessage.serialize() format
                     }
-                    await websocket.send_json(message_data)
+                    await websocket.send_json(message_envelope)
 
                 # Clear the queue
                 cursor.execute("DELETE FROM message_queue WHERE recipient_id = ?", (user_id,))
@@ -581,27 +689,25 @@ class LocalServer:
                 # Keep the connection alive and listen for messages
                 while True:
                     data = await websocket.receive_json()
-                    # Handle incoming messages from the client
-                    # For now, just echo back or handle specific message types
+                    # Acknowledge receipt
                     await websocket.send_json(
                         {
                             "type": "ack",
                             "message": "Message received",
                             "data": data,
-                        }
+                        },
                     )
             except WebSocketDisconnect:
                 # Clean up when the client disconnects
                 if user_id in self.active_connections:
                     del self.active_connections[user_id]
-            except Exception as e:
-                # Handle other exceptions
+            except (RuntimeError, ConnectionError):
+                # Handle connection errors
                 if user_id in self.active_connections:
                     del self.active_connections[user_id]
-                print(f"WebSocket error: {e}")
+                # Log error with proper exception traceback
+                logger.exception("WebSocket error for user %s", user_id)
 
     def run(self, host: str = "127.0.0.1", port: int = 8000) -> None:
         """Run the server."""
-        import uvicorn
-
         uvicorn.run(self.app, host=host, port=port)

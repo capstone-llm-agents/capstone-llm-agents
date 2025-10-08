@@ -168,6 +168,7 @@ class NetworkClient:
 
         Returns:
             True if request sent successfully, False otherwise
+
         """
         if not self._token:
             return False
@@ -182,6 +183,7 @@ class NetworkClient:
 
         Returns:
             True if request accepted successfully, False otherwise
+
         """
         if not self._token:
             return False
