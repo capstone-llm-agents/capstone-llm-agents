@@ -15,6 +15,7 @@ from llm_mas.agent.workspace import Workspace
 
 if TYPE_CHECKING:
     from llm_mas.communication.interface import CommunicationInterface
+    from llm_mas.communication.task.task_enums import TaskPriority
 
 from llm_mas.communication.default_interface import DefaultCommunicationInterface
 from llm_mas.communication.task.agent_task import Task
@@ -100,6 +101,11 @@ class Agent(Entity):
             msg = "StopAction must be in the action space to stop the agent."
             raise ValueError(msg)
 
+        # Mark current task as in progress if there is one
+        current_task = self.get_current_task()
+        if current_task and current_task.is_pending():
+            current_task.mark_in_progress()
+
         res = ActionResult()
         while not self.finished_working():
             res = await self.act(context)
@@ -113,6 +119,7 @@ class Agent(Entity):
 
     def add_task(self, task: Task) -> None:
         """Add a task to the agent's task stack."""
+        task.assigned_to = self
         self.task_stack.append(task)
 
     def get_current_task(self) -> Task | None:
@@ -125,4 +132,34 @@ class Agent(Entity):
         """Complete the current task and remove it from the task stack."""
         if not self.task_stack:
             return None
-        return self.task_stack.pop()
+        task = self.task_stack.pop()
+        if not task.is_completed() and not task.is_failed():
+            task.mark_completed()
+        return task
+
+    def get_pending_tasks(self) -> list[Task]:
+        """Get all pending tasks from the task stack."""
+        return [task for task in self.task_stack if task.is_pending()]
+
+    def get_in_progress_tasks(self) -> list[Task]:
+        """Get all in-progress tasks from the task stack."""
+        return [task for task in self.task_stack if task.is_in_progress()]
+
+    def get_completed_tasks(self) -> list[Task]:
+        """Get all completed tasks from the task stack."""
+        return [task for task in self.task_stack if task.is_completed()]
+
+    def get_failed_tasks(self) -> list[Task]:
+        """Get all failed tasks from the task stack."""
+        return [task for task in self.task_stack if task.is_failed()]
+
+    def get_tasks_by_priority(self, priority: "TaskPriority") -> list[Task]:
+        """Get all tasks with a specific priority."""
+        return [task for task in self.task_stack if task.priority == priority]
+
+    def get_highest_priority_pending_task(self) -> Task | None:
+        """Get the highest priority pending task."""
+        pending_tasks = self.get_pending_tasks()
+        if not pending_tasks:
+            return None
+        return max(pending_tasks, key=lambda task: task.priority.value)
