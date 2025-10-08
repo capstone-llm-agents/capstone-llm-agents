@@ -52,6 +52,7 @@ class WebSocketNetworkClient(NetworkInterface):
             dict containing status and any response data
 
         """
+        print(f"WebSocketNetworkClient sending message: {message.serialize()}")
         if not self.token:
             return {"success": False, "error": "Not authenticated"}
 

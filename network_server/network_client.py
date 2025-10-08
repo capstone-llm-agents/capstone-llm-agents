@@ -261,6 +261,7 @@ class NetworkClient:
             True if message sent successfully, False otherwise
 
         """
+        print(f"Sending message to {recipient_agent} ({recipient_id}) with fragments: {fragments}")
         if not self._token or not self._user_id:
             return False
 
