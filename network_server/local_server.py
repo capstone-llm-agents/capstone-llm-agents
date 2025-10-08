@@ -649,6 +649,8 @@ class LocalServer:
 
             Receives NetworkMessage objects and delivers them to connected clients.
             """
+            print("WebSocket connection attempt")
+
             # Validate token
             user_data = self._validate_token(token)
             if not user_data:

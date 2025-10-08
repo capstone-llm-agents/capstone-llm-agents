@@ -25,15 +25,13 @@ class Client:
         self.user = User(name=username, description="A user of the multi-agent system.")
         self.config = config
 
-        self.network_client = NetworkClient()
+        self.network_client = None
 
         # Message router will be initialized after network client is connected
         self.message_router: MessageRouter | None = None
 
         # Background tasks for handling incoming messages
         self.background_tasks: set[asyncio.Task] = set()
-
-        self.setup_message_routing()
 
     def setup_message_routing(self) -> None:
         """Set up message routing after network client is authenticated.
@@ -43,6 +41,7 @@ class Client:
         """
         print("Setting up message routing...")
         if self.message_router is None:
+            print("Initializing message router...")
             self.message_router = MessageRouter(self)
             # Register the message router as a handler for incoming messages
             self.network_client.add_message_handler(

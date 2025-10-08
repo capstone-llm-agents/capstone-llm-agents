@@ -125,6 +125,7 @@ class PyQtApp(QStackedWidget):
         # Store network client in application client if available
         if network_client:
             self.client.network_client = network_client
+            self.client.setup_message_routing()
 
         # Setup user friendships
         self.client.user.add_friend(ASSISTANT_AGENT)

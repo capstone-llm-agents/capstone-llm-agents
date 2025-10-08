@@ -274,10 +274,12 @@ class WebSocketNetworkClient(NetworkInterface):
             handler: Callback function that takes a message dict
 
         """
+        print("Adding message handler asdhkasda")
         self.message_handlers.append(handler)
 
     async def _connect_websocket(self) -> None:
         """Establish WebSocket connection for real-time communication."""
+        print("Connecting to WebSocket...")
         if not self.token:
             return
 
@@ -314,13 +316,21 @@ class WebSocketNetworkClient(NetworkInterface):
                 self.websocket = websocket
 
                 async for message in websocket:
+                    print(f"WebSocket raw message: {message}")
                     try:
                         import json
 
                         data = json.loads(message)
 
+                        print(len(self.message_handlers))
+
+                        if len(self.message_handlers) == 0:
+                            # add a default handler to avoid silent failures
+                            print("No message handlers registered, adding default handler")
+
                         # Call all registered message handlers
-                        for handler in self.message_handlers:
+                        for handler in self.get_message_handlers():
+                            print(f"WebSocket received message: {data}")
                             handler(data)
                     except Exception as e:
                         print(f"Error processing WebSocket message: {e}")
@@ -329,3 +339,8 @@ class WebSocketNetworkClient(NetworkInterface):
             pass
         except Exception as e:
             print(f"WebSocket connection error: {e}")
+
+    def get_message_handlers(self) -> list[Callable[[dict[str, Any]], None]]:
+        """Return the list of registered message handlers."""
+        print(f"Getting {len(self.message_handlers)} message handlers")
+        return self.message_handlers
