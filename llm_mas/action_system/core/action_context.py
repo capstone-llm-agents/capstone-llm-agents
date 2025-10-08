@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from llm_mas.action_system.core.action_result import ActionResult
+    from llm_mas.client.account.client import Client
     from llm_mas.fragment.fragment import Fragment
     from llm_mas.mas.agent import Agent
     from llm_mas.mas.conversation import Conversation, ConversationManager
@@ -24,6 +25,7 @@ class ActionContext:
         agent: Agent,
         user: User,
         conversation_manager: ConversationManager,
+        client: Client,
     ) -> None:
         """Initialize the action context with a conversation and an optional last result."""
         self.conversation = conversation
@@ -32,6 +34,7 @@ class ActionContext:
         self.agent = agent
         self.user = user
         self.conversation_manager = conversation_manager
+        self.client = client
 
         self.fragments: list[Fragment] = []
 
@@ -49,6 +52,7 @@ class ActionContext:
             agent=context.agent,
             user=context.user,
             conversation_manager=context.conversation_manager,
+            client=context.client,
         )
 
     def add_fragment(self, fragment: Fragment) -> None:

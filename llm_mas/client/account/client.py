@@ -3,6 +3,7 @@
 import asyncio
 import logging
 
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.agent import Agent
 from llm_mas.mas.mas import MAS
 from llm_mas.mas.user import User
@@ -32,12 +33,15 @@ class Client:
         # Background tasks for handling incoming messages
         self.background_tasks: set[asyncio.Task] = set()
 
+        self.setup_message_routing()
+
     def setup_message_routing(self) -> None:
         """Set up message routing after network client is authenticated.
 
         This should be called after successful login/signup to enable
         agents to receive messages from the network.
         """
+        print("Setting up message routing...")
         if self.message_router is None:
             self.message_router = MessageRouter(self)
             # Register the message router as a handler for incoming messages
@@ -55,6 +59,8 @@ class Client:
             message_data: The incoming message data from the network
 
         """
+        APP_LOGGER.debug(f"Client received network message: {message_data}")
+        print(f"Client received network message: {message_data}")
         if not self.message_router:
             logger.warning("Message router not initialized, ignoring message")
             return

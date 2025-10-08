@@ -113,6 +113,7 @@ class MessageRouter:
             agent=sender_agent,
             user=self.client.user,
             conversation_manager=self.client.mas.conversation_manager,
+            client=self.client,
         )
 
         task_description = network_message.context.get("task_description", content)
@@ -162,6 +163,8 @@ class MessageRouter:
                 - message: serialized NetworkMessage object
 
         """
+        print(f"Client received network message: {message_data}")
+
         try:
             # Extract the NetworkMessage from the envelope
             network_msg_data = message_data.get("message", {})

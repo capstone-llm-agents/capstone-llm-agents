@@ -89,8 +89,8 @@ class PyQtApp(QStackedWidget):
 
         # Initialize MAS and agents
         mas = MAS()
-        mas.add_agent(GITHUB_AGENT)
         mas.add_agent(ASSISTANT_AGENT)
+        mas.add_agent(GITHUB_AGENT)
         mas.add_agent(CALENDAR_AGENT)
         mas.add_agent(WEATHER_AGENT)
         mas.add_agent(WEBSEARCH_AGENT)

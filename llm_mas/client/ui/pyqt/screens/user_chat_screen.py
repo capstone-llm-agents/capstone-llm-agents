@@ -1,26 +1,34 @@
 # user_chat_screen.py (PyQt6 fully MAS-integrated)
 import asyncio
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QScrollArea
-)
-from llm_mas.client.account.client import Client
-from llm_mas.mas.conversation import Conversation
-from llm_mas.mas.agent import Agent
-from llm_mas.client.ui.pyqt.components.agent_message_bubble import AgentMessage
-from llm_mas.client.ui.pyqt.components.user_message_bubble import UserMessage
+
+from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget
+
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.agent.work_step import SelectingActionWorkStep, PerformingActionWorkStep
+from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep
+from llm_mas.client.account.client import Client
+from llm_mas.client.ui.pyqt.components.agent_message_bubble import AgentMessage
+from llm_mas.client.ui.pyqt.components.user_message_bubble import UserMessage
 from llm_mas.logging.loggers import APP_LOGGER
-from llm_mas.utils.background_tasks import BACKGROUND_TASKS
-from llm_mas.mas.checkpointer import CheckPointer
-from llm_mas.mas.conversation import Message
+from llm_mas.mas.agent import Agent
 from llm_mas.mas.agentstate import State
+from llm_mas.mas.checkpointer import CheckPointer
+from llm_mas.mas.conversation import Conversation, Message
+from llm_mas.utils.background_tasks import BACKGROUND_TASKS
+
+
 class UserChatScreen(QWidget):
     """PyQt6 chat screen with real MAS agent workflow."""
 
-    def __init__(self, client: Client, conversation: Conversation, checkpoint: CheckPointer,nav: QWidget, artificial_delay: float | None = 0.1):
+    def __init__(
+        self,
+        client: Client,
+        conversation: Conversation,
+        checkpoint: CheckPointer,
+        nav: QWidget,
+        artificial_delay: float | None = 0.1,
+    ):
         super().__init__()
         self.client = client
         self.conversation = conversation
@@ -64,8 +72,6 @@ class UserChatScreen(QWidget):
         self.send_btn.clicked.connect(self._on_send)
         self.input_line.returnPressed.connect(self._on_send)
 
-
-
     def _save_on_exit(self):
         # Save conversation state to checkpoint
         message = self.conversation.get_chat_history()
@@ -74,17 +80,13 @@ class UserChatScreen(QWidget):
 
     def _add_initial_assistant_message(self):
         agent = self.client.get_mas().get_assistant_agent()
-        #check if conversation is empty, then load from checkpoint
+        # check if conversation is empty, then load from checkpoint
         if agent and not self.conversation.chat_history.messages:
             state = self.checkpoint.fetch()
-            #load conversation if it exists
+            # load conversation if it exists
             if state:
                 for message in state:
-                    message_to_save = Message(
-                        role=message['role'],
-                        content=message['content'],
-                        sender=agent
-                    )
+                    message_to_save = Message(role=message["role"], content=message["content"], sender=agent)
                     self.conversation.chat_history.add_message(message_to_save)
                     if message_to_save.role == "user":
                         self._add_user_message(message_to_save.content)
@@ -96,8 +98,6 @@ class UserChatScreen(QWidget):
                 msg = "Hello! I'm your assistant. How can I help you today?"
                 self._add_agent_message(agent, msg)
                 self.conversation.add_message(agent, msg)
-
-
 
     def _add_user_message(self, text: str):
         bubble = UserMessage(text)
@@ -134,7 +134,8 @@ class UserChatScreen(QWidget):
                 self.client.mcp_client,
                 agent,
                 self.client.user,
-                self.client.get_mas().conversation_manager
+                self.client.get_mas().conversation_manager,
+                self.client,
             )
 
             agent.workspace.action_history.clear()
@@ -169,9 +170,8 @@ class UserChatScreen(QWidget):
 
         except Exception as e:
             APP_LOGGER.exception(f"Error running agent workflow: {e}")
-            agent_bubble.mark_as_error() # looks a bit funny
+            agent_bubble.mark_as_error()  # looks a bit funny
             agent_bubble.content_label.setText(f"[Error: {e}]")
-
 
     async def _add_step_indicator(self, agent: Agent, step):
         """Add a placeholder step indicator in UI (optional)."""
