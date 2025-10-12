@@ -18,10 +18,10 @@ from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
 
-llm_config = {
-    "api_type": "ollama",
-    "model": "gemma3",
-}
+from dotenv import load_dotenv
+
+load_dotenv()
+from server_llm_config import Model_type, llm_config
 
 file_handler_agent = ConversableAgent(
     name="file_handler",
@@ -55,10 +55,11 @@ def safe_tool[F: Callable[..., Any]](func: F) -> F:
     return cast("F", wrapper)
 
 
-@mcp.tool(name="CreateCalendar")
+@mcp.tool(name="Create_ICS_Calendar/Schedule")
 @safe_tool
 def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.ics") -> str:
     """Generate a calendar schedule from a task prompt and write it to an ICS file."""
+    print("###Using CreateCalendar###")
     current_date = datetime.now().date()
 
     prompt = f"""
@@ -70,6 +71,7 @@ def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.
     Respond with a schedule in a structured format suitable for creating a calendar file (e.g., Task Name, Description, Start Time, End Time).
     Use 24 hour notation for times to make it unambiguous.
     Only give a date if specified by either the Tasks or Preferences otherwise use the current date instead
+    Do not add any additional tasks the user has not asked for.
     Directly and only answer with the follow format:
     1. Task: Research for Report
     Date: 2022-07-13
@@ -86,15 +88,26 @@ def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.
     """
 
     plan = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
+    #different formats depending on which LLM is used
+    if Model_type == 1:
+        LLM_result = plan["content"]
+        print(LLM_result)
+        create_ics_file(LLM_result, ics_file)
+    elif Model_type == 2:
+        LLM_result = plan
+        print(LLM_result)
+        create_ics_file(LLM_result, ics_file)
+    else:
+        print("Error within calendar_server.py response collection")
+        LLM_result = "Error within calendar_server.py response collection"
+    return LLM_result
 
-    create_ics_file(plan["content"], ics_file)
-    return plan["content"]
 
-
-@mcp.tool(name="ReadCalendar")
+@mcp.tool(name="Read_ICS_Calendar/Schedule")
 @safe_tool
 def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
     """Read an ICS file and return a human-readable task list."""
+    print("###Using ReadCalendar###")
     calendar_content = convert_ics_to_text(file_name)
 
     prompt = f"""
@@ -120,16 +133,27 @@ def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
     """
 
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
-    return result["content"]
+    #different formats depending on which LLM is used
+    if Model_type == 1:
+        LLM_result = result["content"]
+        print(LLM_result)
+    elif Model_type == 2:
+        LLM_result = result
+        print(LLM_result)
+    else:
+        print("Error within calendar_server.py response collection")
+        LLM_result = "Error within calendar_server.py response collection"
+    return LLM_result
 
 
-@mcp.tool(name="UpdateCalendar")
+@mcp.tool(name="Update_ICS_Calendar/Schedule")
 def create_ics_calendar_with_context(
     prompt: str,
     file_name_read: str = "./calendars/test_calendar.ics",
     file_name_write: str = "./calendars/test_calendar.ics",
 ) -> str:
     """Create a new calendar schedule considering existing events."""
+    print("###Using UpdateCalendar###")
     current_date = datetime.now().date()
     existing_events = convert_ics_to_text(file_name_read)
 
@@ -159,11 +183,20 @@ def create_ics_calendar_with_context(
     End: 10:00
     ...
     """
-
+    print("made it here for the update calendar")
     result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": extracted_prompt}])
-
-    create_ics_file(result["content"], file_name_write)
-    return result["content"]
+    if Model_type == 1:
+        LLM_result = result["content"]
+        print(LLM_result)
+        create_ics_file(LLM_result, file_name_write)
+    elif Model_type == 2:
+        LLM_result = result
+        print(LLM_result)
+        create_ics_file(LLM_result, file_name_write)
+    else:
+        print("Error within calendar_server.py response collection")
+        LLM_result = "Error within calendar_server.py response collection"
+    return LLM_result
 
 
 def create_starlette_app(mcp_server: Server, *, debug: bool = False) -> Starlette:

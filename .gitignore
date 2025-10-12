@@ -220,5 +220,5 @@ logs
 # Hide db
 db
 
-# Hide config
-/config
+# Hide ./pdfs
+pdfs
