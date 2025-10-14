@@ -165,46 +165,55 @@ def create_ics_calendar_with_context(
     print("###Using UpdateCalendar###")
     current_date = datetime.now().date()
     existing_events = convert_ics_to_text(file_name_read)
-
-    extracted_prompt = f"""
-    Break down the following tasks into realistic time frames, using the provided start time as a reference.
-
-    Tasks: {prompt}
-    Current Date: {current_date}
-    Pre Existing Plans: {existing_events}
-
-    Respond with a schedule in a structured format suitable for creating a calendar file (e.g., Task Name, Description, Start Time, End Time).
-    Use 24 hour notation for times to make it unambiguous.
-    Only give a date if specified by either the Tasks or Preferences otherwise use the current date instead
-    Do not clash any new schedules with pre existing plans.
-    Make sure to add all pre existing plans to this new schedule.
-    Directly and only answer with the follow format:
-    1. Task: Research for Report
-    Date: 2022-07-13
-    Description: Research reliable details online
-    Start: 09:00
-    End: 09:30
-
-    2. Task: Write Draft
-    Date: 2022-07-13
-    Description: Handwritten research report about computers
-    Start: 09:30
-    End: 10:00
-    ...
-    """
-    print("made it here for the update calendar")
-    result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": extracted_prompt}])
-    if Model_type == 1:
-        LLM_result = result["content"]
+    if existing_events[0] == 1:
+        LLM_result = "There was an error converting the ics file to text. this means either the ics file is misconfigured or does not exist. To fix this issue try using the create calendar tool first to reset or create your calendar."
         print(LLM_result)
-        create_ics_file(LLM_result, file_name_write)
-    elif Model_type == 2:
-        LLM_result = result
-        print(LLM_result)
-        create_ics_file(LLM_result, file_name_write)
     else:
-        print("Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration")
-        LLM_result = "Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration"
+        extracted_prompt = f"""
+        Break down the following tasks into realistic time frames, using the provided start time as a reference.
+
+        Tasks: {prompt}
+        Current Date: {current_date}
+        Pre Existing Plans: {existing_events}
+
+        Respond with a schedule in a structured format suitable for creating a calendar file (e.g., Task Name, Description, Start Time, End Time).
+        Use 24 hour notation for times to make it unambiguous.
+        Only give a date if specified by either the Tasks or Preferences otherwise use the current date instead
+        Do not clash any new schedules with pre existing plans.
+        Make sure to add all pre existing plans to this new schedule.
+        Directly and only answer with the follow format:
+        1. Task: Research for Report
+        Date: 2022-07-13
+        Description: Research reliable details online
+        Start: 09:00
+        End: 09:30
+
+        2. Task: Write Draft
+        Date: 2022-07-13
+        Description: Handwritten research report about computers
+        Start: 09:30
+        End: 10:00
+        ...
+        """
+        #print("made it here for the update calendar")
+        result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": extracted_prompt}])
+        if Model_type == 1:
+            LLM_result = result["content"]
+            print(LLM_result)
+            creation_result = create_ics_file(LLM_result, file_name_write)
+            if creation_result[0] == 1:
+                LLM_result = "There has been an error within the create ics file function. This could be due to using the wrong format or some other issue found within the calender server/functions."
+                print(LLM_result)
+        elif Model_type == 2:
+            LLM_result = result
+            print(LLM_result)
+            creation_result = create_ics_file(LLM_result, file_name_write)
+            if creation_result[0] == 1:
+                LLM_result = "There has been an error within the create ics file function. This could be due to using the wrong format or some other issue found within the calender server/functions."
+                print(LLM_result)
+        else:
+            print("Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration")
+            LLM_result = "Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration"
     return LLM_result
 
 
