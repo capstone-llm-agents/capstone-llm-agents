@@ -23,6 +23,9 @@ from dotenv import load_dotenv
 load_dotenv()
 from server_llm_config import Model_type, llm_config
 
+print("Using this LLM configuration:")
+print(llm_config)
+
 file_handler_agent = ConversableAgent(
     name="file_handler",
     system_message="Your job is to assist the user with their tasks.",
