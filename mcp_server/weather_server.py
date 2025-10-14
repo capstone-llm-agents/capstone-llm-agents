@@ -23,8 +23,8 @@ load_dotenv()
 ########llm agent setup########
 from server_llm_config import Model_type, llm_config
 
-print("Using this LLM configuration:")
-print(llm_config)
+print("Using this LLM model:")
+print(llm_config["model"])
 
 weather_agent = ConversableAgent(
     name="weather_agent",
