@@ -152,7 +152,7 @@ def obtain_weather_details(prompt):
         print("########Final Result########")
         print(result)
     except:
-        result = "An error has occurred within weather_server.py. make sure the date range is no more than 16 days past today. If this is not the issue checking the server responses may give more details on what the issue could be"
+        result = "An error has occurred within weather_server.py. make sure the date range is no more than 16 days past today. If this is not the issue it is worth checking if the LLM has misconfigured its output such as not using a IANA timezone or if there are any troubles with the meteo weather API within weatherfunctions.py"
 
     return result
 
