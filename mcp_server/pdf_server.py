@@ -46,6 +46,7 @@ mcp = FastMCP("SSE Example Server")
 @mcp.tool(name="create_pdf_file")
 def create_pdf_file(prompt: str, file_name: str) -> str:
     try:
+        #print(this_will_not_work)#test to try error catching
         print("Using create pdf function")
         # current_date = datetime.now().date()
 
@@ -129,6 +130,7 @@ def create_pdf_file(prompt: str, file_name: str) -> str:
         result = f"PDF file created: {output_filename}. It has the following content: {LLM_details}. You can confirm with the user that the file has been created."
     except:
         result = "An error has occurred within the PDF file creator. Please check pdf_server.py to see what may be causing the issue."
+        print(result)
         return result
 
     return result
