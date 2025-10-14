@@ -1,4 +1,4 @@
-Model_type = 2 #use 1 for gemma3 or 2 for openai
+Model_type = 3 #use 1 for gemma3 or 2 for openai
 
 
 import os
@@ -13,8 +13,9 @@ elif Model_type == 2:
         "model": "gpt-4o-mini",
         "api_key": os.environ.get("OPENAI_API_KEY"),
     }
-else:
+else:#fallback to local llm if any unusable inputs are found
     print("No model has been selected local LLM will be used instead")
+    Model_type = 1
     llm_config = {
         "api_type": "ollama",
         "model": "gemma3",
