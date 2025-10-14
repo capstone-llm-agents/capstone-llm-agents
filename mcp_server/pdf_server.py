@@ -128,7 +128,7 @@ def create_pdf_file(prompt: str, file_name: str) -> str:
         print("#####PDF file created")
         result = f"PDF file created: {output_filename}. It has the following content: {LLM_details}. You can confirm with the user that the file has been created."
     except:
-        result = "An error has occurred within the PDF file creator."
+        result = "An error has occurred within the PDF file creator. Please check pdf_server.py to see what may be causing the issue."
         return result
 
     return result
