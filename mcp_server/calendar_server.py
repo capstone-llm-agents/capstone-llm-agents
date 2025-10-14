@@ -57,7 +57,7 @@ def safe_tool[F: Callable[..., Any]](func: F) -> F:
 
 @mcp.tool(name="Create_ICS_Calendar/Schedule")
 @safe_tool
-def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.ics") -> str:
+def create_ics_calendar(prompt: str, ics_file: str = "./calendars/my_calendar.ics") -> str:
     """Generate a calendar schedule from a task prompt and write it to an ICS file."""
     print("###Using CreateCalendar###")
     current_date = datetime.now().date()
@@ -92,20 +92,26 @@ def create_ics_calendar(prompt: str, ics_file: str = "./calendars/test_calendar.
     if Model_type == 1:
         LLM_result = plan["content"]
         print(LLM_result)
-        create_ics_file(LLM_result, ics_file)
+        creation_result = create_ics_file(LLM_result, ics_file)
+        if creation_result[0] == 1:#checks if there has been an issue within the create ics file function
+            LLM_result = "There has been an error within the create ics file function. This could be due to using the wrong format or some other issue found within the calender server/functions."
+            print(LLM_result)
     elif Model_type == 2:
         LLM_result = plan
         print(LLM_result)
-        create_ics_file(LLM_result, ics_file)
+        creation_result = create_ics_file(LLM_result, ics_file)
+        if creation_result[0] == 1:#checks if there has been an issue within the create ics file function
+            LLM_result = "There has been an error within the create ics file function. This could be due to using the wrong format or some other issue found within the calender server/functions."
+            print(LLM_result)
     else:
-        print("Error within calendar_server.py response collection")
-        LLM_result = "Error within calendar_server.py response collection"
+        print("Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration")
+        LLM_result = "Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration"
     return LLM_result
 
 
 @mcp.tool(name="Read_ICS_Calendar/Schedule")
 @safe_tool
-def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
+def read_calendar(file_name: str = "./calendars/my_calendar.ics") -> str:
     """Read an ICS file and return a human-readable task list."""
     print("###Using ReadCalendar###")
     calendar_content = convert_ics_to_text(file_name)
@@ -149,8 +155,8 @@ def read_calendar(file_name: str = "./calendars/test_calendar.ics") -> str:
 @mcp.tool(name="Update_ICS_Calendar/Schedule")
 def create_ics_calendar_with_context(
     prompt: str,
-    file_name_read: str = "./calendars/test_calendar.ics",
-    file_name_write: str = "./calendars/test_calendar.ics",
+    file_name_read: str = "./calendars/my_calendar.ics",
+    file_name_write: str = "./calendars/my_calendar.ics",
 ) -> str:
     """Create a new calendar schedule considering existing events."""
     print("###Using UpdateCalendar###")
