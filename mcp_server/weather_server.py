@@ -43,7 +43,7 @@ mcp = FastMCP("SSE Example Server")
 @mcp.tool(name="ObtainWeatherDetails")
 def obtain_weather_details(prompt):
     try:
-        print("made it here 1")
+        #print("made it here 1")
         current_date = datetime.now().date()
         curent_time_zone = get_localzone_name()
         print("####Users timezone####")
@@ -91,7 +91,7 @@ def obtain_weather_details(prompt):
             LLM_details = extracted_details
             print(LLM_details)
         else:
-            print("Error within weather_server.py response collection")
+            print("Error within the server_llm_config.py")
 
         # This array will be used to store each/how many readings need to be looped through the function
         all_locations = []
@@ -152,7 +152,7 @@ def obtain_weather_details(prompt):
         print("########Final Result########")
         print(result)
     except:
-        result = "An error has occurred within weather_server.py. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere within the server/functions file"
+        result = "An error has occurred within weather_server.py. make sure the date range is no more than 16 days past today. If this is not the issue checking the server responses may give more details on what the issue could be"
 
     return result
 
