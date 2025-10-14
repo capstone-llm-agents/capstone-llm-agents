@@ -115,40 +115,43 @@ def read_calendar(file_name: str = "./calendars/my_calendar.ics") -> str:
     """Read an ICS file and return a human-readable task list."""
     print("###Using ReadCalendar###")
     calendar_content = convert_ics_to_text(file_name)
-
-    prompt = f"""
-    You are to explain what the date, tasks and times are based off this ics calender.
-
-    calender content: {calendar_content}
-
-    Respond with a list of each task and their related time for the date provided. also convert the time to 24 hour format such as 16:15 pm.
-    Make sure to convert these times from UCD to the provided timezone.
-    Follow the example format bellow and do not add anything else.
-    EXAMPLE:
-    1. Task: Research for Report
-    Date: 2022-07-13
-    Description: Research reliable details online
-    Start: 09:00
-    End: 09:30
-
-    2. Task: Write Draft
-    Date: 2022-07-13
-    Description: Handwritten research report about computers
-    Start: 09:30
-    End: 10:00
-    """
-
-    result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
-    #different formats depending on which LLM is used
-    if Model_type == 1:
-        LLM_result = result["content"]
-        print(LLM_result)
-    elif Model_type == 2:
-        LLM_result = result
+    if calendar_content[0] == 1:
+        LLM_result = "There has been an error with converting the ics calendar file to text. this either means a calendar file does not exist or is misconfigured."
         print(LLM_result)
     else:
-        print("Error within calendar_server.py response collection")
-        LLM_result = "Error within calendar_server.py response collection"
+        prompt = f"""
+        You are to explain what the date, tasks and times are based off this ics calender.
+
+        calender content: {calendar_content}
+
+        Respond with a list of each task and their related time for the date provided. also convert the time to 24 hour format such as 16:15 pm.
+        Make sure to convert these times from UCD to the provided timezone.
+        Follow the example format bellow and do not add anything else.
+        EXAMPLE:
+        1. Task: Research for Report
+        Date: 2022-07-13
+        Description: Research reliable details online
+        Start: 09:00
+        End: 09:30
+
+        2. Task: Write Draft
+        Date: 2022-07-13
+        Description: Handwritten research report about computers
+        Start: 09:30
+        End: 10:00
+        """
+
+        result = file_handler_agent.generate_reply(messages=[{"role": "user", "content": prompt}])
+        #different formats depending on which LLM is used
+        if Model_type == 1:
+            LLM_result = result["content"]
+            print(LLM_result)
+        elif Model_type == 2:
+            LLM_result = result
+            print(LLM_result)
+        else:
+            print("Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration")
+            LLM_result = "Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration"
     return LLM_result
 
 
@@ -200,8 +203,8 @@ def create_ics_calendar_with_context(
         print(LLM_result)
         create_ics_file(LLM_result, file_name_write)
     else:
-        print("Error within calendar_server.py response collection")
-        LLM_result = "Error within calendar_server.py response collection"
+        print("Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration")
+        LLM_result = "Error with which model has been selected. please check the server_llm_config.py file to ensure correct LLM configuration"
     return LLM_result
 
 

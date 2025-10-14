@@ -11,6 +11,7 @@ from tzlocal import get_localzone
 # takes in a ics file and puts the content into more readable text making it easier for the LLM to read
 def convert_ics_to_text(ics_file_path):
     try:
+        #print(This_will_not_work)#used to test the error catching
         local_time_zone = get_localzone()
         local_time_zone = str(local_time_zone)
         matching_events = []
