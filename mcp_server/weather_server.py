@@ -152,7 +152,7 @@ def obtain_weather_details(prompt):
         print("########Final Result########")
         print(result)
     except:
-        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"  # temporary error catching
+        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"
 
     return result
 
