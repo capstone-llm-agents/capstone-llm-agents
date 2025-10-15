@@ -165,6 +165,23 @@ class MessageRouter:
         """
         print(f"Client received network message: {message_data}")
 
+        # {
+        #     "id": "0640d4b6-fba8-40f8-af68-6660cf20e121",
+        #     "from_user_id": "35aafb37-9e1d-4593-bdcc-ba5bfdca7842",
+        #     "timestamp": "2025-10-15T01:02:27.283085+00:00",
+        #     "message": {
+        #         "sender": "alice_Assistant",
+        #         "sender_client": "35aafb37-9e1d-4593-bdcc-ba5bfdca7842",
+        #         "recipient": "Assistant",
+        #         "recipient_client": "f608b1aa-69d7-493e-8a1d-f1d4d0702e54",
+        #         "fragments": [],
+        #         "message_type": "PROPOSAL",
+        #         "context": {
+        #         "task_description": "What is the weather in Tokyo?"
+        #         }
+        #     }
+        # }
+
         try:
             # Extract the NetworkMessage from the envelope
             network_msg_data = message_data.get("message", {})
@@ -195,9 +212,12 @@ class MessageRouter:
                 context=network_msg_data.get("context", {}),
             )
 
+            print(f"Reconstructed NetworkMessage: {network_message}")
+
             # Find the recipient agent
             recipient_agent = self._find_agent_by_name(network_message.recipient)
             if not recipient_agent:
+                print(f"Recipient agent not found: {network_message.recipient}")
                 logger.warning("Recipient agent not found: %s", network_message.recipient)
                 return
 
@@ -209,6 +229,7 @@ class MessageRouter:
                 # Use a simple placeholder for remote agents
                 sender_agent = self.client.get_assistant_agent()
                 if not sender_agent:
+                    print("No assistant agent available to handle message")
                     logger.warning("No assistant agent available to handle message")
                     return
 
@@ -219,6 +240,7 @@ class MessageRouter:
             )
 
             if not assistant_message:
+                print("Failed to convert network message to assistant message")
                 logger.warning("Failed to convert network message to assistant message")
                 return
 
@@ -231,6 +253,8 @@ class MessageRouter:
                 assistant_message,
                 comm_state,
             )
+
+            print(f"Agent {recipient_agent.name} handled message, response: {response}")
 
             # TODO: Send response back over the network if needed
             logger.info(

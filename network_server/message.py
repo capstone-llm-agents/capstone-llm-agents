@@ -37,3 +37,18 @@ class NetworkMessage:
             "message_type": self.message_type.name,
             "context": self.context,
         }
+
+    def __str__(self) -> str:
+        """Return a string representation of the message."""
+        return (
+            f"NetworkMessage(from={self.sender}({self.sender_client}) to={self.recipient}({self.recipient_client}) "
+            f"type={self.message_type.name} fragments={len(self.fragments)})"
+        )
+
+    def __repr__(self) -> str:
+        """Return a detailed string representation of the message."""
+        return (
+            f"NetworkMessage(sender={self.sender}, sender_client={self.sender_client}, "
+            f"recipient={self.recipient}, recipient_client={self.recipient_client}, "
+            f"fragments={self.fragments}, message_type={self.message_type}, context={self.context})"
+        )
