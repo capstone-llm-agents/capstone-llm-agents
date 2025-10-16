@@ -94,5 +94,5 @@ The default shell on modern Mac computers is **Zsh**, older Macs might be using 
 On Linux similar to Mac we first need to identify which shell your running this can be done by doing ```echo $$SHELL``` in terminal which should print out the shell you are using.
 for **Bash** and **Zsh** it's the same process, but there are a lot of shells available on linux so you need to research the specific shell you are using.
 
-After setting up your api keys as environment variables, navigate to the project directory and open the directory called ```config```
+After setting up your api keys as environment variables, navigate to the project directory and open the sub directory called ```config```
 in that directory open the file named ```models.yaml``` and adjust the configuration to use different models.
