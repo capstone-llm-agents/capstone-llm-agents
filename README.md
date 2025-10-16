@@ -53,7 +53,7 @@ Start by cloning the repository or downloading it from here and navigate to the 
      run ```python -m main.py```.
    * If your using ```uv``` simply run ```uv run main.py```
    
-**Note** if your using a linux some shells require a different activate script, for example using ```fish``` its ```.venv/bin/activate.fish```
+**Note** if your using linux or mac some shells require a different activatation script, for example using ```fish``` its ```.venv/bin/activate.fish```
 
 ## Extra Information 
 The ```honcho start``` command starts four different servers, and they are in no particular oder:
