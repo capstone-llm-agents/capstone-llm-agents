@@ -39,7 +39,8 @@ class UserChatScreen(QWidget):
         # Top bar with back button
         top_bar = QHBoxLayout()
         self.back_btn = QPushButton("← Back")
-        self.back_btn.clicked.connect(lambda: (self._save_on_exit(), self.nav.navigate.emit("main_menu", None)))
+        #if you want to save a conversation when the back button is pressed add this to the lambad function below: self._save_on_exit()
+        self.back_btn.clicked.connect(lambda: (self.nav.navigate.emit("main_menu", None)))
         top_bar.addWidget(self.back_btn)
         top_bar.addStretch()
         layout.addLayout(top_bar)
@@ -67,7 +68,7 @@ class UserChatScreen(QWidget):
 
 
     def _save_on_exit(self):
-        # Save conversation state to checkpoint
+        """This function is no longer used and is here just as backup"""
         message = self.conversation.get_chat_history()
         state: State = {"messages": message.as_dicts()}
         self.checkpoint.save(state)

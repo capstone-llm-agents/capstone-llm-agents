@@ -89,8 +89,8 @@ class PyQtApp(QStackedWidget):
 
         # Initialize MAS and agents
         mas = MAS()
-        mas.add_agent(GITHUB_AGENT)
         mas.add_agent(ASSISTANT_AGENT)
+        mas.add_agent(GITHUB_AGENT)
         mas.add_agent(CALENDAR_AGENT)
         mas.add_agent(WEATHER_AGENT)
         mas.add_agent(WEBSEARCH_AGENT)
@@ -144,9 +144,13 @@ class PyQtApp(QStackedWidget):
         self.addWidget(widget)
 
     def closeEvent(self, event) -> None:
+        """Now only saves conversation on exiting the application since"""
         conversations = self.client.mas.conversation_manager.get_all_conversations()
-        print(conversations)
-        print("Closing main menu")
+        for conversation in conversations:
+            if conversation.name == "User Assistant Chat":
+                message = conversation.get_chat_history()
+                state: State = {"messages": message.as_dicts()}
+                self.checkpoint.save(state)
         event.accept()
 
     def _navigate(self, screen_name: str, payload=None):
