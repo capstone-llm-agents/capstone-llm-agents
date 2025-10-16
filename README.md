@@ -22,7 +22,7 @@ Before you begin, ensure you have the following installed on your system.
 2. Python Package Manager
    You will need a python package manager to be able to install all the necessary packages. You can either use ```Pip``` or ```uv```
       * ```Pip```: This is the standard package manager and comes included with python and so no separate installation is needed. 
-      * ```uv```**(Recommended):** uv is a much faster alternative to pip.
+      * ```uv```**(Recommended):** uv is a much faster alternative to pip, and its much easier to use.
         * **Installation:** can be installed from https://docs.astral.sh/uv/getting-started/installation/
 
 3. Ollama and a Local LLM model
