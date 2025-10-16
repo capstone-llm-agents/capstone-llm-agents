@@ -13,14 +13,14 @@ from llm_mas.mas.agent import Agent
 from llm_mas.mas.mas import MAS
 from llm_mas.mcp_client.client import MCPClient
 from llm_mas.mcp_client.connected_server import SSEConnectedServer
-from llm_mas.model_providers.ollama.call_llm import call_llm
+from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.tools.tool_action_creator import DefaultToolActionCreator
 from llm_mas.tools.tool_manager import ToolManager
 from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 action_space = ActionSpace()
 narrower = GraphBasedNarrower()
-selector = LLMSelector(call_llm)
+selector = LLMSelector(ModelsAPI.call_llm)
 
 # tools
 tool_narrower = DefaultToolNarrower()

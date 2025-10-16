@@ -1,6 +1,7 @@
 """An agent is an entity that can perform actions to complete tasks."""
 
 import logging
+from typing import TYPE_CHECKING
 
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.core.action import Action
@@ -11,6 +12,12 @@ from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.agent.workspace import Workspace
+
+if TYPE_CHECKING:
+    from llm_mas.communication.interface import CommunicationInterface
+
+from llm_mas.communication.default_interface import DefaultCommunicationInterface
+from llm_mas.communication.task.agent_task import Task
 from llm_mas.mas.entity import Entity
 from llm_mas.tools.tool_manager import ToolManager
 
@@ -27,6 +34,7 @@ class Agent(Entity):
         selector: ActionSelector,
         tool_manager: ToolManager,
         workspace: Workspace | None = None,
+        communication_interface: "CommunicationInterface | None" = None,  # use quotes to avoid circular import
     ) -> None:
         """Initialize the agent with a name, action space, narrowing policy, and action selection strategy."""
         super().__init__(name, role="assistant", description=description)
@@ -45,6 +53,12 @@ class Agent(Entity):
 
         # tools manager
         self.tool_manager = tool_manager
+
+        # task stack
+        self.task_stack: list[Task] = []
+
+        # communication interface
+        self.communication_interface = communication_interface or DefaultCommunicationInterface(self)
 
     async def act(self, context: ActionContext, params: ActionParams | None = None) -> ActionResult:
         """Perform an action in the workspace using the agent's action selection strategy."""
@@ -96,3 +110,19 @@ class Agent(Entity):
     def finished_working(self) -> bool:
         """Check if the agent has finished working."""
         return self.workspace.action_history.has_action(StopAction())
+
+    def add_task(self, task: Task) -> None:
+        """Add a task to the agent's task stack."""
+        self.task_stack.append(task)
+
+    def get_current_task(self) -> Task | None:
+        """Get the current task from the agent's task stack."""
+        if not self.task_stack:
+            return None
+        return self.task_stack[-1]
+
+    def complete_current_task(self) -> Task | None:
+        """Complete the current task and remove it from the task stack."""
+        if not self.task_stack:
+            return None
+        return self.task_stack.pop()

@@ -1,7 +1,6 @@
 """The embedding selector module provides a class for selecting actions based on semantic similarity of embeddings."""
 
 import logging
-from collections.abc import Awaitable, Callable
 from typing import override
 
 import numpy as np
@@ -10,7 +9,8 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_selector import ActionSelector
 from llm_mas.action_system.core.action_space import ActionSpace
-from llm_mas.utils.embeddings import VectorSelector
+from llm_mas.utils.config.models_config import ModelType
+from llm_mas.utils.embeddings import EmbeddingFunction, VectorSelector
 
 
 class EmbeddingSelector(ActionSelector):
@@ -18,7 +18,7 @@ class EmbeddingSelector(ActionSelector):
 
     def __init__(
         self,
-        embedding_model: Callable[[str], Awaitable[list[float]]],
+        embedding_model: EmbeddingFunction,
         vector_selector: VectorSelector | None = None,
     ) -> None:
         """Initialize the EmbeddingSelector."""
@@ -46,9 +46,9 @@ class EmbeddingSelector(ActionSelector):
         # log
         logging.getLogger("textual_app").info("Selecting action using prompt: %s", prompt)
 
-        user_embedding = np.array(await self.embedding_model(prompt))
+        user_embedding = np.array(await self.embedding_model(prompt, ModelType.EMBEDDING))
         action_embeddings: list[tuple[Action, np.ndarray]] = [
-            (action, np.array(await self.embedding_model(f"{action.name} - {action.description}")))
+            (action, np.array(await self.embedding_model(f"{action.name} - {action.description}", ModelType.EMBEDDING)))
             for action in actions
         ]
 

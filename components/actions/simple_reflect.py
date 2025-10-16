@@ -3,16 +3,14 @@
 from typing import override
 
 from components.actions.action_switcher import ActionSwitcher
-from components.actions.list_friends import AskFriendForHelp
-from components.actions.simple_response import SimpleResponse
+from components.actions.communicate import Communicate
 from llm_mas.action_system.base.actions.stop import StopAction
-from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.logging.loggers import APP_LOGGER
-from llm_mas.model_providers.ollama.call_llm import get_embedding
+from llm_mas.model_providers.api import ModelsAPI
 
 
 class SimpleReflect(ActionSwitcher):
@@ -90,6 +88,6 @@ class SimpleReflect(ActionSwitcher):
         else:
             # TODO: actually do a smart retry system  # noqa: TD003
             # allow all actions except StopAction
-            action_space.add_action(AskFriendForHelp(embedding_model=get_embedding))
+            action_space.add_action(Communicate(embedding_model=ModelsAPI.get_embedding))
 
         return action_space

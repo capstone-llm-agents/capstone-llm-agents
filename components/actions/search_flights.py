@@ -12,6 +12,7 @@ from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
+from llm_mas.logging.loggers import APP_LOGGER
 
 
 class SearchFlights(Action):
@@ -32,20 +33,13 @@ class SearchFlights(Action):
             msg = "Aviationstack API key not found. Please set the AVIATIONSTACK_API_KEY environment variable."
             raise ValueError(msg)
 
-        chat_history = context.conversation.get_chat_history()
-        messages = chat_history.as_dicts()
-
-        last_message = messages[-1] if messages else None
-        if not last_message:
-            msg = "No chat history available for web search."
-            raise ValueError(msg)
-
-        query = last_message["content"]
-
         # In a real-world scenario, you would parse the user's intent to extract
         # origin, destination, and dates. For this example, we'll extract them
         # from the action parameters which are assumed to be provided by the LLM
         # after it has processed the user's request.
+
+        # log the current travel context
+        APP_LOGGER.debug(f"Current travel context: {TRAVEL_CONTEXT}")
 
         origin = get_city_iata(TRAVEL_CONTEXT.origin or "Melbourne")
         destination = get_city_iata(TRAVEL_CONTEXT.city or "Tokyo")

@@ -1,6 +1,7 @@
 """The test server to connect to the LLM MAS client."""
 
 from datetime import datetime
+from tzlocal import get_localzone_name
 
 import uvicorn
 from autogen import ConversableAgent
@@ -11,15 +12,19 @@ from starlette.applications import Starlette
 from starlette.requests import Request
 from starlette.responses import Response
 from starlette.routing import Mount, Route
+import os
 
 # functions file
 from weather_functions import break_down_result, deduce_weather_result, generate_weather_data
+import os
+from dotenv import load_dotenv
 
+load_dotenv()
 ########llm agent setup########
-llm_config = {
-    "api_type": "ollama",
-    "model": "gemma3",
-}
+from server_llm_config import Model_type, llm_config
+
+print("Using this LLM model:")
+print(llm_config["model"])
 
 weather_agent = ConversableAgent(
     name="weather_agent",
@@ -38,33 +43,40 @@ mcp = FastMCP("SSE Example Server")
 @mcp.tool(name="ObtainWeatherDetails")
 def obtain_weather_details(prompt):
     try:
+        #print("made it here 1")
         current_date = datetime.now().date()
+        curent_time_zone = get_localzone_name()
+        print("####Users timezone####")
+        print(curent_time_zone)
 
         agent_prompt = f"""
         Break down the following tasks into the latitude and longitude of the given location as well as the date you would expect to find the weather information.
 
         Tasks: {prompt}
         Current Date: {current_date}
+        User Time Zone: {curent_time_zone}
 
-        If the date requested is not clear assume they are talking about today for both the beginning and the end dates.
-        Remember if the user requests for tomorrows weather add a day to the current date. Likewise if they specify a date use that for the start and end dates.
-        Always keep the start date and end date the same for each task.
+        If the date requested is not clear assume they are talking about today.
+        Remember if the user requests for tomorrows weather add a day to the current date. Likewise if they specify a date use that in your response instead.
         If no time is provided use 12:00
+        With the time zones if the user requests a specific location or the use of their own enter it down in IANA format otherwise if it has not been specified use the timezone of the location they have stated.
+        An example of when to write down the timezone of the location if not specified would be if the user requests "what is the weather in Ottawa". An example of when to write an IANA timezone of a user stated location would be "what is the weather in Ottawa using London's timezone".
+        Sometimes the user may request multiple locations to use the same timezone with key words such as both. Sometimes they may only want one of the readings to have a unique timezone. It is up to you to determine what the best timezone will be for each reading.
         Directly and only answer with the follow format:
         Reading) 1
         Location) Ottawa
+        Time_zone) Australia/Melbourne
         Latitude) -10.6531
         Longitude) 14.2315
-        Start date) yyyy-mm-dd
-        End date) yyyy-mm-dd
+        Date) yyyy-mm-dd
         Time) 15:00
 
         Reading) 2
         Location) Rosedale
+        Time_zone) Australia/Melbourne
         Latitude) -20.2187
         Longitude) 27.9102
-        Start date) yyyy-mm-dd
-        End date) yyyy-mm-dd
+        Date) yyyy-mm-dd
         Time) 21:00
         """
 
@@ -72,29 +84,37 @@ def obtain_weather_details(prompt):
         print("#####################################")
         print("Extracted location and date")
         print("#####################################")
-        print(extracted_details["content"])
+        if Model_type == 1:
+            LLM_details = extracted_details["content"]
+            print(LLM_details)
+        elif Model_type == 2:
+            LLM_details = extracted_details
+            print(LLM_details)
+        else:
+            print("Error within the server_llm_config.py")
 
         # This array will be used to store each/how many readings need to be looped through the function
         all_locations = []
 
         time = None
-        for line in extracted_details["content"].splitlines():
+        for line in LLM_details.splitlines():
             if "Reading)" in line:
                 reading = line.split(") ")[1].strip()
+            if "Time_zone)" in line:
+                time_zone = line.split(") ")[1].strip()
             elif "Location)" in line:
                 location = line.split(") ")[1].strip()
             elif "Latitude)" in line:
                 latitude = line.split(") ")[1].strip()
             elif "Longitude)" in line:
                 longitude = line.split(") ")[1].strip()
-            elif "Start date)" in line:
+            elif "Date)" in line:
                 start_date = line.split(") ")[1].strip()
-            elif "End date)" in line:
-                end_date = line.split(") ")[1].strip()
+                end_date = start_date
             elif "Time)" in line:
                 time = line.split(") ")[1].strip()
             if time != None:  # if time is assigned a value save all data read so far and reset variables
-                all_locations.append([reading, location, latitude, longitude, start_date, end_date, time])
+                all_locations.append([reading, location, latitude, longitude, start_date, end_date, time, time_zone])
                 reading = None
                 location = None
                 latitude = None
@@ -102,6 +122,7 @@ def obtain_weather_details(prompt):
                 start_date = None
                 end_date = None
                 time = None
+                time_zone = None
 
         print(all_locations)
         combined_weather_data = []
@@ -110,15 +131,18 @@ def obtain_weather_details(prompt):
             print("#####################################")
             print("Generated weather data")
             print("#####################################")
-            weather_data = generate_weather_data(locations[2], locations[3], locations[4], locations[5])
+            weather_data = generate_weather_data(locations[2], locations[3], locations[4], locations[5], locations[6], locations[7])
+            new_date = weather_data[1]
+            new_time = weather_data[2]
+            weather_data = weather_data[0]
             print(weather_data)
             print("\n\n\n")
 
-            reformated_weather_data = break_down_result(weather_data, locations[6], locations[1])
+            reformated_weather_data = break_down_result(weather_data, new_time, locations[1])
             print(reformated_weather_data)
 
             ######could potentially remove this part and just use simple response to work it out maybe?#########
-            resulting_weather_reading = deduce_weather_result(prompt, reformated_weather_data)
+            resulting_weather_reading = deduce_weather_result(locations[7], new_time, reformated_weather_data)
             combined_weather_data.append(resulting_weather_reading)
             # combined_weather_data.append(reformated_weather_data)#Option 2 just the raw data
         # print(combined_weather_data)
@@ -128,7 +152,7 @@ def obtain_weather_details(prompt):
         print("########Final Result########")
         print(result)
     except:
-        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"  # temporary error catching
+        result = "An error has occurred within weather_server.py. make sure the date range is no more than 16 days past today. If this is not the issue it is worth checking if the LLM has misconfigured its output such as not using a IANA timezone or if there are any troubles with the meteo weather API within weatherfunctions.py"
 
     return result
 

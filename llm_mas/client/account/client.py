@@ -4,16 +4,21 @@ from llm_mas.mas.agent import Agent
 from llm_mas.mas.mas import MAS
 from llm_mas.mas.user import User
 from llm_mas.mcp_client.client import MCPClient
+from llm_mas.utils.config.general_config import GeneralConfig
+from network_server.client import NetworkClient
 
 
 class Client:
     """The Client class represents a user account in the MAS."""
 
-    def __init__(self, username: str, mas: MAS, mcp_client: MCPClient) -> None:
+    def __init__(self, username: str, mas: MAS, mcp_client: MCPClient, config: GeneralConfig) -> None:
         """Initialize the client with a username."""
         self.mas = mas
         self.mcp_client = mcp_client
         self.user = User(name=username, description="A user of the multi-agent system.")
+        self.config = config
+
+        self.network_client = NetworkClient()
 
     def get_username(self) -> str:
         """Return the username of the client."""
@@ -26,3 +31,15 @@ class Client:
     def add_agent(self, agent: Agent) -> None:
         """Add an agent to the MAS associated with the client."""
         self.mas.add_agent(agent)
+
+    def get_agents(self) -> list[Agent]:
+        """Return the list of agents in the MAS associated with the client."""
+        return self.mas.get_agents()
+
+    def get_assistant_agent(self) -> Agent | None:
+        """Return the assistant agent in the MAS associated with the client."""
+        return self.mas.get_assistant_agent()
+
+    def get_discovery_agent(self) -> Agent | None:
+        """Return the discovery agent in the MAS associated with the client."""
+        return self.mas.get_discovery_agent()

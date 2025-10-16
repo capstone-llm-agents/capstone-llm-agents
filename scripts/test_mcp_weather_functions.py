@@ -1,12 +1,12 @@
-import openmeteo_requests
+from datetime import datetime
 
+import openmeteo_requests
 import pandas as pd
 import requests_cache
-from retry_requests import retry
 from autogen import ConversableAgent, GroupChat, GroupChatManager, UserProxyAgent
 from pytz import timezone
+from retry_requests import retry
 from tzlocal import get_localzone
-from datetime import datetime
 
 ########llm agent setup########
 llm_config = {
@@ -26,9 +26,9 @@ weather_agent = ConversableAgent(
 
 def generate_weather_data(latitude, longitude, start_date, end_date):
     # Setup the Open-Meteo API client with cache and retry on error
-    cache_session = requests_cache.CachedSession('.cache', expire_after = 3600)
-    retry_session = retry(cache_session, retries = 5, backoff_factor = 0.2)
-    openmeteo = openmeteo_requests.Client(session = retry_session)
+    cache_session = requests_cache.CachedSession(".cache", expire_after=3600)
+    retry_session = retry(cache_session, retries=5, backoff_factor=0.2)
+    openmeteo = openmeteo_requests.Client(session=retry_session)
 
     # Make sure all required weather variables are listed here
     # The order of variables in hourly or daily is important to assign them correctly below
@@ -36,8 +36,15 @@ def generate_weather_data(latitude, longitude, start_date, end_date):
     params = {
         "latitude": latitude,
         "longitude": longitude,
-        "hourly": ["temperature_2m", "uv_index", "precipitation_probability", "precipitation", "wind_speed_10m", "wind_gusts_10m"],
-        #"forecast_days": 16,#i think it will be best to query results based off the date instead of searching up the dates just because of how the api doesn't always get the right range(actually giving the full dataframe could also be useful for multi questions)
+        "hourly": [
+            "temperature_2m",
+            "uv_index",
+            "precipitation_probability",
+            "precipitation",
+            "wind_speed_10m",
+            "wind_gusts_10m",
+        ],
+        # "forecast_days": 16,#i think it will be best to query results based off the date instead of searching up the dates just because of how the api doesn't always get the right range(actually giving the full dataframe could also be useful for multi questions)
         "timezone": "auto",
         "start_date": start_date,
         "end_date": end_date,
@@ -62,13 +69,15 @@ def generate_weather_data(latitude, longitude, start_date, end_date):
 
     meteo_time_zone = response.Timezone()
     meteo_time_zone = meteo_time_zone.decode()
-    #print(meteo_time_zone)
-    hourly_data = {"date": pd.date_range(
-        start = pd.to_datetime(hourly.Time(), unit = "s", utc = True).tz_convert(meteo_time_zone),
-        end = pd.to_datetime(hourly.TimeEnd(), unit = "s", utc = True).tz_convert(meteo_time_zone),
-        freq = pd.Timedelta(seconds = hourly.Interval()),
-        inclusive = "left"
-    )}
+    # print(meteo_time_zone)
+    hourly_data = {
+        "date": pd.date_range(
+            start=pd.to_datetime(hourly.Time(), unit="s", utc=True).tz_convert(meteo_time_zone),
+            end=pd.to_datetime(hourly.TimeEnd(), unit="s", utc=True).tz_convert(meteo_time_zone),
+            freq=pd.Timedelta(seconds=hourly.Interval()),
+            inclusive="left",
+        )
+    }
 
     hourly_data["temperature_2m"] = hourly_temperature_2m
     hourly_data["uv_index"] = hourly_uv_index
@@ -77,11 +86,12 @@ def generate_weather_data(latitude, longitude, start_date, end_date):
     hourly_data["wind_speed_10m"] = hourly_wind_speed_10m
     hourly_data["wind_gusts_10m"] = hourly_wind_gusts_10m
 
-    hourly_dataframe = pd.DataFrame(data = hourly_data)
-    #print("\nHourly data\n", hourly_dataframe)
+    hourly_dataframe = pd.DataFrame(data=hourly_data)
+    # print("\nHourly data\n", hourly_dataframe)
 
     result = hourly_dataframe
     return result
+
 
 def deduce_weather_result(prompt, weather_data):
     current_date = datetime.now().date()
@@ -116,16 +126,14 @@ def deduce_weather_result(prompt, weather_data):
     result = extracted_details["content"]
     return result
 
-def break_down_result(weather_data, time, location):
 
+def break_down_result(weather_data, time, location):
     for index, row in weather_data.iterrows():
-        #print("###########new_row###############")
-        #print(str(row["date"]))
+        # print("###########new_row###############")
+        # print(str(row["date"]))
         if time in str(row["date"]):
             data_found = str(row)
-            #print(data_found)
+            # print(data_found)
 
     data_found = data_found + "\n Reading location: " + location
     return data_found
-
-
