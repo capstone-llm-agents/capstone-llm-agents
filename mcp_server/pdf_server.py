@@ -26,6 +26,9 @@ from starlette.routing import Mount, Route
 load_dotenv()
 from server_llm_config import Model_type, llm_config
 
+print("Using this LLM model:")
+print(llm_config["model"])
+
 pdf_agent = ConversableAgent(
     name="pdf_agent",
     system_message="""Your Job is to assist the user with their tasks.
@@ -43,6 +46,7 @@ mcp = FastMCP("SSE Example Server")
 @mcp.tool(name="create_pdf_file")
 def create_pdf_file(prompt: str, file_name: str) -> str:
     try:
+        #print(this_will_not_work)#test to try error catching
         print("Using create pdf function")
         # current_date = datetime.now().date()
 
@@ -125,7 +129,8 @@ def create_pdf_file(prompt: str, file_name: str) -> str:
         print("#####PDF file created")
         result = f"PDF file created: {output_filename}. It has the following content: {LLM_details}. You can confirm with the user that the file has been created."
     except:
-        result = "An error has occurred within the PDF file creator."
+        result = "An error has occurred within the PDF file creator. Please check pdf_server.py to see what may be causing the issue."
+        print(result)
         return result
 
     return result
