@@ -94,5 +94,33 @@ The default shell on modern Mac computers is **Zsh**, older Macs might be using 
 On Linux similar to Mac we first need to identify which shell your running this can be done by doing ```echo $$SHELL``` in terminal which should print out the shell you are using.
 for **Bash** and **Zsh** it's the same process, but there are a lot of shells available on linux so you need to research the specific shell you are using.
 
-After setting up your api keys as environment variables, navigate to the project directory and open the sub directory called ```config```
-in that directory open the file named ```models.yaml``` and adjust the configuration to use different models.
+### Choosing a model
+After setting up your api keys as environment variables, navigate to the project directory and open the subdirectory called ```config```
+in that directory open the file named ```models.yaml```, there you will be met with the following:
+```yaml
+default_embedding_model: 0
+default_model: 2
+default_model_with_native_tools: 1
+default_powerful_model: 2
+default_quick_model: 3
+default_local_model: 0
+default_super_quick_model: 3
+embedding_models:
+  - model: mxbai-embed-large
+    provider: ollama
+  - model: nomic-embed-text
+    provider: ollama
+models:
+  - model: gemma3
+    provider: ollama
+  - model: llama3.2
+    provider: ollama
+  - model: gpt-4o-mini
+    provider: openai
+  - model: gemma3:1b
+    provider: ollama
+version: "1.0"
+```
+For the most part you will just need to change the ```default_model:``` for the application to work better since the local embedding model is powerful enough.
+
+
