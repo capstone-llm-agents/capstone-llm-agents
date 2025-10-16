@@ -28,7 +28,7 @@ Before you begin, ensure you have the following installed on your system.
 3. Ollama and a Local LLM model
    This project by default uses local model through Ollama.
    * **Install Ollama:** Download the application from https://ollama.com/.
-   * **Download Gemma3:** After installing ```Ollama``` open your terminal and run ```ollama pull gemma3``` to download Gemma3.
+   * **Download Gemma3 & mxbai-embed-large:** After installing ```Ollama``` open your terminal and run ```ollama pull gemma3``` to download Gemma3 and ```ollama pull mxbai-embed-large``` to download mxbai-embed-large.
 
     **Note:** The application can also be configured to use other model providers like ```OpenAI``` please refer to the **Configuration** section for more details.
 ## Installation
