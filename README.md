@@ -31,6 +31,7 @@ Before you begin, ensure you have the following installed on your system.
    * **Download Gemma3 & mxbai-embed-large:** After installing ```Ollama``` open your terminal and run ```ollama pull gemma3``` to download Gemma3 and ```ollama pull mxbai-embed-large``` to download mxbai-embed-large.
 
     **Note:** The application can also be configured to use other model providers like ```OpenAI``` please refer to the **Configuration** section for more details.
+
 ## Installation
 Start by cloning the repository or downloading it from here and navigate to the main project directory which would be under ```/capstone-llm-agents``` and open a terminal window.
 ### Using Pip

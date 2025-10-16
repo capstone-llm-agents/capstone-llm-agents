@@ -54,6 +54,20 @@ class OpenAIProvider(ModelProvider):
         return content
 
     @staticmethod
+    async def call_llm_with_chat_history(messages: list[dict], model: str) -> str:
+        """Call the LLM with the given chat history."""
+        client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+        response = await client.chat.completions.create(
+            model=model,
+            messages=messages,  # pyright: ignore[reportArgumentType]
+        )
+        content = response.choices[0].message.content
+        if not content:
+            msg = f"No content returned from {model}."
+            raise ValueError(msg)
+        return content
+
+    @staticmethod
     async def get_embedding(text: str, model: str) -> list[float]:
         """Get the embedding for the given text using openai."""
         client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
