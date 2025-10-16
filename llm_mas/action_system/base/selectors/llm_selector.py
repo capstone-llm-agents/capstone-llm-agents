@@ -102,13 +102,18 @@ class LLMSelector(ActionSelector):
         actions_str = json.dumps([action.as_json() for action in actions], indent=4)
 
         logging.getLogger("textual_app").debug("Actions: %s", actions_str)
-
         prompt = ""
-
-        prompt += f"""
-        Choose an action from the following list of actions:
-        {actions_str}
-        """
+        if context.plan == "No":
+            prompt += f"""
+                   Choose an action from the following list of actions:
+                   {actions_str}
+                   """
+        else:
+            prompt += f"""
+                   YOU MUST Follow this plan {context.plan}
+                   Choose an action from the following list of actions:
+                   {actions_str}
+                   """
 
         prompt += "\n\n"
         if not context.last_result.is_empty():
