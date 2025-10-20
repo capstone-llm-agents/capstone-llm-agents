@@ -131,7 +131,7 @@ class DefaultQueryHandler(QueryHandler):
         action_context = ActionContext.from_action_result(result, message.action_context)
 
         try:
-            action_result, context = await state.talking_to.work(action_context)
+            action_result, _ = await state.talking_to.work(action_context)
             return InformationMessage(
                 sender=state.talking_to,
                 content=f"Here is the information you requested about '{prompt}'.",
@@ -153,14 +153,25 @@ class DefaultTaskHandler(TaskHandler):
         """Handle an incoming task message."""
         # execute the task using the agent's action system
         APP_LOGGER.debug(f"Executing task: {message.task.description}")
+
+        # Mark task as in progress
+        message.task.mark_in_progress()
+
         try:
-            action_result, context = await state.talking_to.work(message.task.action_context)
+            action_result, _ = await state.talking_to.work(message.task.action_context)
+
+            # Mark task as completed
+            message.task.mark_completed()
+
             return InformationMessage(
                 sender=state.talking_to,
                 content=f"Task '{message.task.description}' completed successfully.",
                 action_result=action_result,
             )
         except Exception as e:  # noqa: BLE001
+            # Mark task as failed
+            message.task.mark_failed(str(e))
+
             return ErrorMessage(sender=state.talking_to, error=CommError(str(e)), content=str(e))
 
 
