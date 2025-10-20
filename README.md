@@ -43,16 +43,13 @@ Start by cloning the repository or downloading it from here and navigate to the 
 1. Run ```uv sync``` to create a virtual environment and install all the necessary packages. 
 
 ## Running the Application
-1. Navigate to the project directory and open two terminal windows. 
+1. Navigate to the project directory and open a terminal windows. 
 2. Make sure all the packages are installed refer to the instructions above for that.
-3. If you are using ollama ```ollama``` then make sure you have pulled ```gemma3``` and make sure ```ollama``` is running. If you're not using ```ollama``` skip this step
-4. Then in one of the terminal windows:
-   * If your using ```pip``` activate the virtual environment ```source .venv/scripts/activate``` on Linux and macOs or ```.venv\Scripts\Activate.ps1``` on Windows and run ```honcho start``` which will run all      the necessary servers.
-   * If your using ```uv``` run ```uv run honcho start```
-5. And finally to start the application in the second terminal:
-   * If your using ```pip``` activate the virtual environment using ```source .venv/bin/activate``` on linux or ```.venv\Scripts\Activate.ps1``` on Windows and then
-     run ```python -m main.py```.
-   * If your using ```uv``` simply run ```uv run main.py```
+3. If you are using ```ollama``` then make sure you have pulled ```gemma3``` and make sure ```ollama``` is running. If you're not using ```ollama``` skip this step
+4. Then in the terminal window:
+   * If your using ```pip``` activate the virtual environment ```source .venv/scripts/activate``` on Linux and macOs or ```.venv\Scripts\Activate.ps1``` on Windows and run ```honcho start``` which will run all      the necessary servers and startup the application.
+   * If your using ```uv``` run ```uv run honcho start```.
+
    
 **Note** if your using linux or mac some shells require a different activatation script, for example using ```fish``` its ```.venv/bin/activate.fish```
 
