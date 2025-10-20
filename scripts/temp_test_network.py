@@ -38,6 +38,7 @@ async def test_client() -> None:
 def run_server_in_background() -> None:
     """Run the server in a separate thread."""
     import threading
+
     import uvicorn
 
     server = LocalServer()
