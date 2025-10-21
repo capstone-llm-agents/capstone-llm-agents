@@ -57,7 +57,7 @@ class TestKnowledgeBase:
         try:
             await ModelsAPI.get_embedding("test")
         except ConnectionError:
-            msg = "Skipping test_can_ingest_knowledge: Embedding model is not available."
+            msg = "Embedding model is not available. Skipping test_can_ingest_knowledge."
             raise pytest.skip(msg) from None
 
         assert GLOBAL_KB.is_empty(), "Global KB should be empty at the start of the test."
@@ -95,7 +95,7 @@ class TestKnowledgeBase:
         try:
             await ModelsAPI.get_embedding("test")
         except ConnectionError:
-            msg = "Skipping test_retrieve_knowledge_action: Embedding model is not available."
+            msg = "Embedding model is not available. Skipping test_retrieve_knowledge_action."
             raise pytest.skip(msg) from None
 
         await GLOBAL_KB.index_path(self.path)

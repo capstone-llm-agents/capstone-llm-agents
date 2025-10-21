@@ -266,6 +266,24 @@ class WebSocketNetworkClient(NetworkInterface):
         except httpx.HTTPError as e:
             return {"success": False, "error": str(e)}
 
+    async def ping(self) -> dict[str, Any]:
+        """Ping the server to check connectivity.
+
+        Returns:
+            dict containing server status
+
+        """
+        try:
+            async with httpx.AsyncClient() as client:
+                response = await client.get(
+                    f"{self.base_url}/ping",
+                    timeout=10.0,
+                )
+                response.raise_for_status()
+                return response.json()
+        except httpx.HTTPError as e:
+            return {"success": False, "error": str(e), "status": "unreachable"}
+
     def add_message_handler(self, handler: Callable[[dict[str, Any]], None]) -> None:
         """Add a callback handler for incoming messages.
 

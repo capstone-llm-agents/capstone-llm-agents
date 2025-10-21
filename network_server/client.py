@@ -23,6 +23,10 @@ if TYPE_CHECKING:
     from collections.abc import Callable
 
 
+class NotAuthenticatedError(Exception):
+    """Exception raised when an operation requires authentication but the client is not authenticated."""
+
+
 class NetworkClient:
     """High-level client for network operations.
 
@@ -132,7 +136,8 @@ class NetworkClient:
 
         """
         if not self._token:
-            return []
+            msg = "Not authenticated. Please log in first."
+            raise NotAuthenticatedError(msg)
         return await self._network.get_friends(self._token)
 
     async def get_pending_friend_requests(self) -> list[dict[str, Any]]:
@@ -283,3 +288,12 @@ class NetworkClient:
 
         """
         self._ws_client.add_message_handler(handler)
+
+    async def ping(self) -> dict[str, Any]:
+        """Ping the server to check connectivity.
+
+        Returns:
+            dict containing server status
+
+        """
+        return await self._network.ping()
