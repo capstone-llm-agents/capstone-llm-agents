@@ -1,5 +1,6 @@
 """The Multi-Agent System (MAS) contains a system of agents that can collaborate to achieve complex tasks."""
 
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.agent import Agent
 from llm_mas.mas.conversation import ConversationManager
 
@@ -23,12 +24,11 @@ class MAS:
         """Return the list of agents in the MAS."""
         return self.agents
 
-    # TODO: Actual implementation to find the assistant agent  # noqa: TD003
     def get_assistant_agent(self) -> Agent | None:
-        """Return the first agent that is an assistant agent."""
-        if not self.agents:
-            return None
-        return self.assistant_agent or self.agents[0]
+        """Return the assistant agent if set, otherwise None."""
+        if self.assistant_agent is None:
+            APP_LOGGER.warning("Assistant agent not set in MAS. Call set_assistant_agent() to configure.")
+        return self.assistant_agent
 
     def set_assistant_agent(self, agent: Agent) -> None:
         """Set the assistant agent and ensure it is part of the MAS."""

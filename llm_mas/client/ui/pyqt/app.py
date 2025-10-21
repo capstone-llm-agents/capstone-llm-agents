@@ -95,6 +95,8 @@ class PyQtApp(QStackedWidget):
         mas.add_agent(WEATHER_AGENT)
         mas.add_agent(WEBSEARCH_AGENT)
 
+        mas.set_assistant_agent(ASSISTANT_AGENT)
+
         # Setup MCP client
         mcp_client = MCPClient()
         server1 = SSEConnectedServer("http://localhost:8080/sse")
