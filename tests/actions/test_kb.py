@@ -1,6 +1,5 @@
 """Test suite for agent knowledge base actions."""
 
-import os
 from pathlib import Path
 
 import pytest
