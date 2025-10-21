@@ -10,6 +10,7 @@ from tzlocal import get_localzone
 
 # takes in a ics file and puts the content into more readable text making it easier for the LLM to read
 def convert_ics_to_text(ics_file_path):
+    #print(This_will_not_work)#used to test the error catching
     local_time_zone = get_localzone()
     local_time_zone = str(local_time_zone)
     matching_events = []
@@ -58,12 +59,14 @@ def convert_ics_to_text(ics_file_path):
                     "End": end_time,
                 }
                 matching_events.append(event_info)
+
     return matching_events
 
 
 # based on the file handeler agents formated response it converts it into an ics file which a user can upload to their calender.
 def create_ics_file(schedule_text, file_name):
     # Initialize the calendar
+    #print(This_will_not_work)#used to test the error catching
     calendar = Calendar()
 
     # Parsing the LLM response

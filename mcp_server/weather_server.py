@@ -1,4 +1,5 @@
 """The test server to connect to the LLM MAS client."""
+import traceback
 
 from datetime import datetime
 from tzlocal import get_localzone_name
@@ -23,6 +24,9 @@ load_dotenv()
 ########llm agent setup########
 from server_llm_config import Model_type, llm_config
 
+print("Using this LLM model:")
+print(llm_config["model"])
+
 weather_agent = ConversableAgent(
     name="weather_agent",
     system_message="""Your Job is to assist the user with their tasks.
@@ -40,7 +44,7 @@ mcp = FastMCP("SSE Example Server")
 @mcp.tool(name="ObtainWeatherDetails")
 def obtain_weather_details(prompt):
     try:
-        print("made it here 1")
+        #print("made it here 1")
         current_date = datetime.now().date()
         curent_time_zone = get_localzone_name()
         print("####Users timezone####")
@@ -88,7 +92,7 @@ def obtain_weather_details(prompt):
             LLM_details = extracted_details
             print(LLM_details)
         else:
-            print("Error within weather_server.py response collection")
+            print("Error within the server_llm_config.py")
 
         # This array will be used to store each/how many readings need to be looped through the function
         all_locations = []
@@ -148,8 +152,13 @@ def obtain_weather_details(prompt):
             result = result + "\n\n" + data
         print("########Final Result########")
         print(result)
-    except:
-        result = "An error has occurred. make sure the date range is no more than 16 days past today. If this is not the issue than it will likely be somewhere in the system"  # temporary error catching
+    except Exception as e:
+        print("###Error Reason###")
+        print(str(e))
+        error = "\n\n Error: " + str(e) + "\n\n The full error can be found within the weather server terminal output."
+        print("###Full Error###")
+        print(traceback.format_exc())
+        result = "An error has occurred within weather_server.py. make sure the date range is no more than 16 days past today. If this is not the issue it is worth checking if the LLM has misconfigured its output such as not using a IANA timezone or if there are any troubles with the meteo weather API within weatherfunctions.py." + error
 
     return result
 

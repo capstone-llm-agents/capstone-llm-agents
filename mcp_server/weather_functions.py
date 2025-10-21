@@ -24,7 +24,7 @@ weather_agent = ConversableAgent(
 
 
 def generate_weather_data(latitude, longitude, start_date, end_date, time, time_zone):
-
+    #print(This_will_not_work)#for testing error catching
     # Setup the Open-Meteo API client with cache and retry on error
     print("###Time zone and time inputed###")
     print(time_zone)
@@ -242,6 +242,7 @@ def generate_weather_data(latitude, longitude, start_date, end_date, time, time_
 
 
 def deduce_weather_result(time_zone, time, weather_data):
+    #print(This_will_not_work)#for testing error catching
     #current_date = datetime.now().date()
 
     agent_prompt = f"""
@@ -287,6 +288,7 @@ def deduce_weather_result(time_zone, time, weather_data):
 
 
 def break_down_result(weather_data, time, location):
+    #print(This_will_not_work)#for testing error catching
     for index, row in weather_data.iterrows():
         # print("###########new_row###############")
         # print(str(row["date"]))

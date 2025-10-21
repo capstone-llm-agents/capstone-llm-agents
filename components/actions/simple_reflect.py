@@ -3,7 +3,7 @@
 from typing import override
 
 from components.actions.action_switcher import ActionSwitcher
-from components.actions.list_friends import AskFriendForHelp
+from components.actions.communicate import Communicate
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -88,6 +88,6 @@ class SimpleReflect(ActionSwitcher):
         else:
             # TODO: actually do a smart retry system  # noqa: TD003
             # allow all actions except StopAction
-            action_space.add_action(AskFriendForHelp(embedding_model=ModelsAPI.get_embedding))
+            action_space.add_action(Communicate(embedding_model=ModelsAPI.get_embedding))
 
         return action_space

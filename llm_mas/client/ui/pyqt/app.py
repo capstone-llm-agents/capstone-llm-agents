@@ -13,6 +13,7 @@ from components.agents.calendar_agent import CALENDAR_AGENT
 from components.agents.github_agent import GITHUB_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
+from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from llm_mas.client.account.client import Client
 from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
@@ -94,6 +95,7 @@ class PyQtApp(QStackedWidget):
         mas.add_agent(CALENDAR_AGENT)
         mas.add_agent(WEATHER_AGENT)
         mas.add_agent(WEBSEARCH_AGENT)
+        mas.add_agent(TRAVEL_PLANNER_AGENT)
 
         mas.set_assistant_agent(ASSISTANT_AGENT)
 
@@ -119,6 +121,7 @@ class PyQtApp(QStackedWidget):
         ASSISTANT_AGENT.add_friend(WEATHER_AGENT)
         ASSISTANT_AGENT.add_friend(CALENDAR_AGENT)
         ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
+        ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
 
         # Create the client with the logged-in user
         self.client = Client(username, mas, mcp_client, GENERAL_CONFIG)
@@ -147,9 +150,14 @@ class PyQtApp(QStackedWidget):
         self.addWidget(widget)
 
     def closeEvent(self, event) -> None:
+        """Now only saves conversation on exiting the application since"""
         conversations = self.client.mas.conversation_manager.get_all_conversations()
-        print(conversations)
-        print("Closing main menu")
+        for conversation in conversations:
+            print(conversation.get_chat_history().as_dicts())
+            if conversation.name == "User Assistant Chat":
+                message = conversation.get_chat_history()
+                state: State = {"messages": message.as_dicts()}
+                self.checkpoint.save(state)
         event.accept()
 
     def _navigate(self, screen_name: str, payload=None):
