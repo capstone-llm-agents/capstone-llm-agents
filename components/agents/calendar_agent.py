@@ -38,6 +38,7 @@ CALENDAR_AGENT = Agent(
 # add some actions
 CALENDAR_AGENT.add_action(RespondWithChatHistory())
 CALENDAR_AGENT.add_action(StopAction())
+CALENDAR_AGENT.add_action(SimpleResponse())
 CALENDAR_AGENT.add_action(UpdateTools(tool_creator))
 CALENDAR_AGENT.add_action(GetTools(tool_creator))
 CALENDAR_AGENT.add_action(GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding))
@@ -52,11 +53,10 @@ narrower.add_action_edge(RespondWithChatHistory(), [StopAction()])
 narrower.add_action_edge(SimpleResponse(), [StopAction()])
 narrower.add_action_edge(UpdateTools(tool_creator), [GetTools(tool_creator)])
 narrower.add_action_edge(
-    GetTools(tool_creator),
-    [GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding)],
+    GetTools(tool_creator), [GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding)]
 )
 narrower.add_action_edge(
     GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding),
     [GetParamsForToolCall(tool_creator)],
 )
-narrower.add_action_edge(GetParamsForToolCall(tool_creator), [])
+narrower.add_action_edge(GetParamsForToolCall(tool_creator), [SimpleResponse()])

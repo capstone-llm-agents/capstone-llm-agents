@@ -43,31 +43,4 @@ class RetrieveKnowledge(Action):
         res.set_param("facts", facts)
         res.set_param("sources", sources)
 
-        # network client
-        client = context.client
-
-        friends = await client.network_client.get_friends()
-        bob = next((f for f in friends if f["username"] == "bob"), None)
-
-        if not bob:
-            msg = "Bob is not in your friends list. Cannot send message."
-            raise RuntimeError(msg)
-
-        recipient_id = bob["id"]
-
-        success = await client.network_client.send_message(
-            recipient_id=recipient_id,
-            fragments=[],
-            recipient_agent=context.agent.name,
-            message_type=MessageType.PROPOSAL,
-            sender_agent=context.agent.name,
-            context={
-                "task_description": "What is the weather in Tokyo?",
-            },
-        )
-
-        if not success:
-            msg = "Failed to send message to Bob via network."
-            raise RuntimeError(msg)
-
         return res

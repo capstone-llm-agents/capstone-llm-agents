@@ -29,11 +29,19 @@ class EmbeddingSelector(ActionSelector):
     async def select_action(self, action_space: ActionSpace, context: ActionContext) -> Action:
         actions = action_space.get_actions()
         if not actions:
-            msg = "Action space is empty. Cannot select an action."
+            last_action = context.agent.workspace.action_history.get_last_action()
+            last_action_name = last_action[0].name if last_action else "None"
+            msg = f"Action space is empty after narrowing from '{last_action_name}'. This indicates a graph configuration issue."
+            logging.getLogger("textual_app").error(msg)
             raise ValueError(msg)
 
         if len(actions) == 1:
-            return actions[0]
+            selected = actions[0]
+            logging.getLogger("textual_app").debug(
+                "Only one action available, selecting: %s",
+                selected.name,
+            )
+            return selected
 
         messages = context.conversation.chat_history.messages
         if not messages:
@@ -43,7 +51,6 @@ class EmbeddingSelector(ActionSelector):
 
         prompt = f"{user_input} - {context.last_result.as_json_pretty()}"
 
-        # log
         logging.getLogger("textual_app").info("Selecting action using prompt: %s", prompt)
 
         user_embedding = np.array(await self.embedding_model(prompt, ModelType.EMBEDDING))
@@ -52,5 +59,13 @@ class EmbeddingSelector(ActionSelector):
             for action in actions
         ]
 
-        action, _ = self.vector_selector.select(user_embedding, action_embeddings)
+        action, similarity = self.vector_selector.select(user_embedding, action_embeddings)
+        
+        logging.getLogger("textual_app").debug(
+            "Selected action '%s' with similarity %.3f from candidates: %s",
+            action.name,
+            similarity,
+            [a.name for a in actions],
+        )
+        
         return action

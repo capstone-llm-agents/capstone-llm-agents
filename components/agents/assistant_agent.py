@@ -2,7 +2,6 @@
 
 from components.actions.assess_response import AssessResponse
 from components.actions.communicate import Communicate
-from components.actions.list_friends import AskFriendForHelp
 from components.actions.retrieve_knowledge import RetrieveKnowledge
 from components.actions.simple_reflect import SimpleReflect
 from components.actions.simple_response import SimpleResponse
@@ -51,4 +50,4 @@ narrower.add_action_edge(AssessResponse(), [SimpleReflect()])
 narrower.add_action_edge(SimpleReflect(), [StopAction()])
 narrower.add_action_edge(RetrieveKnowledge(), [SimpleResponse()])
 narrower.add_action_edge(SimpleResponse(), [AssessResponse()])
-narrower.add_action_edge(Communicate(embedding_model=ModelsAPI.get_embedding), [AssessResponse()])
+narrower.add_action_edge(Communicate(embedding_model=ModelsAPI.get_embedding), [SimpleResponse(), AssessResponse()])

@@ -8,6 +8,7 @@ from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.base.narrowers.graph_narrower import GraphBasedNarrower
 from llm_mas.action_system.base.selectors.embedding_selector import EmbeddingSelector
 from llm_mas.action_system.core.action_space import ActionSpace
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.agent import Agent
 from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.tools.tool_action_creator import DefaultToolActionCreator
@@ -34,10 +35,12 @@ WEATHER_AGENT = Agent(
     tool_manager,
 )
 
+APP_LOGGER.debug("Initializing WeatherAgent with UpdateTools workflow")
 
 # add some actions
 WEATHER_AGENT.add_action(RespondWithChatHistory())
 WEATHER_AGENT.add_action(StopAction())
+WEATHER_AGENT.add_action(SimpleResponse())
 WEATHER_AGENT.add_action(UpdateTools(tool_creator))
 WEATHER_AGENT.add_action(GetTools(tool_creator))
 WEATHER_AGENT.add_action(GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding))
@@ -45,6 +48,8 @@ WEATHER_AGENT.add_action(GetParamsForToolCall(tool_creator))
 
 
 narrower.add_default_action(UpdateTools(tool_creator))
+
+APP_LOGGER.debug("Set UpdateTools as default action for WeatherAgent")
 
 # add some edges
 narrower.add_action_edge(RetrieveKnowledge(), [RespondWithChatHistory(), SimpleResponse()])
@@ -57,4 +62,4 @@ narrower.add_action_edge(
 narrower.add_action_edge(
     GetRelevantTools(tool_creator, embedding_model=ModelsAPI.get_embedding), [GetParamsForToolCall(tool_creator)]
 )
-narrower.add_action_edge(GetParamsForToolCall(tool_creator), [])
+narrower.add_action_edge(GetParamsForToolCall(tool_creator), [SimpleResponse()])

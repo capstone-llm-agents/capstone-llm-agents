@@ -78,16 +78,18 @@ class GraphBasedNarrower(ActionNarrower):
         """Narrow the action space based on the defined action edges."""
         narrowed_actions: list[Action] = []
 
-        # get last action from workspace action history
         last_action_tup = workspace.action_history.get_last_action()
 
         if last_action_tup is None:
             narrowed_actions = self.default_actions
+            logging.getLogger("textual_app").debug(
+                "No action history found. Using default actions: %s",
+                [action.name for action in narrowed_actions],
+            )
 
         else:
             last_action, _, _ = last_action_tup
 
-            # if last action is an ActionSwitcher then we need to narrow it
             if isinstance(last_action, ActionSwitcher) and not last_action.hit_max_retries():
                 last_action.add_retry()
                 return last_action.narrow(
@@ -97,11 +99,23 @@ class GraphBasedNarrower(ActionNarrower):
                     narrower_context,
                 )
 
-            # find the action edge corresponding to the last action
             for edge in self.action_edges:
                 if edge.action == last_action:
                     narrowed_actions = edge.next_actions
                     break
+
+            if not narrowed_actions:
+                logging.getLogger("textual_app").warning(
+                    "No next actions found for action '%s'. Using SimpleResponse as fallback.",
+                    last_action.name,
+                )
+                narrowed_actions = [SimpleResponse()]
+            else:
+                logging.getLogger("textual_app").debug(
+                    "After action '%s', narrowed to: %s",
+                    last_action.name,
+                    [action.name for action in narrowed_actions],
+                )
 
         new_space = ActionSpace()
 
