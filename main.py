@@ -7,7 +7,7 @@ from llm_mas.mas.checkpointer import CheckPointer
 def main():
     """Main entry point - show login screen."""
     # Always show login screen
-    checkpoint = CheckPointer("test.sqlite")
+    checkpoint = CheckPointer("./db/checkpoint.sqlite3")
     run_app(None, checkpoint)
 
 
