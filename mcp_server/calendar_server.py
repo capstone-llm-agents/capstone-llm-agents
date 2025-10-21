@@ -76,6 +76,7 @@ def create_ics_calendar(prompt: str, ics_file: str = "./calendars/my_calendar.ic
         Respond with a schedule in a structured format suitable for creating a calendar file (e.g., Task Name, Description, Start Time, End Time).
         Use 24 hour notation for times to make it unambiguous.
         Only give a date if specified by either the Tasks or Preferences otherwise use the current date instead
+        Remember to add the key details asked from you in both the task and description.
         Do not add any additional tasks the user has not asked for.
         Directly and only answer with the follow format:
         1. Task: Research for Report
