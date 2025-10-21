@@ -35,11 +35,14 @@ dependencies = [
     "httpx>=0.28.0",
     "uvicorn>=0.35.0",
     "honcho>=2.0.0",
+    "pytest>=8.4.2",
+    "pytest-asyncio>=1.2.0",
+    "pydantic>=2.11.7",
 ]
 
 [tool.ruff.lint]
 select = ["ALL"]
-ignore = ["FIX002", "TD002"]
+ignore = ["FIX002", "TD002", "S101"]
 
 [tool.ruff]
 line-length = 120
