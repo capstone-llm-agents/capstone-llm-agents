@@ -155,7 +155,7 @@ def obtain_weather_details(prompt):
     except Exception as e:
         print("###Error Reason###")
         print(str(e))
-        error = "\n\n Error: " + str(e) + "\n\n The full error can be found within the server terminal output."
+        error = "\n\n Error: " + str(e) + "\n\n The full error can be found within the weather server terminal output."
         print("###Full Error###")
         print(traceback.format_exc())
         result = "An error has occurred within weather_server.py. make sure the date range is no more than 16 days past today. If this is not the issue it is worth checking if the LLM has misconfigured its output such as not using a IANA timezone or if there are any troubles with the meteo weather API within weatherfunctions.py." + error
