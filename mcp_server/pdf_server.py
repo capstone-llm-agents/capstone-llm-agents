@@ -135,8 +135,6 @@ def create_pdf_file(prompt: str, file_name: str) -> str:
         print("###Full Error###")
         print(traceback.format_exc())
         result = "An error has occurred within the PDF file creator. Please check pdf_server.py or the server terminal output to see what may be causing the issue." + error
-        print(result)
-        return result
 
     return result
 

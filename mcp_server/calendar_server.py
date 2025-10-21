@@ -63,6 +63,7 @@ def safe_tool[F: Callable[..., Any]](func: F) -> F:
 def create_ics_calendar(prompt: str, ics_file: str = "./calendars/my_calendar.ics") -> str:
     """Generate a calendar schedule from a task prompt and write it to an ICS file."""
     try:
+        #print(This_will_not_work)#used to test the error catching
         print("###Using CreateCalendar###")
         current_date = datetime.now().date()
 
