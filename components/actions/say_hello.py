@@ -18,5 +18,6 @@ class SayHello(Action):
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by printing a greeting."""
-        print("Hello world!")  # noqa: T201
-        return ActionResult()
+        res = ActionResult()
+        res.set_param("greeting", "Hello, world!")
+        return res

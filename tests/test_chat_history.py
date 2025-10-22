@@ -34,7 +34,7 @@ class TestChatHistory:
         )
         mas.add_agent(agent)
 
-        # agent adds the knowledge base action here
+        # agent adds the respond with chat history action here
         agent.add_action(RespondWithChatHistory())
 
         self.mas = mas
