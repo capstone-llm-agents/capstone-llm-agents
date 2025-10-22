@@ -9,7 +9,7 @@ from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.mas.agent import Agent
-from llm_mas.mas.conversation import ConversationManager
+from llm_mas.mas.conversation import Conversation, ConversationManager
 from llm_mas.mas.mas import MAS
 from llm_mas.mas.user import User
 from llm_mas.mcp_client.client import MCPClient
@@ -38,32 +38,52 @@ class TestChatHistory:
         agent.add_action(RespondWithChatHistory())
 
         self.mas = mas
-
         self.agent = agent
-
         self.user = User(name="TestUser", description="A user for testing chat history functionalities.")
 
-    @pytest.mark.asyncio
-    async def test_remembers_prev_messages(self) -> None:
-        """Test if the agent remembers previous messages in chat history."""
+    async def _ensure_llm_available(self) -> None:
         try:
             await ModelsAPI.call_llm("RESPOND WITH THE LETTER A AND NOTHING ELSE.")
         except ConnectionError:
-            msg = "LLM model is not available. Skipping test_remembers_prev_messages."
-            raise pytest.skip(msg) from None
+            pytest.skip("LLM model is not available. Skipping test.")
 
+    def _create_test_conversation(self) -> Conversation:
         conv = self.mas.conversation_manager.start_conversation("TestConversation")
-
         conv.add_message(self.user, "Hello, my name is Ned?")
         conv.add_message(self.agent, "Hi there, Ned! How can I help you today?")
         conv.add_message(self.user, "Do you remember my name?")
+        return conv
 
-        # check chat history has 3 messages
+    @pytest.mark.asyncio
+    async def test_chat_history_contains_expected_messages(self) -> None:
+        """Chat history contains the expected number of messages and last message content."""
+        await self._ensure_llm_available()
+
+        conv = self._create_test_conversation()
+
         chat_history = conv.get_chat_history()
         assert len(chat_history.messages) == 3  # noqa: PLR2004
-
-        # check last message content
         assert chat_history.messages[-1].content == "Do you remember my name?"
+
+    @pytest.mark.asyncio
+    async def test_respond_with_chat_history_action_present(self) -> None:
+        """RespondWithChatHistory action should be present in the agent's action space."""
+        await self._ensure_llm_available()
+
+        respond_with_chat_history = next(
+            (action for action in self.agent.action_space.get_actions() if isinstance(action, RespondWithChatHistory)),
+            None,
+        )
+        assert respond_with_chat_history is not None, (
+            "RespondWithChatHistory action should be present in the agent's action space."
+        )
+
+    @pytest.mark.asyncio
+    async def test_agent_returns_response_with_history(self) -> None:
+        """Agent should act with RespondWithChatHistory and include remembered name in response."""
+        await self._ensure_llm_available()
+
+        conv = self._create_test_conversation()
 
         context = ActionContext(
             conv,
@@ -78,16 +98,12 @@ class TestChatHistory:
             (action for action in self.agent.action_space.get_actions() if isinstance(action, RespondWithChatHistory)),
             None,
         )
-        assert respond_with_chat_history is not None, (
-            "RespondWithChatHistory action should be present in the agent's action space."
-        )
+        assert respond_with_chat_history is not None
 
-        # agent should act
         response = await self.agent.do_selected_action(respond_with_chat_history, context)
 
-        # has param
         assert response.has_param("response"), "Agent response should have 'response' param."
 
-        context = response.get_param("response")
+        response_text = response.get_param("response")
 
-        assert "Ned" in context, "Agent should remember the user's name from chat history."
+        assert "Ned" in response_text, "Agent should remember the user's name from chat history."
