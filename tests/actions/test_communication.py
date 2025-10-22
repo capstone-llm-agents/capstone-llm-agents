@@ -1,6 +1,7 @@
 """Test suite for agent communication actions."""
 
 import pytest
+from dotenv import load_dotenv
 
 from components.actions.communicate import Communicate
 from components.actions.dummy_weather import GetWeather
@@ -23,6 +24,11 @@ from llm_mas.tools.tool_narrower import DefaultToolNarrower
 
 class TestCommunication:
     """Test suite for agent communication actions."""
+
+    @classmethod
+    def setup_class(cls) -> None:
+        """Set up performed once before all tests in this class."""
+        load_dotenv()
 
     def setup_method(self) -> None:
         """Set up the test environment."""
@@ -107,6 +113,12 @@ class TestCommunication:
             await ModelsAPI.call_llm("RESPOND WITH THE LETTER A AND NOTHING ELSE.")
         except ConnectionError:
             pytest.skip("LLM model is not available. Skipping test.")
+
+        # also try embedding
+        try:
+            await ModelsAPI.get_embedding("Test embedding.")
+        except ConnectionError:
+            pytest.skip("Embedding model is not available. Skipping test.")
 
     def _create_default_action_context(self, conv: Conversation, agent: Agent) -> ActionContext:
         """Create a default ActionContext for testing."""
