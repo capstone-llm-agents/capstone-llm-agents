@@ -44,6 +44,11 @@ class Communicate(Action):
 
         agent_friends = [friend for friend in friends if isinstance(friend, Agent)]
 
+        if not agent_friends:
+            res = ActionResult()
+            res.set_param("response", "No agent friends available to ask for help.")
+            return res
+
         friend = self.vector_selector.select(
             query_vector=await self.embedding_model(last_message, ModelType.EMBEDDING),
             items_with_vectors=[
