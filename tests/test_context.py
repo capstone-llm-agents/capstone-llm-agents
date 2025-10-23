@@ -51,12 +51,6 @@ class TestContext:
         self.agent = agent
         self.user = User(name="TestUser", description="A user for testing chat history functionalities.")
 
-    async def _ensure_llm_available(self) -> None:
-        try:
-            await ModelsAPI.call_llm("RESPOND WITH THE LETTER A AND NOTHING ELSE.")
-        except ConnectionError:
-            pytest.skip("LLM model is not available. Skipping test.")
-
     def _create_default_action_context(self, conv: Conversation) -> ActionContext:
         """Create a default ActionContext for testing."""
         return ActionContext(
@@ -71,8 +65,6 @@ class TestContext:
     @pytest.mark.asyncio
     async def test_say_hello_action(self) -> None:
         """Test the SayHello action."""
-        await self._ensure_llm_available()
-
         conv = self.mas.conversation_manager.start_conversation("TestConversation")
         conv.add_message(self.user, "Please greet me.")
 
@@ -89,8 +81,6 @@ class TestContext:
     @pytest.mark.asyncio
     async def test_context_retained_between_actions(self) -> None:
         """Test that the context is retained between actions."""
-        await self._ensure_llm_available()
-
         conv = self.mas.conversation_manager.start_conversation("TestConversation")
         conv.add_message(self.user, "Please greet me and then stop.")
 
