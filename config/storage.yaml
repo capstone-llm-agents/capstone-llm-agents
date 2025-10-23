@@ -1,0 +1,12 @@
+provider_choice: 0
+providers:
+  - provider: chroma
+    config:
+      collection_name: memory
+      path: /db
+  - provider: qdrant
+    config:
+      host: localhost
+      port: 6333
+version: "1.0"
+

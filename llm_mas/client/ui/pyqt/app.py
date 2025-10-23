@@ -147,15 +147,21 @@ class PyQtApp(QStackedWidget):
         self.addWidget(widget)
 
     def closeEvent(self, event) -> None:
-        """Now only saves conversation on exiting the application since"""
-        conversations = self.client.mas.conversation_manager.get_all_conversations()
-        for conversation in conversations:
-            print(conversation.get_chat_history().as_dicts())
-            if conversation.name == "User Assistant Chat":
-                message = conversation.get_chat_history()
-                state: State = {"messages": message.as_dicts()}
-                self.checkpoint.save(state)
-        event.accept()
+        """Now only saves conversation on exiting the application since the memory is alread
+        stored in memory
+        """
+        try:
+            conversations = self.client.mas.conversation_manager.get_all_conversations()
+            for conversation in conversations:
+                if conversation.name == "User Assistant Chat":
+                    message = conversation.get_chat_history()
+                    state: State = {"messages": message.as_dicts()}
+                    self.checkpoint.save(state)
+            APP_LOGGER.info("User Assistant Chat Saved")
+        except Exception as e:
+            APP_LOGGER.info(f"Client wasn't initialized: {e}")
+        finally:
+            event.accept()
 
     def _navigate(self, screen_name: str, payload=None):
         """Handle navigation requests to switch screens."""
