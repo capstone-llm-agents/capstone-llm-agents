@@ -27,23 +27,30 @@ class SimpleResponse(Action):
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by generating a response from an LLM."""
-        last_message = self.get_last_message_content(context)
+        chat_history = context.conversation.get_chat_history()
+
+        messages = chat_history.as_dicts()
+
+        last_message = messages[-1] if messages else None
+
+        if not last_message:
+            msg = "No chat history available to respond to."
+            raise ValueError(msg)
 
         if not context.last_result.is_empty():
             # override content
-            last_message = f"""
+            last_message["content"] = f"""
             Context:
             {context.last_result.as_json_pretty()}
 
             Prompt:
-            {last_message}
+            {last_message["content"]}
             """
 
-        # TODO: Move to a different logger  # noqa: TD003
-        logging.getLogger("textual_app").info("Calling LLM with message: %s", last_message)
-        logging.getLogger("textual_app").info("Context: %s", context.last_result.as_json_pretty())
+        # cap it to last 10 messages
+        messages = messages[-10:]
 
-        response = await ModelsAPI.call_llm(last_message, ModelType.DEFAULT)
+        response = await ModelsAPI.call_llm_with_chat_history(messages, model=ModelType.DEFAULT)
 
         res = ActionResult()
         res.set_param("response", response)
