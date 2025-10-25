@@ -1,6 +1,6 @@
-provider_choice: 1
+provider_choice: 0
 embedding_model_choice: 0
-model_choice: 1
+model_choice: 0
 providers:
   - provider: chroma
     config:
