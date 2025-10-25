@@ -1,4 +1,6 @@
-provider_choice: 0
+provider_choice: 1
+embedding_model_choice: 0
+model_choice: 1
 providers:
   - provider: chroma
     config:
@@ -8,5 +10,20 @@ providers:
     config:
       host: localhost
       port: 6333
+embedding_models:
+  - provider: ollama
+    config:
+        model: mxbai-embed-large
+        ollama_base_url: http://localhost:11434
+  - provider: openai
+    config:
+        model: text-embedding-3-small
+models:
+  - provider: ollama
+    config:
+      model: gemma3
+      ollama_base_url: http://localhost:11434
+  - provider: openai
+    config:
+      model: gpt-4o-mini
 version: "1.0"
-
