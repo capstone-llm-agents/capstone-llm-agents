@@ -4,4 +4,4 @@ pdf_mcp: python mcp_server/pdf_server.py
 
 websocket: python -m network_server.run_network
 
-app: python main.py
+app: python main.py --no-servers
