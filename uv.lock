@@ -316,7 +316,7 @@ requires-dist = [
     { name = "icalendar", specifier = ">=6.3.1" },
     { name = "ics", specifier = ">=0.7.2" },
     { name = "mcp", extras = ["cli"], specifier = ">=1.12.4" },
-    { name = "mem0ai", specifier = ">=0.1.116" },
+    { name = "mem0ai", specifier = ">=1.0.0" },
     { name = "ollama", specifier = ">=0.5.3" },
     { name = "openai", specifier = ">=1.100.1" },
     { name = "openmeteo-requests", specifier = ">=1.7.2" },
