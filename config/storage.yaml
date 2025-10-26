@@ -1,4 +1,4 @@
-provider_choice: 0
+provider_choice: 1
 embedding_model_choice: 0
 model_choice: 0
 providers:
@@ -21,7 +21,7 @@ embedding_models:
 models:
   - provider: ollama
     config:
-      model: gemma3
+      model: gemma3:latest
       ollama_base_url: http://localhost:11434
   - provider: openai
     config:

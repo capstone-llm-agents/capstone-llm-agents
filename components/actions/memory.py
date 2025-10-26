@@ -90,7 +90,7 @@ class MemorySaveLong(Action):
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         response = await asyncio.to_thread(Save, context, self.config)
         res = ActionResult()
-        res.set_param("response", response)
+        res.set_param("response", "memories saved")
         return res
 
 
