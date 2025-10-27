@@ -1,8 +1,9 @@
 """PyQt6 application with full screen navigation and proper QStackedWidget setup."""
-from pathlib import Path
+
 import asyncio
 import os
 import sys
+from pathlib import Path
 
 from PyQt6.QtCore import QObject, pyqtSignal
 from PyQt6.QtWidgets import QApplication, QStackedWidget
@@ -11,9 +12,10 @@ from qasync import QEventLoop
 from components.agents.assistant_agent import ASSISTANT_AGENT
 from components.agents.calendar_agent import CALENDAR_AGENT
 from components.agents.github_agent import GITHUB_AGENT
+from components.agents.pdf_agent import PDF_AGENT
+from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
-from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from llm_mas.client.account.client import Client
 from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
@@ -96,6 +98,7 @@ class PyQtApp(QStackedWidget):
         mas.add_agent(WEATHER_AGENT)
         mas.add_agent(WEBSEARCH_AGENT)
         mas.add_agent(TRAVEL_PLANNER_AGENT)
+        mas.add_agent(PDF_AGENT)
 
         # Setup MCP client
         mcp_client = MCPClient()
@@ -113,13 +116,14 @@ class PyQtApp(QStackedWidget):
             APP_LOGGER.warning("GITHUB_PERSONAL_ACCESS_TOKEN not set in environment variables.")
         else:
             github_server = HTTPConnectedServer("https://api.githubcopilot.com/mcp", auth_token=github_token)
-            mcp_client.add_connected_server(github_server)
+            # mcp_client.add_connected_server(github_server)
 
         # Setup agent friendships
         ASSISTANT_AGENT.add_friend(WEATHER_AGENT)
         ASSISTANT_AGENT.add_friend(CALENDAR_AGENT)
         ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
         ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
+        ASSISTANT_AGENT.add_friend(PDF_AGENT)
 
         # Create the client with the logged-in user
         self.client = Client(username, mas, mcp_client, GENERAL_CONFIG)
@@ -134,9 +138,51 @@ class PyQtApp(QStackedWidget):
 
         # Create checkpoint if not exists
         if not hasattr(self, "checkpoint") or self.checkpoint is None:
-            checkpointing_path = Path(__file__).parent.parent.parent.parent.parent.joinpath("db").joinpath("checkpoint.sqlite3")
+            checkpointing_path = (
+                Path(__file__).parent.parent.parent.parent.parent.joinpath("db").joinpath("checkpoint.sqlite3")
+            )
             APP_LOGGER.info(checkpointing_path)
             self.checkpoint = CheckPointer(str(checkpointing_path))
+
+        state = self.checkpoint.fetch()
+        APP_LOGGER.info("Loaded checkpoint state")
+        APP_LOGGER.info(state)
+        # load conversation if it exists
+        if state:
+            for conv in state.get("conversations", []):
+                name = conv.get("name", "Unnamed Conversation")
+                messages = conv.get("messages", [])
+                # add conv to mas
+                mas = self.client.get_mas()
+                loaded_conv = mas.conversation_manager.start_conversation(name)
+                for msg in messages:
+                    role = msg.get("role", "user")
+                    content = msg.get("content", "")
+                    sender_str = msg.get("sender", "")
+                    if role == "user":
+                        sender = self.client.user
+
+                    else:
+                        # find agent by name
+                        agents = self.client.mas.get_agents()
+                        sender = next((agent for agent in agents if agent.get_name() == sender_str), None)
+                        if not sender:
+                            APP_LOGGER.warning(
+                                f"Agent with name {sender_str} not found, using Assistant Agent instead."
+                            )
+                            sender = ASSISTANT_AGENT
+
+                    loaded_conv.add_message(sender, content)
+
+        # if there isn't a User Assistant Conversation, create one
+        conv = self.client.get_mas().conversation_manager.start_or_get_conversation("User Assistant Conversation")
+        if len(conv.get_chat_history().messages) == 0:
+            # add the message to introduce the assistant
+            conversation = self.client.get_mas().conversation_manager.get_conversation("User Assistant Conversation")
+            conversation.add_message(
+                ASSISTANT_AGENT,
+                f"Hello {self.client.get_username()}! I am your assistant agent. How can I help you today?",
+            )
 
         # Create and show main menu
         self.main_menu = MainMenu(self.client, self.checkpoint, nav=self.nav)
@@ -152,13 +198,15 @@ class PyQtApp(QStackedWidget):
         """Now only saves conversation on exiting the application since the memory is alread
         stored in memory
         """
+        state: State = {"conversations": []}
+
         try:
             conversations = self.client.mas.conversation_manager.get_all_conversations()
             for conversation in conversations:
-                if conversation.name == "User Assistant Chat":
-                    message = conversation.get_chat_history()
-                    state: State = {"messages": message.as_dicts()}
-                    self.checkpoint.save(state)
+                chat_history = conversation.get_chat_history()
+                messages = chat_history.as_dicts()
+                state["conversations"].append({"messages": messages, "name": conversation.name})
+                self.checkpoint.save(state)
             APP_LOGGER.info("User Assistant Chat Saved")
         except Exception as e:
             APP_LOGGER.info(f"Client wasn't initialized: {e}")

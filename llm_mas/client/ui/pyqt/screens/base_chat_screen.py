@@ -1,8 +1,5 @@
 # base_chat_screen.py
-from PyQt6.QtWidgets import (
-    QWidget, QVBoxLayout, QHBoxLayout, QPushButton,
-    QLabel, QScrollArea, QFrame, QVBoxLayout
-)
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QScrollArea, QFrame, QVBoxLayout
 from PyQt6.QtCore import Qt
 
 from llm_mas.logging.loggers import APP_LOGGER
@@ -70,14 +67,16 @@ class BaseChatScreen(QWidget):
 
     def _user_bubble(self, text):
         lbl = QLabel(text)
-        lbl.setStyleSheet("background:#cce5ff; border-radius:8px; padding:5px;")
+        lbl.setStyleSheet("background:#4b4b4b; color:#FFFFFF; border-radius:10px; padding:8px;")
         lbl.setAlignment(Qt.AlignmentFlag.AlignRight)
+        lbl.setWordWrap(True)
         return lbl
 
     def _agent_bubble(self, agent, text):
         lbl = QLabel(f"{agent.name}: {text}")
-        lbl.setStyleSheet("background:#e2e3e5; border-radius:8px; padding:5px;")
+        lbl.setStyleSheet("background:#3b3b6b; color:#FFFFFF; border-radius:10px; padding:8px;")
         lbl.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        lbl.setWordWrap(True)
         return lbl
 
     def _back_clicked(self):

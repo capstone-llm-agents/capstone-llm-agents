@@ -1,21 +1,22 @@
 # user_chat_screen.py (PyQt6 fully MAS-integrated)
 import asyncio
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QScrollArea
-from PyQt6.QtCore import QTimer, QEvent
-from llm_mas.client.account.client import Client
-from llm_mas.mas.conversation import Conversation
-from llm_mas.mas.agent import Agent
-from llm_mas.client.ui.pyqt.components.agent_message_bubble import AgentMessage
-from llm_mas.client.ui.pyqt.components.user_message_bubble import UserMessage
+
+from PyQt6.QtCore import QEvent, QTimer
+from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget
+
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from llm_mas.agent.work_step import SelectingActionWorkStep, PerformingActionWorkStep
+from llm_mas.agent.work_step import PerformingActionWorkStep, SelectingActionWorkStep
+from llm_mas.client.account.client import Client
+from llm_mas.client.ui.pyqt.components.agent_message_bubble import AgentMessage
+from llm_mas.client.ui.pyqt.components.user_message_bubble import UserMessage
 from llm_mas.logging.loggers import APP_LOGGER
-from llm_mas.utils.background_tasks import BACKGROUND_TASKS
-from llm_mas.mas.checkpointer import CheckPointer
-from llm_mas.mas.conversation import Message
+from llm_mas.mas.agent import Agent
 from llm_mas.mas.agentstate import State
+from llm_mas.mas.checkpointer import CheckPointer
+from llm_mas.mas.conversation import Conversation, Message
+from llm_mas.utils.background_tasks import BACKGROUND_TASKS
 
 
 class UserChatScreen(QWidget):
@@ -39,7 +40,13 @@ class UserChatScreen(QWidget):
         self._should_auto_scroll = True  # Track if we should auto-scroll
 
         self._init_ui()
-        self._add_initial_assistant_message()
+
+        # add messages
+        for msg in self.conversation.get_chat_history().messages:
+            if msg.sender == self.client.user:
+                self._add_user_message(msg.content)
+            else:
+                self._add_agent_message(msg.sender, msg.content)
 
     def _init_ui(self):
         layout = QVBoxLayout()

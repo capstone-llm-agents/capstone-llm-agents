@@ -1,6 +1,6 @@
 # agent_chat_screen.py
 from PyQt6.QtWidgets import QWidget
-from base_chat_screen import BaseChatScreen
+from llm_mas.client.ui.pyqt.screens.base_chat_screen import BaseChatScreen
 
 
 class AgentChatScreen(BaseChatScreen):
