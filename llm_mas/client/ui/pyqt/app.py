@@ -12,6 +12,7 @@ from qasync import QEventLoop
 from components.agents.assistant_agent import ASSISTANT_AGENT
 from components.agents.calendar_agent import CALENDAR_AGENT
 from components.agents.github_agent import GITHUB_AGENT
+from components.agents.pdf_agent import PDF_AGENT
 from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
@@ -97,6 +98,7 @@ class PyQtApp(QStackedWidget):
         mas.add_agent(WEATHER_AGENT)
         mas.add_agent(WEBSEARCH_AGENT)
         mas.add_agent(TRAVEL_PLANNER_AGENT)
+        mas.add_agent(PDF_AGENT)
 
         # Setup MCP client
         mcp_client = MCPClient()
@@ -121,6 +123,7 @@ class PyQtApp(QStackedWidget):
         ASSISTANT_AGENT.add_friend(CALENDAR_AGENT)
         ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
         ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
+        ASSISTANT_AGENT.add_friend(PDF_AGENT)
 
         # Create the client with the logged-in user
         self.client = Client(username, mas, mcp_client, GENERAL_CONFIG)
