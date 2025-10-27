@@ -395,6 +395,11 @@ class LocalServer:
 
             return agents
 
+        @self.app.get("/ping")
+        async def ping() -> dict[str, Any]:
+            """Ping the server to check connectivity."""
+            return {"status": "ok", "message": "Server is reachable"}
+
         @self.app.post("/friend_request/{friend_username}")
         async def send_friend_request(friend_username: str, token: str) -> dict[str, Any]:
             """Send a friend request to another user."""

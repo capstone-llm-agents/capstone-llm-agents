@@ -1,4 +1,4 @@
-"""The hello action simply prints a greeting message."""
+"""The dummy weather action says its sunny and a temperature."""
 
 from typing import override
 
@@ -8,16 +8,16 @@ from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 
 
-class SayHello(Action):
-    """An action that prints a greeting message."""
+class GetWeather(Action):
+    """An action that returns the weather."""
 
     def __init__(self) -> None:
-        """Initialize the SayHello action."""
-        super().__init__(description="Prints a greeting message")
+        """Initialize the GetWeather action."""
+        super().__init__(description="Returns the current weather")
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
-        """Perform the action by printing a greeting."""
+        """Perform the action by returning the weather."""
         res = ActionResult()
-        res.set_param("greeting", "Hello, world!")
+        res.set_param("response", "The weather is sunny with a temperature of 25.3 degrees Celsius.")
         return res

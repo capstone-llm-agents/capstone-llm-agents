@@ -51,6 +51,7 @@ def _cosine_similarity(a: list[float], b: list[float]) -> float:
         return 0.0
     return dot / (na * nb)
 
+
 def _fixed_size_chunk_text(text: str, chunk_size: int = 1000, overlap: int = 200) -> list[str]:
     """Chunk text into overlapping windows of characters.
 
@@ -104,9 +105,7 @@ def _rc_split_leaves(text: str, max_chunk_size: int, separators: list[str]) -> l
             result.append(frag)
             continue
         if idx >= last_sep_idx:
-            result.extend(
-                frag[i : i + max_chunk_size] for i in range(0, len(frag), max_chunk_size)
-            )
+            result.extend(frag[i : i + max_chunk_size] for i in range(0, len(frag), max_chunk_size))
             continue
         sep = separators[idx]
         if sep and sep in frag:
@@ -319,9 +318,7 @@ class _EmbeddingProvider:
             resp = self._openai_client.embeddings.create(model=str(self.model), input=texts)
             return [[float(v) for v in item.embedding] for item in resp.data]
 
-        msg = (
-            "No embedding backend available. Install/launch Ollama with an embedding model, or set OPENAI_API_KEY."
-        )
+        msg = "No embedding backend available. Install/launch Ollama with an embedding model, or set OPENAI_API_KEY."
         raise RuntimeError(msg)
 
 
@@ -393,11 +390,13 @@ class KnowledgeBase:
                             records.append(_KBRecord.from_json(item))
                         except (KeyError, TypeError, ValueError) as exc:
                             APP_LOGGER.warning(
-                                "Skipping invalid KB record in list index: %s", exc,
+                                "Skipping invalid KB record in list index: %s",
+                                exc,
                             )
                     else:
                         APP_LOGGER.warning(
-                            "Ignoring non-dict item in KB index list: %r", item,
+                            "Ignoring non-dict item in KB index list: %r",
+                            item,
                         )
                 self._records = records
                 self._next_id = len(self._records) + 1
@@ -438,7 +437,10 @@ class KnowledgeBase:
         self._progress_log.append(start_msg % (path,))
         # Enumerate files off-thread
         paths, scan_time = await loop.run_in_executor(
-            None, self._gather_files_for_index, path, logger,
+            None,
+            self._gather_files_for_index,
+            path,
+            logger,
         )
         ctx = self._ProcessContext(
             root_path=path,
@@ -475,8 +477,7 @@ class KnowledgeBase:
             await loop.run_in_executor(None, self._save)
         ingest_duration_local = time.monotonic() - ingest_start_local
         finish_tpl = (
-            "KB async indexing finished: root=%s files_processed=%d chunks_added=%d "
-            "scan_time=%.2fs ingest_time=%.2fs"
+            "KB async indexing finished: root=%s files_processed=%d chunks_added=%d scan_time=%.2fs ingest_time=%.2fs"
         )
         logger.info(
             finish_tpl,
@@ -533,7 +534,8 @@ class KnowledgeBase:
                     paths.append(fp)
                     if len(paths) >= max_scan_files:
                         logger.warning(
-                            "Reached KB_MAX_SCAN_FILES cap (%d). Stopping scan.", max_scan_files,
+                            "Reached KB_MAX_SCAN_FILES cap (%d). Stopping scan.",
+                            max_scan_files,
                         )
                         break
             if len(paths) >= max_scan_files:
@@ -662,6 +664,12 @@ class KnowledgeBase:
         """Return True if the knowledge base has no indexed content."""
         return len(self._records) == 0
 
+    def clear(self) -> None:
+        """Clear all indexed content from the knowledge base."""
+        self._records = []
+        self._next_id = 1
+        self._save()
+
+
 # Global singleton to share across UI and actions
 GLOBAL_KB = KnowledgeBase()
-

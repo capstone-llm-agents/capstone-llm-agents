@@ -15,7 +15,7 @@ class ModelsAPI:
     def _get_model_config(
         config: GeneralConfig,
         model_type: ModelType | str = ModelType.DEFAULT,
-    ) -> ModelConfig:
+    ) -> ModelConfig | None:
         """Get the model configuration based on the model type or name."""
         return (
             config.models.get_model_by_type(model_type)
@@ -42,6 +42,11 @@ class ModelsAPI:
         """Call the LLM with the given prompt and model type."""
         config, providers = ModelsAPI._get_config_and_providers()
         model_config = ModelsAPI._get_model_config(config, model)
+
+        if not model_config:
+            msg = f"Model configuration for '{model}' not found."
+            raise ValueError(msg)
+
         provider_name = model_config.provider
         if provider_name not in providers:
             msg = f"Model provider '{provider_name}' not found."

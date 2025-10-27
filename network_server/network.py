@@ -25,7 +25,6 @@ class NetworkInterface(ABC):
 
         """
 
-
     @abstractmethod
     async def get_friends(self, user_token: str) -> list[dict[str, Any]]:
         """Get the list of friends for a user.
@@ -76,7 +75,6 @@ class NetworkInterface(ABC):
 
         """
 
-
     @abstractmethod
     async def signup(self, username: str, password: str) -> dict[str, Any]:
         """Sign up a new user.
@@ -113,6 +111,15 @@ class NetworkInterface(ABC):
 
         Returns:
             dict containing status
+
+        """
+
+    @abstractmethod
+    async def ping(self) -> dict[str, Any]:
+        """Ping the server to check connectivity.
+
+        Returns:
+            dict containing server status
 
         """
 
@@ -164,3 +171,7 @@ class Network:
     async def accept_friend_request(self, friend_id: str, user_token: str) -> dict[str, Any]:
         """Accept a friend request from another user."""
         return await self._impl.accept_friend_request(friend_id, user_token)
+
+    async def ping(self) -> dict[str, Any]:
+        """Ping the server to check connectivity."""
+        return await self._impl.ping()

@@ -2,12 +2,13 @@
 
 import argparse
 import sys
+from pathlib import Path
 
 from llm_mas.client.ui.pyqt.app import run_app
 from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.checkpointer import CheckPointer
 from llm_mas.utils.server_manager import ServerManager
-from pathlib import Path
+
 
 def main() -> None:
     """Start servers and launch application."""
