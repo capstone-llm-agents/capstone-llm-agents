@@ -89,13 +89,34 @@ class ConversationsScreen(QWidget):
         main_layout.addWidget(self.stacked_widget)
         self.setLayout(main_layout)
 
+    def _get_display_name(self, convo: Conversation) -> str:
+        """Generate a friendly display name for a conversation."""
+        if convo.is_user_conversation():
+            # For user conversations, show first user message or "New Chat"
+            if convo.chat_history.messages:
+                first_msg = convo.chat_history.messages[0]
+                if first_msg.role == "user":
+                    # Truncate long messages
+                    preview = first_msg.content[:50]
+                    if len(first_msg.content) > 50:
+                        preview += "..."
+                    return preview
+            return "New Chat"
+        else:
+            # For agent conversations, show participant names
+            if convo.participants:
+                names = [p.name for p in convo.participants]
+                return " ↔ ".join(names)
+            return convo.name
+
     def _populate_conversations(self):
         """Populate conversations into user and agent lists."""
         self.user_convo_list.clear()
         self.agent_convo_list.clear()
 
         for convo in self.conversations:
-            item = QListWidgetItem(convo.name)
+            display_name = self._get_display_name(convo)
+            item = QListWidgetItem(display_name)
             # Store conversation object in item data
             item.setData(1, convo)
 

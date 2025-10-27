@@ -14,6 +14,7 @@ from components.agents.github_agent import GITHUB_AGENT
 from components.agents.weather_agent import WEATHER_AGENT
 from components.agents.websearch_agent import WEBSEARCH_AGENT
 from components.agents.travel_planner_agent import TRAVEL_PLANNER_AGENT
+from components.agents.pdf_agent import PDF_AGENT
 from llm_mas.client.account.client import Client
 from llm_mas.client.ui.pyqt.screens.agent_network_screen import AgentNetworkScreen
 from llm_mas.client.ui.pyqt.screens.conversation_screen import ConversationsScreen
@@ -96,6 +97,7 @@ class PyQtApp(QStackedWidget):
         mas.add_agent(WEATHER_AGENT)
         mas.add_agent(WEBSEARCH_AGENT)
         mas.add_agent(TRAVEL_PLANNER_AGENT)
+        mas.add_agent(PDF_AGENT)
 
         # Setup MCP client
         mcp_client = MCPClient()
@@ -120,6 +122,7 @@ class PyQtApp(QStackedWidget):
         ASSISTANT_AGENT.add_friend(CALENDAR_AGENT)
         ASSISTANT_AGENT.add_friend(WEBSEARCH_AGENT)
         ASSISTANT_AGENT.add_friend(TRAVEL_PLANNER_AGENT)
+        ASSISTANT_AGENT.add_friend(PDF_AGENT)
 
         # Create the client with the logged-in user
         self.client = Client(username, mas, mcp_client, GENERAL_CONFIG)
