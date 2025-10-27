@@ -1,5 +1,15 @@
-from typing import Any, List
 from typing_extensions import TypedDict
 
+
+class Message(TypedDict):
+    role: str
+    content: str
+
+
+class ConversationState(TypedDict):
+    name: str
+    messages: list[Message]
+
+
 class State(TypedDict):
-    messages: List[Any]
+    conversations: list[ConversationState]

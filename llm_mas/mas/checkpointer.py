@@ -1,7 +1,8 @@
-import sqlite3
 import pickle
-from llm_mas.mas.agentstate import State
+import sqlite3
 
+from llm_mas.logging.loggers import APP_LOGGER
+from llm_mas.mas.agentstate import State
 
 
 class CheckPointer:
@@ -23,14 +24,11 @@ class CheckPointer:
             )
 
     def save(self, state: State):
-
         """
         json_string = json.dumps(state, indent=4)
         """
 
-        messages_to_pickle = state.get("messages", [])[-20:]
-
-        pickled_history=pickle.dumps(messages_to_pickle)
+        pickled_history = pickle.dumps(state)
 
         with sqlite3.connect(self.dp_path) as conn:
             cursor = conn.cursor()
@@ -38,7 +36,7 @@ class CheckPointer:
                 """
                 INSERT INTO agent_state (state) VALUES (?)
                 """,
-                (pickled_history,)
+                (pickled_history,),
             )
             conn.commit()
 
@@ -54,6 +52,7 @@ class CheckPointer:
             if row:
                 pickle_data = row[0]
                 data: State = pickle.loads(pickle_data)
+                APP_LOGGER.info(f"Fetched checkpoint data: {data}")
                 return data
             else:
                 return None
