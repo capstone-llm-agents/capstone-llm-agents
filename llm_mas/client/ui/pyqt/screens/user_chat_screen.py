@@ -1,6 +1,7 @@
 # user_chat_screen.py (PyQt6 fully MAS-integrated)
 import asyncio
 
+from PyQt6.QtCore import QEvent, QTimer
 from PyQt6.QtWidgets import QHBoxLayout, QLineEdit, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 from llm_mas.action_system.core.action_context import ActionContext
@@ -36,6 +37,7 @@ class UserChatScreen(QWidget):
         self.nav = nav
         self.artificial_delay = artificial_delay
         self._current_task: asyncio.Task | None = None
+        self._should_auto_scroll = True  # Track if we should auto-scroll
 
         self._init_ui()
 
@@ -67,6 +69,13 @@ class UserChatScreen(QWidget):
         self.chat_layout.addStretch()
         self.chat_container.setLayout(self.chat_layout)
         self.chat_area.setWidget(self.chat_container)
+
+        # Install event filter to track user scrolling
+        self.chat_area.verticalScrollBar().valueChanged.connect(self._on_scroll_changed)
+
+        # Install event filter on chat_container to detect layout changes
+        self.chat_container.installEventFilter(self)
+
         layout.addWidget(self.chat_area)
 
         # Input line and send button
@@ -81,20 +90,76 @@ class UserChatScreen(QWidget):
 
     def _save_on_exit(self):
         """This function is no longer used and is here just as backup"""
-        # message = self.conversation.get_chat_history()
-        # state: State = {"messages": message.as_dicts()}
-        # self.checkpoint.save(state)
-        raise NotImplementedError("This function is no longer used.")
+        message = self.conversation.get_chat_history()
+        state: State = {"messages": message.as_dicts()}
+        self.checkpoint.save(state)
+
+    def _on_scroll_changed(self, value: int) -> None:
+        """Track when user manually scrolls."""
+        scrollbar = self.chat_area.verticalScrollBar()
+        # If user is at bottom, enable auto-scroll
+        self._should_auto_scroll = value >= scrollbar.maximum() - 50
+
+    def eventFilter(self, obj, event):
+        """Filter events to detect layout changes in chat container."""
+        if obj == self.chat_container and event.type() == QEvent.Type.LayoutRequest:
+            # Layout is changing, schedule scroll if needed
+            if self._should_auto_scroll:
+                QTimer.singleShot(0, self._force_scroll_to_bottom)
+        return super().eventFilter(obj, event)
+
+    def _is_scrolled_to_bottom(self) -> bool:
+        """Check if the scroll area is currently at the bottom."""
+        scrollbar = self.chat_area.verticalScrollBar()
+        # Consider "at bottom" if within 50 pixels of maximum
+        return scrollbar.value() >= scrollbar.maximum() - 50
+
+    def _scroll_to_bottom_if_at_bottom(self) -> None:
+        """Scroll to bottom only if user is already at the bottom."""
+        if self._is_scrolled_to_bottom():
+            scrollbar = self.chat_area.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+
+    def _force_scroll_to_bottom(self) -> None:
+        """Force scroll to bottom (used when adding new messages)."""
+        if self._should_auto_scroll:
+            scrollbar = self.chat_area.verticalScrollBar()
+            scrollbar.setValue(scrollbar.maximum())
+
+    def _add_initial_assistant_message(self):
+        agent = self.client.get_mas().get_assistant_agent()
+        # check if conversation is empty, then load from checkpoint
+        if agent and not self.conversation.chat_history.messages:
+            state = self.checkpoint.fetch()
+            # load conversation if it exists
+            if state:
+                for message in state:
+                    message_to_save = Message(role=message["role"], content=message["content"], sender=agent)
+                    self.conversation.chat_history.add_message(message_to_save)
+                    if message_to_save.role == "user":
+                        self._add_user_message(message_to_save.content)
+                    elif message_to_save.role == "assistant":
+                        self._add_agent_message(agent, message_to_save.content)
+
+            else:
+                # add default initial message
+                msg = "Hello! I'm your assistant. How can I help you today?"
+                self._add_agent_message(agent, msg)
+                self.conversation.add_message(agent, msg)
 
     def _add_user_message(self, text: str):
+        was_at_bottom = self._is_scrolled_to_bottom()
         bubble = UserMessage(text)
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
-        self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
+        if was_at_bottom:
+            QTimer.singleShot(0, self._force_scroll_to_bottom)
 
     def _add_agent_message(self, agent: Agent, text: str):
+        was_at_bottom = self._is_scrolled_to_bottom()
         bubble = AgentMessage(agent, text)
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
-        self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
+        if was_at_bottom:
+            QTimer.singleShot(0, self._force_scroll_to_bottom)
 
     def _on_send(self):
         text = self.input_line.text().strip()
@@ -127,9 +192,11 @@ class UserChatScreen(QWidget):
             agent.workspace.action_history.clear()
 
             # just as one
+            was_at_bottom = self._is_scrolled_to_bottom()
             agent_bubble = AgentMessage(agent, "[Processing…]", show_thinking=True)
             self.chat_layout.insertWidget(self.chat_layout.count() - 1, agent_bubble)
-            self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
+            if was_at_bottom:
+                QTimer.singleShot(0, self._force_scroll_to_bottom)
 
             while not agent.finished_working():
                 # Selecting step
@@ -161,9 +228,11 @@ class UserChatScreen(QWidget):
 
     async def _add_step_indicator(self, agent: Agent, step):
         """Add a placeholder step indicator in UI (optional)."""
+        was_at_bottom = self._is_scrolled_to_bottom()
         bubble = AgentMessage(agent, "[Processing…]")
         self.chat_layout.insertWidget(self.chat_layout.count() - 1, bubble)
-        self.chat_area.verticalScrollBar().setValue(self.chat_area.verticalScrollBar().maximum())
+        if was_at_bottom:
+            QTimer.singleShot(0, self._force_scroll_to_bottom)
         await asyncio.sleep(0.05)  # tiny delay to render
         return step  # no async methods required; just for step logic
 

@@ -1,11 +1,16 @@
 """Agent message bubble with thinking/work steps for PyQt6."""
 
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QLabel
-from .message_bubble import MessageBubble
-from .work_step_indicator import WorkStepIndicator
+import asyncio
+
+from PyQt6.QtCore import Qt
+from PyQt6.QtWidgets import QLabel, QVBoxLayout
+
 from llm_mas.agent.work_step import WorkStep
 from llm_mas.mas.agent import Agent
-import asyncio
+
+from .message_bubble import MessageBubble
+from .work_step_indicator import WorkStepIndicator
+
 
 class AgentMessage(MessageBubble):
     """Message bubble for agent messages, supports thinking steps."""
@@ -28,12 +33,17 @@ class AgentMessage(MessageBubble):
 
         if show_thinking:
             self.thinking_label = QLabel("Thinking...")
+            self.thinking_label.setWordWrap(True)
+            self.thinking_label.setMaximumWidth(600)
             self.layout.addWidget(self.thinking_label)
             self.thinking_container = QVBoxLayout()
             self.layout.addLayout(self.thinking_container)
 
         if message:
             self.content_label = QLabel(message)
+            self.content_label.setWordWrap(True)
+            self.content_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.content_label.setMaximumWidth(600)
             self.layout.addWidget(self.content_label)
 
     async def add_work_step(self, work_step: WorkStep) -> WorkStepIndicator:
@@ -60,6 +70,9 @@ class AgentMessage(MessageBubble):
             self.thinking_label.setText("Thinking collapsed")
         if response_text:
             self.content_label = QLabel(response_text)
+            self.content_label.setWordWrap(True)
+            self.content_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.content_label.setMaximumWidth(600)
             self.layout.addWidget(self.content_label)
 
     def mark_as_error(self): # I WANNA MAKE ERROR MESSAGES RED but idk how to do it, ill do it later
