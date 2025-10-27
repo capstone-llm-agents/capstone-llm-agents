@@ -1,5 +1,5 @@
 default_embedding_model: 0
-default_model: 0
+default_model: 2
 default_model_with_native_tools: 1
 default_powerful_model: 2
 default_quick_model: 3
