@@ -1,19 +1,19 @@
+import asyncio
+from datetime import datetime
 from typing import override
+
+from mem0 import Memory as Mem
+
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
-from mem0 import Memory as Mem
-from datetime import datetime
-from llm_mas.utils.memory_config import MemoryConfig
-import asyncio
 from llm_mas.logging.loggers import APP_LOGGER
-
-
-
+from llm_mas.utils.memory_config import MemoryConfig
 
 
 def Save(context: ActionContext, config):
+    APP_LOGGER.info("Saving to memory")
     m = Mem.from_config(config)
     chat_history = context.conversation.get_chat_history()
     messages = chat_history.as_dicts()
@@ -36,22 +36,18 @@ def Save(context: ActionContext, config):
 
 
 def Search(context: ActionContext, config):
-
+    APP_LOGGER.info("Searching memory")
     m = Mem.from_config(config)
     chat_history = context.conversation.get_chat_history()
 
     messages = chat_history.as_dicts()
 
     last_message = messages[-1]
-    APP_LOGGER.info(f"Searching memory for{last_message[-1]}")
-    #relevant_memories = m.search(query=last_message["content"], agent_id=context.agent.name, limit=10)
-    relevant_memories = m.search(query=last_message["content"], limit=10)
+
+    relevant_memories = m.search(query=last_message["content"], agent_id=context.agent.name, limit=10)
+    # relevant_memories = m.search(query=last_message["content"], limit=10)
     memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
     return memories_str
-
-
-
-
 
 
 class MemorySaveLong(Action):
@@ -83,8 +79,6 @@ class MemorySaveLong(Action):
                     },
                 },
             }
-
-
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
@@ -123,11 +117,9 @@ class MemorySearchLong(Action):
                 },
             }
 
-
-
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
-        memories_str = await asyncio.to_thread(Search,  context, self.config)
+        memories_str = await asyncio.to_thread(Search, context, self.config)
         res = ActionResult()
         if memories_str:
             response = f" These are the relating memories {memories_str}"

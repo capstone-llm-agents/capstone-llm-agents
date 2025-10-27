@@ -7,7 +7,7 @@ from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.communication.interface import CommunicationState
-from llm_mas.communication.messages import EndMessage, ProposalMessage
+from llm_mas.communication.messages import EndMessage, ErrorMessage, ProposalMessage
 from llm_mas.communication.task.agent_task import Task
 from llm_mas.mas.agent import Agent
 from llm_mas.model_providers.api import ModelsAPI
@@ -112,7 +112,12 @@ class Communicate(Action):
             message = await context.agent.communication_interface.handle_message(message, comm_state)
 
             if message is None:
-                break
+                msg = "Received no message from friend agent."
+                raise ValueError(msg)
+
+            if isinstance(message, ErrorMessage):
+                msg = f"Error message received from friend agent: {message.content}"
+                raise ValueError(msg)  # noqa: TRY004
 
             # finished message, swap sender and recipient
             sender, recipient = recipient, sender

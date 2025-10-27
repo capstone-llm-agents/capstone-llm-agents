@@ -72,6 +72,8 @@ narrower.add_action_edge(GetTripDetails(), [MemorySearchLong()])
 narrower.add_action_edge(MemorySearchLong(), [SimpleResponse(), TravelResponse()])
 narrower.add_action_edge(SimpleResponse(), [StopAction()])
 narrower.add_action_edge(MemorySaveLong(), [SimpleResponse(), TravelResponse()])
+narrower.add_action_edge(MemorySearchLong(), [SimpleResponse(), TravelResponse()])
+
 # default action
 narrower.add_default_action(GetTripDetails())
 narrower.add_default_action(SearchFlights())

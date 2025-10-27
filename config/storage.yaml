@@ -1,11 +1,11 @@
-provider_choice: 1
+provider_choice: 0
 embedding_model_choice: 0
 model_choice: 0
 providers:
   - provider: chroma
     config:
       collection_name: memory
-      path: /db
+      path: ./db
   - provider: qdrant
     config:
       host: localhost
@@ -13,11 +13,11 @@ providers:
 embedding_models:
   - provider: ollama
     config:
-        model: mxbai-embed-large
-        ollama_base_url: http://localhost:11434
+      model: mxbai-embed-large
+      ollama_base_url: http://localhost:11434
   - provider: openai
     config:
-        model: text-embedding-3-small
+      model: text-embedding-3-small
 models:
   - provider: ollama
     config:
