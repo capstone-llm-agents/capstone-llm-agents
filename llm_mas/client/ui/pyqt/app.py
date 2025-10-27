@@ -116,7 +116,7 @@ class PyQtApp(QStackedWidget):
             APP_LOGGER.warning("GITHUB_PERSONAL_ACCESS_TOKEN not set in environment variables.")
         else:
             github_server = HTTPConnectedServer("https://api.githubcopilot.com/mcp", auth_token=github_token)
-            mcp_client.add_connected_server(github_server)
+            # mcp_client.add_connected_server(github_server)
 
         # Setup agent friendships
         ASSISTANT_AGENT.add_friend(WEATHER_AGENT)
@@ -158,14 +158,31 @@ class PyQtApp(QStackedWidget):
                 for msg in messages:
                     role = msg.get("role", "user")
                     content = msg.get("content", "")
+                    sender_str = msg.get("sender", "")
                     if role == "user":
                         sender = self.client.user
+
                     else:
-                        # just assume the sender is the assistant agent for now
-                        # TODO: improve this to handle multiple agents properly
-                        sender = ASSISTANT_AGENT
+                        # find agent by name
+                        agents = self.client.mas.get_agents()
+                        sender = next((agent for agent in agents if agent.get_name() == sender_str), None)
+                        if not sender:
+                            APP_LOGGER.warning(
+                                f"Agent with name {sender_str} not found, using Assistant Agent instead."
+                            )
+                            sender = ASSISTANT_AGENT
 
                     loaded_conv.add_message(sender, content)
+
+        # if there isn't a User Assistant Conversation, create one
+        conv = self.client.get_mas().conversation_manager.start_or_get_conversation("User Assistant Conversation")
+        if len(conv.get_chat_history().messages) == 0:
+            # add the message to introduce the assistant
+            conversation = self.client.get_mas().conversation_manager.get_conversation("User Assistant Conversation")
+            conversation.add_message(
+                ASSISTANT_AGENT,
+                f"Hello {self.client.get_username()}! I am your assistant agent. How can I help you today?",
+            )
 
         # Create and show main menu
         self.main_menu = MainMenu(self.client, self.checkpoint, nav=self.nav)

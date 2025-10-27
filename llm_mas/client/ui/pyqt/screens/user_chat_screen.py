@@ -38,7 +38,13 @@ class UserChatScreen(QWidget):
         self._current_task: asyncio.Task | None = None
 
         self._init_ui()
-        self._add_initial_assistant_message()
+
+        # add messages
+        for msg in self.conversation.get_chat_history().messages:
+            if msg.sender == self.client.user:
+                self._add_user_message(msg.content)
+            else:
+                self._add_agent_message(msg.sender, msg.content)
 
     def _init_ui(self):
         layout = QVBoxLayout()
@@ -79,15 +85,6 @@ class UserChatScreen(QWidget):
         # state: State = {"messages": message.as_dicts()}
         # self.checkpoint.save(state)
         raise NotImplementedError("This function is no longer used.")
-
-    def _add_initial_assistant_message(self):
-        agent = self.client.get_mas().get_assistant_agent()
-        # check if conversation is empty, then load from checkpoint
-        if agent and not self.conversation.chat_history.messages:
-            # add default initial message
-            msg = "Hello! I'm your assistant. How can I help you today?"
-            self._add_agent_message(agent, msg)
-            self.conversation.add_message(agent, msg)
 
     def _add_user_message(self, text: str):
         bubble = UserMessage(text)

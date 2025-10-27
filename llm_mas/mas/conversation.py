@@ -21,7 +21,7 @@ class Message:
 
     def as_dict(self) -> dict:
         """Return the message as a dictionary."""
-        return {"role": self.role, "content": self.content}
+        return {"role": self.role, "content": self.content, "sender": self.sender.get_name()}
 
 
 class UserMessage(Message):
