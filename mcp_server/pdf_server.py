@@ -128,10 +128,13 @@ def create_pdf_file(prompt: str, file_name: str) -> str:
         # print("Am stuck here 5")
         print("#####PDF file created")
         result = f"PDF file created: {output_filename}. It has the following content: {LLM_details}. You can confirm with the user that the file has been created."
-    except:
-        result = "An error has occurred within the PDF file creator. Please check pdf_server.py to see what may be causing the issue."
-        print(result)
-        return result
+    except Exception as e:
+        print("###Error Reason###")
+        print(str(e))
+        error = "\n\n Short Error response: " + str(e)
+        print("###Full Error###")
+        print(traceback.format_exc())
+        result = "An error has occurred within the PDF file creator. Please check pdf_server.py or the server terminal output to see what may be causing the issue." + error
 
     return result
 

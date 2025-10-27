@@ -44,5 +44,10 @@ dependencies = [
 select = ["ALL"]
 ignore = ["FIX002", "TD002", "S101"]
 
+[dependency-groups]
+dev = [
+    "ruff>=0.14.1",
+]
+
 [tool.ruff]
 line-length = 120

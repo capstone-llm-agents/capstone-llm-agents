@@ -5,6 +5,91 @@ from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from mem0 import Memory as Mem
 from datetime import datetime
+import asyncio
+import yaml
+from llm_mas.logging.loggers import APP_LOGGER
+import json
+import pathlib
+
+def load_conf():
+    try:
+        project_dir = pathlib.Path(__file__).parent.parent.parent
+
+        config_dir = project_dir.joinpath("config").joinpath("storage.yaml")
+        APP_LOGGER.debug(f"project_dir: {config_dir}")
+        config = yaml.safe_load(open(config_dir))
+        choice_index = config["provider_choice"]
+
+        all_providers = config["providers"]
+
+        choice = all_providers[choice_index]
+
+        return choice
+    except FileNotFoundError:
+        APP_LOGGER.error("Storage File Not Found")
+        return None
+    except yaml.YAMLError as e:
+        APP_LOGGER.error(f"Yaml Error: {e}")
+        return None
+    except KeyError as e:
+        APP_LOGGER.error(f"Key Error: {e}")
+        return None
+    except TypeError as e:
+        APP_LOGGER.error(f"Type Error {e}")
+        return None
+    except Exception as e:
+        APP_LOGGER.error(f"Unknown Error: {e}")
+        return None
+
+
+
+
+
+
+
+
+
+
+def Save(context: ActionContext, config):
+    m = Mem.from_config(config)
+    chat_history = context.conversation.get_chat_history()
+    messages = chat_history.as_dicts()
+    last_message = messages[-1]
+    memory_to_save_user = f"User said {last_message['content']}"
+    second_last_message = messages[-2]
+    memory_to_save_agent = f"Agent said {second_last_message['content']}"
+    now = datetime.now()
+    date_string = now.strftime("%Y-%m-%d %H:%M:%S")
+    m.add(
+        messages=memory_to_save_user,
+        agent_id=context.agent.name,
+        metadata={"Speaker": "User", "timestamp": date_string},
+    )
+    m.add(
+        messages=memory_to_save_agent,
+        agent_id=context.agent.name,
+        metadata={"speaker": "Agent", "timestamp": date_string},
+    )
+    response = "Memory Saved"
+
+def Search(context: ActionContext, config):
+    m = Mem.from_config(config)
+    chat_history = context.conversation.get_chat_history()
+
+    messages = chat_history.as_dicts()
+
+    last_message = messages[-1]
+    relevant_memories = m.search(query=last_message["content"], agent_id=context.agent.name, limit=10)
+    memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
+    return memories_str
+
+
+
+
+
+
+
+
 
 
 class MemorySaveLong(Action):
@@ -13,39 +98,28 @@ class MemorySaveLong(Action):
     def __init__(self) -> None:
         """Initialize the memory save action."""
         super().__init__(description="Access memory")
-        self.config = {
-            "vector_store": {
-                "provider": "chroma",
-                "config": {
-                    "collection_name": "test",
-                    "path": "db",
+        loaded_config = load_conf()
+        if loaded_config is None:
+            APP_LOGGER.error("Error in the configuration file defaulting to chroma")
+            self.config = {
+                "vector_store": {
+                    "provider": "chroma",
+                    "config": {
+                        "collection_name": "test",
+                        "path": "db",
+                    },
                 },
-            },
-        }
+            }
+        else:
+            self.config = {
+                "vector_store": loaded_config,
+            }
+
 
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
-        m = Mem.from_config(self.config)
-        chat_history = context.conversation.get_chat_history()
-        messages = chat_history.as_dicts()
-        last_message = messages[-1]
-        memory_to_save_user = f"User said {last_message['content']}"
-        second_last_message = messages[-2]
-        memory_to_save_agent = f"Agent said {second_last_message['content']}"
-        now = datetime.now()
-        date_string = now.strftime("%Y-%m-%d %H:%M:%S")
-        m.add(
-            messages=memory_to_save_user,
-            agent_id=context.agent.name,
-            metadata={"Speaker": "User", "timestamp": date_string},
-        )
-        m.add(
-            messages=memory_to_save_agent,
-            agent_id=context.agent.name,
-            metadata={"speaker": "Agent", "timestamp": date_string},
-        )
-        response = "Memory Saved"
+        response = await asyncio.to_thread(Save, context, self.config)
         res = ActionResult()
         res.set_param("response", response)
         return res
@@ -57,26 +131,27 @@ class MemorySearchLong(Action):
     def __init__(self) -> None:
         """Initialize the memory search action."""
         super().__init__(description="Access memory")
-        self.config = {
-            "vector_store": {
-                "provider": "chroma",
-                "config": {
-                    "collection_name": "test",
-                    "path": "db",
+        loaded_config = load_conf()
+        if loaded_config is None:
+            APP_LOGGER.error("Error in the configuration file defaulting to chroma")
+            self.config = {
+                "vector_store": {
+                    "provider": "chroma",
+                    "config": {
+                        "collection_name": "test",
+                        "path": "db",
+                    },
                 },
-            },
-        }
+            }
+        else:
+            self.config = {
+                "vector_store": loaded_config,
+            }
+
 
     @override
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
-        m = Mem.from_config(self.config)
-        chat_history = context.conversation.get_chat_history()
-
-        messages = chat_history.as_dicts()
-
-        last_message = messages[-1]
-        relevant_memories = m.search(query=last_message["content"], agent_id=context.agent.name, limit=10)
-        memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
+        memories_str = await asyncio.to_thread(Search,  context, self.config)
         res = ActionResult()
         if memories_str:
             response = f" These are the relating memories {memories_str}"

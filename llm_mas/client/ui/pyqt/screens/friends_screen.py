@@ -136,7 +136,7 @@ class FriendsScreen(QWidget):
         # Header
         header_layout = QHBoxLayout()
 
-        self.back_btn = QPushButton("← Back to Menu")
+        self.back_btn = QPushButton("← Back ")
         self.back_btn.clicked.connect(self._on_back)
         self.back_btn.setStyleSheet("padding: 8px 15px;")
         header_layout.addWidget(self.back_btn)

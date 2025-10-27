@@ -28,8 +28,8 @@ Before you begin, ensure you have the following installed on your system.
 3. Ollama and a Local LLM model
    This project by default uses local model through Ollama.
    * **Install Ollama:** Download the application from https://ollama.com/.
-   * **Download Gemma3 & mxbai-embed-large:** After installing ```Ollama``` open your terminal and run ```ollama pull gemma3``` to download Gemma3 and ```ollama pull mxbai-embed-large``` to download mxbai-embed-large.
-
+   * **Download Gemma3, mxbai-embed-large & nomic-embed-text:** After installing ```Ollama``` open your terminal and run ```ollama pull gemma3``` to download Gemma3,```ollama pull mxbai-embed-large``` to download mxbai-embed-large and ```ollama pull nomic-embed-text``` to pull nomic-embed-text
+     
     **Note:** The application can also be configured to use other model providers like ```OpenAI``` please refer to the **Configuration** section for more details.
 
 ## Installation
@@ -43,18 +43,16 @@ Start by cloning the repository or downloading it from here and navigate to the 
 1. Run ```uv sync``` to create a virtual environment and install all the necessary packages. 
 
 ## Running the Application
-1. Navigate to the project directory and open two terminal windows. 
+1. Navigate to the project directory and open a terminal windows. 
 2. Make sure all the packages are installed refer to the instructions above for that.
-3. If you are using ollama ```ollama``` then make sure you have pulled ```gemma3``` and make sure ```ollama``` is running. If you're not using ```ollama``` skip this step
-4. Then in one of the terminal windows:
-   * If your using ```pip``` activate the virtual environment ```source .venv/scripts/activate``` on Linux and macOs or ```.venv\Scripts\Activate.ps1``` on Windows and run ```honcho start``` which will run all      the necessary servers.
-   * If your using ```uv``` run ```uv run honcho start```
-5. And finally to start the application in the second terminal:
-   * If your using ```pip``` activate the virtual environment using ```source .venv/bin/activate``` on linux or ```.venv\Scripts\Activate.ps1``` on Windows and then
-     run ```python -m main.py```.
-   * If your using ```uv``` simply run ```uv run main.py```
-   
-**Note** if your using linux or mac some shells require a different activatation script, for example using ```fish``` its ```.venv/bin/activate.fish```
+3. If you are using ```ollama``` then make sure you have pulled all the relvant models and make sure ```ollama``` is running.
+4. Then in the terminal window:
+   * Using ```honcho start```
+     * If your using ```pip``` activate the virtual environment ```source .venv/scripts/activate``` on Linux and macOs or ```.venv\Scripts\Activate.ps1``` on Windows and run ```honcho start``` which will run all the necessary servers and startup the application.
+     * If your using ```uv``` run ```uv run honcho start```.
+   * Using ```python main.py```
+     * If your using ```pip``` activate the virtual environment ```source .venv/scripts/activate``` on Linux and macOs or ```.venv\Scripts\Activate.ps1``` on Windows and run ```python main.py``` which will run all the necessary servers and startup the application.
+     * If your using ```uv``` run ```uv run main.py```.
 
 ## Extra Information 
 The ```honcho start``` command starts four different servers, and they are in no particular oder:
