@@ -27,10 +27,21 @@ class ActionHistory:
         return None
 
     def get_history_at_index(self, index: int) -> tuple[Action, ActionResult, ActionContext] | None:
-        """Get the action at a specific index."""
-        if self.history:
-            return self.history[index]
-        return None
+        """Get the action tuple at a specific index."""
+        if not self.history:
+            return None
+
+        # Translate negative index relative to end
+        if index < 0:
+            index = len(self.history) + index
+
+        # Clamp to valid range
+        if index < 0:
+            index = 0
+        elif index >= len(self.history):
+            index = len(self.history) - 1
+
+        return self.history[index]
 
     def has_action(self, action: Action) -> bool:
         """Check if a specific action is in the history."""
