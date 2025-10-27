@@ -32,7 +32,7 @@ class CheckPointer:
 
         pickled_history=pickle.dumps(messages_to_pickle)
 
-        with sqlite3.connect('test.sqlite') as conn:
+        with sqlite3.connect(self.dp_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """
@@ -43,8 +43,7 @@ class CheckPointer:
             conn.commit()
 
     def fetch(self) -> State | None:
-
-        with sqlite3.connect('test.sqlite') as conn:
+        with sqlite3.connect(self.dp_path) as conn:
             cursor = conn.cursor()
             cursor.execute(
                 """

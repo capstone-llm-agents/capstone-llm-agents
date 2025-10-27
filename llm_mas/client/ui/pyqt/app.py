@@ -1,5 +1,5 @@
 """PyQt6 application with full screen navigation and proper QStackedWidget setup."""
-
+from pathlib import Path
 import asyncio
 import os
 import sys
@@ -134,7 +134,9 @@ class PyQtApp(QStackedWidget):
 
         # Create checkpoint if not exists
         if not hasattr(self, "checkpoint") or self.checkpoint is None:
-            self.checkpoint = CheckPointer("test.sqlite")
+            checkpointing_path = Path(__file__).parent.parent.parent.parent.parent.joinpath("db").joinpath("checkpoint.sqlite3")
+            APP_LOGGER.info(checkpointing_path)
+            self.checkpoint = CheckPointer(str(checkpointing_path))
 
         # Create and show main menu
         self.main_menu = MainMenu(self.client, self.checkpoint, nav=self.nav)

@@ -5,46 +5,9 @@ from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from mem0 import Memory as Mem
 from datetime import datetime
+from llm_mas.utils.memory_config import MemoryConfig
 import asyncio
-import yaml
 from llm_mas.logging.loggers import APP_LOGGER
-import json
-import pathlib
-
-def load_conf():
-    try:
-        project_dir = pathlib.Path(__file__).parent.parent.parent
-
-        config_dir = project_dir.joinpath("config").joinpath("storage.yaml")
-        APP_LOGGER.debug(f"project_dir: {config_dir}")
-        config = yaml.safe_load(open(config_dir))
-        choice_index = config["provider_choice"]
-
-        all_providers = config["providers"]
-
-        choice = all_providers[choice_index]
-
-        return choice
-    except FileNotFoundError:
-        APP_LOGGER.error("Storage File Not Found")
-        return None
-    except yaml.YAMLError as e:
-        APP_LOGGER.error(f"Yaml Error: {e}")
-        return None
-    except KeyError as e:
-        APP_LOGGER.error(f"Key Error: {e}")
-        return None
-    except TypeError as e:
-        APP_LOGGER.error(f"Type Error {e}")
-        return None
-    except Exception as e:
-        APP_LOGGER.error(f"Unknown Error: {e}")
-        return None
-
-
-
-
-
 
 
 
@@ -70,22 +33,21 @@ def Save(context: ActionContext, config):
         agent_id=context.agent.name,
         metadata={"speaker": "Agent", "timestamp": date_string},
     )
-    response = "Memory Saved"
+
 
 def Search(context: ActionContext, config):
+
     m = Mem.from_config(config)
     chat_history = context.conversation.get_chat_history()
 
     messages = chat_history.as_dicts()
 
     last_message = messages[-1]
-    relevant_memories = m.search(query=last_message["content"], agent_id=context.agent.name, limit=10)
+    APP_LOGGER.info(f"Searching memory for{last_message[-1]}")
+    #relevant_memories = m.search(query=last_message["content"], agent_id=context.agent.name, limit=10)
+    relevant_memories = m.search(query=last_message["content"], limit=10)
     memories_str = "\n".join(f"- {entry['memory']}" for entry in relevant_memories["results"])
     return memories_str
-
-
-
-
 
 
 
@@ -98,8 +60,19 @@ class MemorySaveLong(Action):
     def __init__(self) -> None:
         """Initialize the memory save action."""
         super().__init__(description="Access memory")
-        loaded_config = load_conf()
-        if loaded_config is None:
+        self.load = MemoryConfig()
+        config = self.load.load_provider_conf()
+
+        if config is not None:
+            provider = config.get("provider")
+            llm = config.get("llm")
+            embed = config.get("embedd")
+            self.config = {
+                "vector_store": provider,
+                "llm": llm,
+                "embedding_model": embed,
+            }
+        else:
             APP_LOGGER.error("Error in the configuration file defaulting to chroma")
             self.config = {
                 "vector_store": {
@@ -110,10 +83,6 @@ class MemorySaveLong(Action):
                     },
                 },
             }
-        else:
-            self.config = {
-                "vector_store": loaded_config,
-            }
 
 
 
@@ -121,7 +90,7 @@ class MemorySaveLong(Action):
     async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         response = await asyncio.to_thread(Save, context, self.config)
         res = ActionResult()
-        res.set_param("response", response)
+        res.set_param("response", "memories saved")
         return res
 
 
@@ -131,8 +100,18 @@ class MemorySearchLong(Action):
     def __init__(self) -> None:
         """Initialize the memory search action."""
         super().__init__(description="Access memory")
-        loaded_config = load_conf()
-        if loaded_config is None:
+        self.load = MemoryConfig()
+        config = self.load.load_provider_conf()
+        if config is not None:
+            provider = config.get("provider")
+            llm = config.get("llm")
+            embed = config.get("embedd")
+            self.config = {
+                "vector_store": provider,
+                "llm": llm,
+                "embedding_model": embed,
+            }
+        else:
             APP_LOGGER.error("Error in the configuration file defaulting to chroma")
             self.config = {
                 "vector_store": {
@@ -143,10 +122,7 @@ class MemorySearchLong(Action):
                     },
                 },
             }
-        else:
-            self.config = {
-                "vector_store": loaded_config,
-            }
+
 
 
     @override
