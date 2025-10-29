@@ -1,16 +1,14 @@
 """The stop module defines a StopAction class that stops the agent's execution."""
-
-import datetime
+from datetime import datetime
 from typing import override
-import asyncio
-from mem0 import Memory as Mem
-from components.actions.memory import MemorySaveLong
+from mem0 import AsyncMemory
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.utils.config.general_config import GENERAL_CONFIG
-
+from components.actions.memory import MemorySaveLong
 
 class StopAction(Action):
     """An action that stops the agent's execution."""
@@ -25,9 +23,10 @@ class StopAction(Action):
         # don't save memory if disabled, just stop immediately
         if not GENERAL_CONFIG.app.memory_enabled():
             return ActionResult()
-
-
-        memory = MemorySaveLong()
-        await memory.do(params, context)
-
-        return ActionResult()
+        try:
+            memory = MemorySaveLong()
+            await memory.do(params=params, context=context)
+        except Exception as e:
+            APP_LOGGER.error(e)
+        finally:
+            return ActionResult()
