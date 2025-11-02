@@ -17,7 +17,7 @@ class RetrieveKnowledge(Action):
         super().__init__(description="Retrieves knowledge from the knowledge base.")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Query the KB using the latest user message as the retrieval query.
 
         Returns an ActionResult with:

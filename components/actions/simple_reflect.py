@@ -25,7 +25,7 @@ class SimpleReflect(ActionSwitcher):
         super().__init__(description="Decide how to proceed based on an assessment of a response")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by retrieving parameters for the assessment of the last response."""
         last_result = context.last_result
 

@@ -21,7 +21,7 @@ class CreateItinerary(Action):
         self.use_fragments_for_context()
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by generating an itinerary with an LLM."""
         last_message = self.get_last_message_content(context)
 

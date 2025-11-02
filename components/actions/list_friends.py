@@ -22,7 +22,7 @@ class ListFriends(Action):
         super().__init__(description="Retrieves the list of available friends")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by retrieving the list of friends."""
         entity = context.agent
         friends = entity.friends
@@ -49,7 +49,7 @@ class AskFriendForHelp(Action):
         self.vector_selector = vector_selector or VectorSelector()
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by asking a friend for help."""
         entity = context.agent
         friends = entity.friends

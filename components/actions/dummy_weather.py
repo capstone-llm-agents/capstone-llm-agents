@@ -16,7 +16,7 @@ class GetWeather(Action):
         super().__init__(description="Returns the current weather")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by returning the weather."""
         res = ActionResult()
         res.set_param("response", "The weather is sunny with a temperature of 25.3 degrees Celsius.")

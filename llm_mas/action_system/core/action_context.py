@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from llm_mas.fragment.kind import FragmentKind
+
 if TYPE_CHECKING:
     from llm_mas.action_system.core.action_result import ActionResult
     from llm_mas.fragment.fragment import Fragment
@@ -34,6 +36,7 @@ class ActionContext:
         self.conversation_manager = conversation_manager
 
         self.fragments: list[Fragment] = []
+        self.available_fragment_kinds: list[type[FragmentKind]] = []
 
     @classmethod
     def from_action_result(

@@ -27,7 +27,7 @@ class SearchFlights(Action):
         self.base_url = "http://api.aviationstack.com/v1/flights"
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by searching for flights using the Aviationstack API."""
         if not self.api_key:
             msg = "Aviationstack API key not found. Please set the AVIATIONSTACK_API_KEY environment variable."

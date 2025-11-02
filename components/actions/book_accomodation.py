@@ -19,7 +19,7 @@ class BookAccommodation(Action):
         super().__init__(description="Simulates the booking of an accommodation and provides a confirmation code.")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by simulating a booking."""
         # Expect the accommodation ID to be passed as a parameter
         accommodation_id = TRAVEL_CONTEXT.accommodation_id

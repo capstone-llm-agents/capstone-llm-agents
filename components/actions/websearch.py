@@ -24,7 +24,7 @@ class WebSearch(Action):
         super().__init__(description="Get web result.")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         query = self.get_last_message_content(context)
 
         # do the search asynchronously

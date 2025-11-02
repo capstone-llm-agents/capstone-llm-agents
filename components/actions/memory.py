@@ -1,18 +1,18 @@
+import sys
 from datetime import datetime
 from typing import override
+
 from mem0 import AsyncMemory
+
 from llm_mas.action_system.core.action import Action
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.utils.memory_config import InternalMemoryConfig as MemoryConfig
-import sys
 
 
-
-
-#tried moving both helper functions back and it broke
+# tried moving both helper functions back and it broke
 async def Save(context: ActionContext, config):
     """helper function from previous threading tried to move it back since its async, and it broke
     Save the memory to the memory store."""
@@ -55,7 +55,7 @@ async def Save(context: ActionContext, config):
 
 async def Search(context: ActionContext, config):
     """helper function from previous threading tried to move it back since its async, and it broke
-        Save the memory to the memory store."""
+    Save the memory to the memory store."""
     APP_LOGGER.info("Searching memory")
     if sys.platform == "win32":
         memories_str = "No memories found"
@@ -83,9 +83,8 @@ class MemorySaveLong(Action):
         config = MemoryConfig()
         self.config = config.load_provider_conf()
 
-
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         APP_LOGGER.info(f"Saving memory and config {self.config}")
         await Save(context, self.config)
 
@@ -103,9 +102,8 @@ class MemorySearchLong(Action):
         config = MemoryConfig()
         self.config = config.load_provider_conf()
 
-
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         memories_str = await Search(context, self.config)
         res = ActionResult()
         if memories_str:
@@ -115,4 +113,3 @@ class MemorySearchLong(Action):
             response = "No memories found"
             res.set_param("response", response)
         return res
-

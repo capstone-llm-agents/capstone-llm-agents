@@ -26,7 +26,7 @@ class ToolAction(Action):
         self.tool = tool
         self.server = server
 
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by calling the tool."""
         # TODO: Move to a different logger  # noqa: TD003
         logging.getLogger("textual_app").info("Calling tool: %s with params: %s", self.tool.name, params.to_dict())

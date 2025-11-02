@@ -40,7 +40,7 @@ class SearchAccommodations(Action):
                 return token_data["access_token"]
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by searching for accommodations."""
         if not self.api_key or not self.api_secret:
             msg = "Amadeus API key or secret not found. Please set environment variables."
