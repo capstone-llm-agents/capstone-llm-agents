@@ -45,15 +45,25 @@ class FragAction(Action):
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
 
+        # base example
+        # get the top 40% for inputs, next 50% for context, rest ignored
+
     async def prep(self, fragments: list[Fragment], in_schema: DictSchema) -> ActionParams:
         """Create action parameters from fragments."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
 
+        # base example
+        # prompt until the input schema is satisfied
+
     async def out(self, result: ActionResult, out_frag_schema: DictSchema) -> list[Fragment]:
         """Create fragments from action result."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
+
+        # base example
+        # for each prop find the best fragment kind to represent it
+        # then create fragments accordingly
 
     async def create_out_schema(
         self,
@@ -83,6 +93,13 @@ class FragAction(Action):
 
         arranged_fragments, context_fragments = await self.arrange(fragments, self.in_frag_schema)
 
+        new_context = ActionContext.from_action_result(
+            context.last_result,
+            context,
+        )
+        for frag in context_fragments:
+            new_context.add_fragment(frag)
+
         prep_params = await self.prep(arranged_fragments, self.in_schema)
 
         # verify schema
@@ -90,7 +107,7 @@ class FragAction(Action):
             msg = f"Prepared params do not satisfy input schema for action {self.name}."
             raise ValueError(msg)
 
-        result = await self._do(prep_params, context)
+        result = await self._do(prep_params, new_context)
 
         # verify output schema
         if not self.out_schema.dict_satisfies_schema(result.results):
