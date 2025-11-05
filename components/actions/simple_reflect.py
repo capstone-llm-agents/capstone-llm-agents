@@ -4,6 +4,8 @@ from typing import override
 
 from components.actions.action_switcher import ActionSwitcher
 from components.actions.communicate import Communicate
+from components.actions.long_think import LongThink
+from components.actions.short_think import ShortThink
 from llm_mas.action_system.base.actions.stop import StopAction
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
@@ -25,7 +27,7 @@ class SimpleReflect(ActionSwitcher):
         super().__init__(description="Decide how to proceed based on an assessment of a response")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by retrieving parameters for the assessment of the last response."""
         last_result = context.last_result
 
@@ -87,7 +89,16 @@ class SimpleReflect(ActionSwitcher):
             action_space.add_action(StopAction())
         else:
             # TODO: actually do a smart retry system  # noqa: TD003
-            # allow all actions except StopAction
-            action_space.add_action(Communicate(embedding_model=ModelsAPI.get_embedding))
+            # check if we did ShortThink or LongThink
+            action_history = workspace.action_history
+
+            for action_record in reversed(action_history.history):
+                action = action_record[0]
+                if isinstance(action, ShortThink):
+                    action_space.add_action(LongThink())
+                    break
+                if isinstance(action, LongThink):
+                    action_space.add_action(ShortThink())
+                    break
 
         return action_space

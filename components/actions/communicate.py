@@ -30,7 +30,7 @@ class Communicate(Action):
         self.vector_selector = vector_selector or VectorSelector()
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by asking a friend for help."""
         entity = context.agent
         friends = entity.friends
@@ -41,6 +41,12 @@ class Communicate(Action):
             return res
 
         last_message = context.conversation.chat_history.messages[-1].content
+
+        # check context to see if we have the "contextualised_message" param
+        contextualised_message = context.last_result.get_param("contextualised_message")
+
+        if contextualised_message:
+            last_message = contextualised_message
 
         agent_friends = [friend for friend in friends if isinstance(friend, Agent)]
 

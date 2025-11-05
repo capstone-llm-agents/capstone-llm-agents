@@ -20,7 +20,7 @@ class AssessResponse(Action):
         super().__init__(description="Assess the quality of a response")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by assessing the quality of the last response."""
         # get response
         agent_res = context.last_result.get_param("response")

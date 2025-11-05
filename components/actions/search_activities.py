@@ -19,7 +19,7 @@ class SearchActivities(Action):
         super().__init__(description="Searches for and recommends activities for a given location and user interests.")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by generating a response from an LLM."""
         last_message = self.get_last_message_content(context)
 

@@ -18,10 +18,14 @@ class Action:
 
         self.use_fragments = False
 
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action with the given agent."""
         msg = "This method should be overridden by subclasses."
         raise NotImplementedError(msg)
+
+    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+        """Wrap the _do method to perform the action."""
+        return await self._do(params, context)
 
     def __eq__(self, other: object) -> bool:
         """Check equality based on the class name."""

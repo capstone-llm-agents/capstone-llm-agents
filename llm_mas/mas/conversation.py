@@ -3,6 +3,7 @@
 from typing import TYPE_CHECKING
 
 from llm_mas.communication.message_types import MessageType
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.entity import Entity
 from llm_mas.mas.user import User
 
@@ -63,6 +64,16 @@ class ChatHistory:
     def as_dicts(self) -> list[dict]:
         """Return the chat history as a list of dictionaries."""
         return [message.as_dict() for message in self.messages]
+
+    def get_last_user_message(self) -> UserMessage | None:
+        """Return the last user message in the chat history."""
+        APP_LOGGER.debug("Getting last user message from chat history.")
+        APP_LOGGER.debug(f"Chat history messages: {[message.as_dict() for message in self.messages]}")
+        for message in reversed(self.messages):
+            if message.role == "user" or isinstance(message, UserMessage):
+                # TODO: note not necessarily true but should be fine
+                return message  # pyright: ignore[reportReturnType]
+        return None
 
 
 class UserAssistantExample:

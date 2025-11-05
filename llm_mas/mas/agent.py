@@ -80,7 +80,7 @@ class Agent(Entity):
         # TODO: Get parameters from some source like ParamProvider  # noqa: TD003
         params = params if params is not None else ActionParams()
 
-        res = await action.do(params, context)
+        res = await action._do(params, context)
         self.workspace.action_history.add_action(action, res, context)
         return res
 

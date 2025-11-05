@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from llm_mas.communication.task.agent_task import Task
+from llm_mas.fragment.kind import FragmentKind
+
 if TYPE_CHECKING:
     from llm_mas.action_system.core.action_result import ActionResult
     from llm_mas.fragment.fragment import Fragment
@@ -24,6 +27,7 @@ class ActionContext:
         agent: Agent,
         user: User,
         conversation_manager: ConversationManager,
+        task: Task | None = None,
     ) -> None:
         """Initialize the action context with a conversation and an optional last result."""
         self.conversation = conversation
@@ -32,14 +36,17 @@ class ActionContext:
         self.agent = agent
         self.user = user
         self.conversation_manager = conversation_manager
+        self.task = task
 
         self.fragments: list[Fragment] = []
+        self.available_fragment_kinds: list[type[FragmentKind]] = []
 
     @classmethod
     def from_action_result(
         cls,
         action_result: ActionResult,
         context: ActionContext,
+        task: Task | None = None,
     ) -> ActionContext:
         """Create a new ActionContext from an ActionResult and an existing context."""
         return cls(
@@ -49,6 +56,7 @@ class ActionContext:
             agent=context.agent,
             user=context.user,
             conversation_manager=context.conversation_manager,
+            task=task,
         )
 
     def add_fragment(self, fragment: Fragment) -> None:

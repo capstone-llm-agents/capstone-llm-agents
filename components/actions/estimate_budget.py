@@ -44,7 +44,7 @@ class EstimateBudget(Action):
         return adjusted_cost  # noqa: RET504
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by estimating the budget."""
         destination = TRAVEL_CONTEXT.city or "Tokyo"
         duration_days = TRAVEL_CONTEXT.duration_days or 7

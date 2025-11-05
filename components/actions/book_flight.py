@@ -23,7 +23,7 @@ class BookFlight(Action):
         super().__init__(description="Books a flight based on the selected flight number.")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by booking the flight."""
         # Expect the flight number to be passed as a parameter
         flight_number = TRAVEL_CONTEXT.flight_number

@@ -16,7 +16,7 @@ class SayHello(Action):
         super().__init__(description="Prints a greeting message")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by printing a greeting."""
         res = ActionResult()
         res.set_param("greeting", "Hello, world!")

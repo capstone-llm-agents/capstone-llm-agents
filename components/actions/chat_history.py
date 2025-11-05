@@ -18,7 +18,7 @@ class RespondWithChatHistory(Action):
         super().__init__(description="Retrieves the chat history")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by retrieving the chat history."""
         chat_history = context.conversation.get_chat_history()
 

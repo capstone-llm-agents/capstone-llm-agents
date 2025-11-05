@@ -17,7 +17,7 @@ class SendConfirmationEmail(Action):
         super().__init__(description="Simulates sending a confirmation email to the user with booking details.")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by 'sending' the email."""
 
         # Get the email address from parameters

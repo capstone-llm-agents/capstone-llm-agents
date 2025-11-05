@@ -24,7 +24,7 @@ class SummariseURL(Action):
         super().__init__(description="Fetch and summarise content from a given URL.")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         # expect a "url" parameter from the request
         url = params.get_param("url")
         if not url:

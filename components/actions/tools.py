@@ -31,7 +31,7 @@ class UpdateTools(Action):
         self.tool_creator = tool_creator
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by updating the list of tools."""
         servers = context.mcp_client.connected_servers
 
@@ -71,7 +71,7 @@ class GetTools(Action):
         self.tool_creator = tool_creator
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by retrieving the list of tools."""
         tools = context.agent.tool_manager.get_all_tools()
         res = ActionResult()
@@ -108,7 +108,7 @@ class GetRelevantTools(Action):
         self.vector_selector = vector_selector or VectorSelector()
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by retrieving relevant tools."""
         # assumes that the context has a method to get relevant tools
         tools = context.last_result.get_param("tools")
@@ -171,7 +171,7 @@ class GetParamsForToolCall(Action):
         self.tool_creator = tool_creator
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by retrieving parameters for calling a tool."""
         tool_name = context.last_result.get_param("tool_name")
 

@@ -21,7 +21,7 @@ class TravelResponse(Action):
         )
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by generating a response from an LLM."""
         chat_history = context.conversation.get_chat_history()
 

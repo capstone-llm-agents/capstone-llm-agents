@@ -16,7 +16,7 @@ class GetSecret(Action):
         super().__init__(description="Returns a secret message")
 
     @override
-    async def do(self, params: ActionParams, context: ActionContext) -> ActionResult:
+    async def _do(self, params: ActionParams, context: ActionContext) -> ActionResult:
         """Perform the action by returning a secret message."""
         res = ActionResult()
         res.set_param("response", "AMOGUS")
