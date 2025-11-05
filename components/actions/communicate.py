@@ -42,6 +42,12 @@ class Communicate(Action):
 
         last_message = context.conversation.chat_history.messages[-1].content
 
+        # check context to see if we have the "contextualised_message" param
+        contextualised_message = context.last_result.get_param("contextualised_message")
+
+        if contextualised_message:
+            last_message = contextualised_message
+
         agent_friends = [friend for friend in friends if isinstance(friend, Agent)]
 
         if not agent_friends:

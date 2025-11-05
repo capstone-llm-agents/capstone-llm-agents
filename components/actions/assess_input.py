@@ -32,12 +32,16 @@ class AssessInput(Action):
         The goal is to ensure that the user input can be effectively addressed by an AI assistant.
         You are to determine if the user input is a clear task that can be acted upon.
         A clear task is one that is specific, unambiguous, and provides enough detail for an AI to respond effectively.
+        You should also determine whether the input requires real-time or up-to-date information to address.
+        You should also determine if the input requires specific knowledge that is not available on the internet.
 
         Here is the user input:
         {last_user_message.content}
 
         Please provide a JSON object with the following field:
         - is_task: A boolean indicating whether the user input is a clear task that can be acted upon.
+        - requires_real_time_info: A boolean indicating whether the input requires real-time or up-to-date information.
+        - requires_specific_knowledge: A boolean indicating whether the input requires specific knowledge that the assistant.
 
         Respond only with the JSON object.
         """
@@ -53,6 +57,11 @@ class AssessInput(Action):
         if is_task is None:
             msg = "The 'is_task' field is missing from the LLM response."
             raise ValueError(msg)
+        requires_real_time_info = params_dict.get("requires_real_time_info", False)
+        requires_specific_knowledge = params_dict.get("requires_specific_knowledge", False)
+
         res = ActionResult()
         res.set_param("is_task", is_task)
+        res.set_param("requires_real_time_info", requires_real_time_info)
+        res.set_param("requires_specific_knowledge", requires_specific_knowledge)
         return res

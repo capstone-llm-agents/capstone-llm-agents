@@ -26,16 +26,28 @@ class Reason(ActionSwitcher):
 
         # get assessment
         is_task = last_result.get_param("is_task")  # bool
+        requires_real_time_info = last_result.get_param("requires_real_time_info")
+        requires_specific_knowledge = last_result.get_param("requires_specific_knowledge")
 
         # check they exist
         if is_task is None:
             msg = "No is_task found in the last action result."
             raise ValueError(msg)
+        if requires_real_time_info is None:
+            msg = "No requires_real_time_info found in the last action result."
+            raise ValueError(msg)
+        if requires_specific_knowledge is None:
+            msg = "No requires_specific_knowledge found in the last action result."
+            raise ValueError(msg)
+
+        APP_LOGGER.debug("Reasoning through user input assessment:")
         APP_LOGGER.debug(f"User input is task: {is_task}")
+        APP_LOGGER.debug(f"User input requires real-time info: {requires_real_time_info}")
+        APP_LOGGER.debug(f"User input requires specific knowledge: {requires_specific_knowledge}")
 
         # if it is a task then we can do it
         decision = "quick"
-        if is_task:
+        if is_task or requires_real_time_info or requires_specific_knowledge:
             decision = "long"
 
         res = ActionResult()
