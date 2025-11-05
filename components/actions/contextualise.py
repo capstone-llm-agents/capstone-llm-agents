@@ -39,6 +39,7 @@ class Contextualise(Action):
         Make sure the summary is relevant to the user's current needs and avoids unnecessary repetition of information already present in the prompt.
         Respond only with the contextualised summary without any additional commentary.
         Do not use emojis, special characters, only plain text and punctuation.
+        If a request is vague or appears to be a follow-up without sufficient context, try your best to infer the user's intent based on the chat history.
 
         Here is the message to contextualise:
         {last_message["content"]}

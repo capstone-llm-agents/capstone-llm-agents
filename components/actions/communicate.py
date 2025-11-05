@@ -7,8 +7,9 @@ from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.communication.interface import CommunicationState
-from llm_mas.communication.messages import EndMessage, ErrorMessage, ProposalMessage
+from llm_mas.communication.messages import EndMessage, ErrorMessage, ProposalMessage, RejectionMessage
 from llm_mas.communication.task.agent_task import Task
+from llm_mas.logging.loggers import APP_LOGGER
 from llm_mas.mas.agent import Agent
 from llm_mas.model_providers.api import ModelsAPI
 from llm_mas.utils.config.models_config import ModelType
@@ -129,6 +130,15 @@ class Communicate(Action):
             if isinstance(message, ErrorMessage):
                 msg = f"Error message received from friend agent: {message.content}"
                 raise ValueError(msg)  # noqa: TRY004
+
+            # we got rejected
+            if isinstance(message, RejectionMessage):
+                res = ActionResult()
+                res.set_param(
+                    "response",
+                    "The friend agent could not complete the task. Likely because the task itself was unsuitable and.",
+                )
+                return res
 
             # finished message, swap sender and recipient
             sender, recipient = recipient, sender

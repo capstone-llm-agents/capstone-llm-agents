@@ -66,16 +66,45 @@ class DefaultCommunicationInterface(CommunicationInterface):
 class DefaultProposalHandler(ProposalHandler):
     """Handler for proposal messages."""
 
+    def __init__(self) -> None:
+        """Initialize the default proposal handler."""
+        super().__init__(use_async=True)
+
     @override
-    def handle_message(
+    async def handle_message_async(
         self,
         message: ProposalMessage,
         state: CommunicationState,
     ) -> AcceptanceMessage | RejectionMessage:
         """Handle an incoming proposal message."""
-        # for simplicity just accept all proposals
-        # in a real system you might want to check the proposal against some criteria
-        return AcceptanceMessage(sender=state.talking_to)
+        # use LLM to decide whether to accept or reject the proposal
+        agent = state.talking_to
+        sender = message.sender
+        content = message.content
+        prompt = f"""
+        You are an expert AI assistant that specializes in evaluating proposals from other agents.
+        Your job is to carefully analyze a task given and a recipient agent and decide whether they are suitable for the task.
+
+        Here is the proposal:
+        - Recipient Agent: {agent.name}
+        {agent.description}
+        - Proposal Content: 
+        {content}
+
+        Consider the relevance of the task to the agent name and description.
+        Based on the above information, do you accept the proposal? Respond with 'ACCEPT' or 'REJECT'.
+        Do not provide any additional explanation. Only respond with the single word 'ACCEPT' or 'REJECT'.
+        """
+
+        response = await ModelsAPI.call_llm(prompt)
+        response = response.strip().upper()
+        if "ACCEPT" in response:
+            return AcceptanceMessage(sender=agent, content="I accept the proposal and will help with the task.")
+        return RejectionMessage(
+            sender=agent,
+            reason=Reason("The proposal was not suitable."),
+            content="I reject the proposal.",
+        )
 
 
 class DefaultRejectionHandler(RejectionHandler):
