@@ -5,9 +5,10 @@ from components.actions.assess_response import AssessResponse
 from components.actions.chat_history import RespondWithChatHistory
 from components.actions.communicate import Communicate
 from components.actions.contextualise import Contextualise
-from components.actions.entry import Entry
+from components.actions.long_think import LongThink
 from components.actions.reason import Reason
 from components.actions.retrieve_knowledge import RetrieveKnowledge
+from components.actions.short_think import ShortThink
 from components.actions.simple_reflect import SimpleReflect
 from components.actions.simple_response import SimpleResponse
 from llm_mas.action_system.base.actions.stop import StopAction
@@ -50,7 +51,8 @@ ASSISTANT_AGENT.add_action(RetrieveKnowledge())
 ASSISTANT_AGENT.add_action(Communicate(embedding_model=ModelsAPI.get_embedding))
 ASSISTANT_AGENT.add_action(AssessInput())
 ASSISTANT_AGENT.add_action(Reason())
-ASSISTANT_AGENT.add_action(Entry())
+ASSISTANT_AGENT.add_action(ShortThink())
+ASSISTANT_AGENT.add_action(LongThink())
 ASSISTANT_AGENT.add_action(RespondWithChatHistory())
 ASSISTANT_AGENT.add_action(Contextualise())
 
@@ -58,8 +60,10 @@ narrower.add_default_action(AssessInput())
 
 # add some edges
 
+narrower.add_action_edge(ShortThink(), [RespondWithChatHistory()])
+
 narrower.add_action_edge(AssessInput(), [Reason()])
-narrower.add_action_edge(Entry(), [Communicate(embedding_model=ModelsAPI.get_embedding)])
+narrower.add_action_edge(LongThink(), [Communicate(embedding_model=ModelsAPI.get_embedding)])
 
 narrower.add_action_edge(AssessResponse(), [SimpleReflect()])
 narrower.add_action_edge(SimpleReflect(), [StopAction()])

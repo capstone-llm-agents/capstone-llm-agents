@@ -3,15 +3,13 @@
 from typing import override
 
 from components.actions.action_switcher import ActionSwitcher
-from components.actions.chat_history import RespondWithChatHistory
-from components.actions.communicate import Communicate
-from components.actions.entry import Entry
+from components.actions.long_think import LongThink
+from components.actions.short_think import ShortThink
 from llm_mas.action_system.core.action_context import ActionContext
 from llm_mas.action_system.core.action_params import ActionParams
 from llm_mas.action_system.core.action_result import ActionResult
 from llm_mas.action_system.core.action_space import ActionSpace
 from llm_mas.logging.loggers import APP_LOGGER
-from llm_mas.model_providers.api import ModelsAPI
 
 
 class Reason(ActionSwitcher):
@@ -67,7 +65,7 @@ class Reason(ActionSwitcher):
         APP_LOGGER.debug(f"Reason through decision: {decision}")
 
         if decision == "quick":
-            action_space.add_action(RespondWithChatHistory())
+            action_space.add_action(ShortThink())
         else:
-            action_space.add_action(Entry())
+            action_space.add_action(LongThink())
         return action_space
